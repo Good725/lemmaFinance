@@ -4,8 +4,25 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const fetch = require("cross-fetch");
+const { constants } = require("ethers");
+const { defaultAccounts } = require("@ethereum-waffle/provider");
+
+const tokenTransfers = require("truffle-token-test-utils");//just to visulize token transfers in a transaction
 
 async function main() {
+  const perpMetadataUrl = "https://metadata.perp.exchange/staging.json";
+  const perpMetadata = await fetch(perpMetadataUrl).then(res => res.json());
+
+  // console.log(perpMetadata);
+
+  const collateral = perpMetadata.layers.layer2.externalContracts.usdc;//USDC
+  const underlyingAsset = "0x359eaF429cd6114c6fcb263dB04586Ad59177CAc";//fake WETH which has pair on honeyswap tp test with
+
+
+
+
+
   // Hardhat always runs the compile task when running scripts with its command
   // line interface.
   //
@@ -21,27 +38,62 @@ async function main() {
 
   console.log("Greeter deployed to:", greeter.address);
 
-  // const uniswapV2Router02 = "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77";
-  // const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
-  // const lemmaHoneySwap = await Greeter.deploy("Hello, Hardhat!");
+  const uniswapV2Router02 = "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77";
+  const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
+  const lemmaHoneySwap = await LemmaHoneySwap.deploy(uniswapV2Router02);
 
-  // await LemmaHoneySwap.deployed();
+  await lemmaHoneySwap.deployed();
 
-  // console.log("LemmaHoneySwap deployed to:", lemmaHoneySwap.address);
+  console.log("LemmaHoneySwap deployed to:", lemmaHoneySwap.address);
 
-  // const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
-  // const lemmaPerpetual = await LemmaPerpetual.deploy("Hello, Hardhat!");
 
-  // await lemmaPerpetual.deployed();
+  const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
+  const lemmaPerpetual = await LemmaPerpetual.deploy(perpMetadata.layers.layer2.contracts.ClearingHouse.address, perpMetadata.layers.layer2.contracts.ETHUSDC.address, collateral);
 
-  // console.log("LemmaPerpetual deployed to:", lemmaPerpetual.address);
+  await lemmaPerpetual.deployed();
 
-  // const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
-  // const lemmaToken = await Greeter.deploy("Hello, Hardhat!");
+  console.log("LemmaPerpetual deployed to:", lemmaPerpetual.address);
 
-  // await lemmaToken.deployed();
+  const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
+  const lemmaToken = await LemmaToken.deploy(collateral, underlyingAsset, lemmaPerpetual.address, lemmaHoneySwap.address);
 
-  // console.log("LemmaToken deployed to:", lemmaToken.address);
+  await lemmaToken.deployed();
+
+  // await lemmaToken.initlialize();
+
+
+  await lemmaHoneySwap.setLemmaToken(lemmaToken.address);
+  await lemmaPerpetual.setLemmaToken(lemmaToken.address);
+
+
+
+  console.log(await lemmaToken.name());
+  console.log("LemmaToken deployed to:", lemmaToken.address);
+
+  //Do the things
+
+  const usdc = lemmaToken.attach(collateral);
+  await usdc.approve(lemmaToken.address, constants.MaxUint256);
+
+  const theAccount = await lemmaHoneySwap.owner();
+  console.log((await usdc.balanceOf(theAccount)).toString());
+
+  // console.log(hre.network);
+  tokenTransfers.setCurrentProvider(hre.network.provider);
+
+  let tx = await lemmaToken.mint(1000000);
+  tx.wait();
+  // // tx = await lemmaToken.mint(1000000);
+  // // tx.wait();
+
+
+  // await tokenTransfers.print(tx.hash);
+
+  // tx = await lemmaToken.redeem(1000000);
+  // tx.wait();
+
+  // await tokenTransfers.print(tx.hash);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -20,10 +20,21 @@ task("accounts", "Prints the list of accounts", async () => {
  */
 module.exports = {
   networks: {
+    // hardhat: {
+    //   forking: {
+    //     url: "https://eth-mainnet.alchemyapi.io/v2/onS4dqEgwFlnReX-5HrjzQjvTjE-BIA7"
+    //   }
+    // },
     hardhat: {
       forking: {
-        url: "https://eth-mainnet.alchemyapi.io/v2/onS4dqEgwFlnReX-5HrjzQjvTjE-BIA7"
-      }
+        url: "https://rpc.xdaichain.com/",
+
+      },
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
+      port: 8545,
+
     },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,

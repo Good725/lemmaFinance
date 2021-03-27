@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.3;
 
-import {
-    ERC20Upgradeable
-} from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+// import {
+//     ERC20Upgradeable
+// } from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+
+import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import 'hardhat/console.sol';
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {IPerpetualProtocol} from './interfaces/IPerpetualProtocol.sol';
 import {IDEX} from './interfaces/IDEX.sol';
 
-contract LemmaToken is ERC20Upgradeable {
+//TODO: decide what contracts need to be upgradeable
+// contract LemmaToken is ERC20Upgradeable {
+contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
     IERC20 public collateral =
         IERC20(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
     IERC20 public underlyingAsset =
@@ -17,14 +22,27 @@ contract LemmaToken is ERC20Upgradeable {
     IPerpetualProtocol public perpetualProtocol; //at first it would be perpetual wrapper
     IDEX public dex;
     uint256 public totalCollateralDeposited;
+    uint256 public totalUnderlyingAssetBought;
     uint256 private constant ONE_18 = 10**18;
 
     //mappping of protocols to wrappers
     //mapping of protocol to collateral
     //underlying assets supported
 
-    function initlialize() public initializer {
-        __ERC20_init('LemmaUSDC', 'LUSDC');
+    // function initlialize() public initializer {
+    //     __ERC20_init('LemmaUSDC', 'LUSDC');
+    // }
+
+    constructor(
+        IERC20 _collateral,
+        IERC20 _underlyingAsset,
+        IPerpetualProtocol _perpetualProtocol,
+        IDEX _dex
+    ) {
+        collateral = _collateral;
+        underlyingAsset = _underlyingAsset;
+        perpetualProtocol = _perpetualProtocol;
+        dex = _dex;
     }
 
     function mint(uint256 _amount) external {
@@ -33,45 +51,76 @@ contract LemmaToken is ERC20Upgradeable {
         uint256 halfAmount = _amount / 2;
         collateral.transfer(address(perpetualProtocol), halfAmount);
         perpetualProtocol.open(halfAmount);
+        totalCollateralDeposited += halfAmount;
 
         collateral.transfer(address(dex), halfAmount);
-        dex.buyUnderlyingAsset(
-            address(collateral),
-            halfAmount,
-            address(underlyingAsset)
-        );
-
-        uint256 toMint = (totalSupply() * _amount) / totalCollateralDeposited;
+        uint256 underlyingAssetBought =
+            dex.swap(address(collateral), halfAmount, address(underlyingAsset));
+        totalUnderlyingAssetBought += underlyingAssetBought;
+        uint256 toMint;
+        if (totalSupply() == 0) {
+            toMint = _amount;
+        } else {
+            toMint = (totalSupply() * _amount) / totalCollateralDeposited;
+        }
 
         //require(toMint>=minimumToMint)
         _mint(msg.sender, toMint);
-        totalCollateralDeposited += _amount;
     }
 
     function redeem(uint256 _amount) external {
-        _burn(msg.sender, _amount);
-
-        uint256 userShareAmount =
+        console.log('toatalCollateralDeposited', totalCollateralDeposited);
+        console.log('_amount', _amount);
+        console.log('totalSupply', totalSupply());
+        uint256 userShareAmountOfCollateral =
             (totalCollateralDeposited * _amount) / totalSupply();
+        uint256 userShareAmountOfUnderlyingToken =
+            (totalUnderlyingAssetBought * _amount) / totalSupply();
 
-        uint256 halfUserShareAmount = userShareAmount / 2;
-        //how much underlying asset to transfer to get back the halfAmount?
-        uint256 underlyingTokenAmountRequired =
-            dex.getUnderlyingTokenAmountRequired(
-                address(collateral),
-                halfUserShareAmount,
-                address(underlyingAsset)
-            ); //?
-        underlyingAsset.transfer(address(dex), underlyingTokenAmountRequired);
-        dex.buyBackCollateral(
-            address(collateral),
-            halfUserShareAmount,
-            address(underlyingAsset)
+        console.log('userShareAmountOfCollateral', userShareAmountOfCollateral);
+        console.log(
+            'userShareAmountOfUnderlyingToken',
+            userShareAmountOfUnderlyingToken
         );
 
-        perpetualProtocol.close(halfUserShareAmount);
+        _burn(msg.sender, _amount);
 
-        collateral.transfer(msg.sender, userShareAmount);
+        // //how much underlying asset to transfer to get back the halfAmount?
+        // uint256 underlyingTokenAmountRequired =
+        //     dex.getUnderlyingTokenAmountRequired(
+        //         address(collateral),
+        //         halfUserShareAmount,
+        //         address(underlyingAsset)
+        //     ); //?
+
+        // dex.buyBackCollateral(
+        //     address(collateral),
+        //     halfUserShareAmount,
+        //     address(underlyingAsset)
+        // );
+        underlyingAsset.transfer(
+            address(dex),
+            userShareAmountOfUnderlyingToken
+        );
+        uint256 collateralAmountFromSellingUnderlyingAsset =
+            dex.swap(
+                address(underlyingAsset),
+                userShareAmountOfUnderlyingToken,
+                address(collateral)
+            );
+
+        console.log(
+            'collateralAmountFromSellingUnderlyingAsset',
+            collateralAmountFromSellingUnderlyingAsset
+        );
+
+        perpetualProtocol.close(userShareAmountOfCollateral);
+
+        collateral.transfer(
+            msg.sender,
+            userShareAmountOfCollateral +
+                collateralAmountFromSellingUnderlyingAsset
+        );
 
         //require(userShare>=minimumUserShare)
     }

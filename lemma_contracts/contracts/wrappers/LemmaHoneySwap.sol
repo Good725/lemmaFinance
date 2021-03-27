@@ -49,62 +49,61 @@ contract LemmaHoneySwap is Ownable, IDEX {
         lemmaToken = _lemmaToken;
     }
 
-    function getUnderlyingTokenAmountRequired(
-        address _collateral,
-        uint256 _collateralAmount,
-        //add some protection so that not more than needed collateral gets converted into collateral
-        address _underlyingToken
-    ) external view override returns (uint256) {
-        address[] memory path = new address[](2);
-        path[0] = _underlyingToken;
-        path[1] = _collateral;
-        uint256[] memory amounts =
-            uniswapV2Router02.getAmountsOut(_collateralAmount, path);
-        return amounts[0];
-    }
+    // function getUnderlyingTokenAmountRequired(
+    //     address _collateral,
+    //     uint256 _collateralAmount,
+    //     //add some protection so that not more than needed collateral gets converted into collateral
+    //     address _underlyingToken
+    // ) external view override returns (uint256) {
+    //     address[] memory path = new address[](2);
+    //     path[0] = _underlyingToken;
+    //     path[1] = _collateral;
+    //     uint256[] memory amounts =
+    //         uniswapV2Router02.getAmountsIn(_collateralAmount, path);
+    //     return amounts[0];
+    // }
 
-    function buyUnderlyingAsset(
-        address _collateral,
-        uint256 _collateralAmount,
+    function swap(
+        address _buyToken,
+        uint256 _buyAmount,
         //add buyAmountMin
-        address _underlyingToken
-    ) external override onlyLemmaToken {
-        IERC20(_collateral).approve(
-            address(uniswapV2Router02),
-            _collateralAmount
-        );
+        address _sellToken
+    ) external override onlyLemmaToken returns (uint256) {
+        IERC20(_buyToken).approve(address(uniswapV2Router02), _buyAmount);
         address[] memory path = new address[](2);
-        path[0] = _collateral;
-        path[1] = _underlyingToken;
-        uniswapV2Router02.swapExactTokensForTokens(
-            _collateralAmount,
-            0, //take it from user
-            path,
-            lemmaToken,
-            type(uint256).max
-        );
+        path[0] = _buyToken;
+        path[1] = _sellToken;
+        uint256[] memory amounts =
+            uniswapV2Router02.swapExactTokensForTokens(
+                _buyAmount,
+                0, //take it from user
+                path,
+                lemmaToken,
+                type(uint256).max
+            );
+        return amounts[1];
     }
 
-    function buyBackCollateral(
-        address _collateral,
-        uint256 _collateralAmount,
-        //add some protection so that not more than needed collateral gets converted into collateral
-        address _underlyingToken
-    ) external override onlyLemmaToken {
-        IERC20(_underlyingToken).approve(
-            address(uniswapV2Router02),
-            _collateralAmount
-        );
-        address[] memory path = new address[](2);
-        path[0] = _underlyingToken;
-        path[1] = _collateral;
+    // function buyBackCollateral(
+    //     address _collateral,
+    //     uint256 _collateralAmount,
+    //     //add some protection so that not more than needed collateral gets converted into collateral
+    //     address _underlyingToken
+    // ) external override onlyLemmaToken {
+    //     IERC20(_underlyingToken).approve(
+    //         address(uniswapV2Router02),
+    //         _collateralAmount
+    //     );
+    //     address[] memory path = new address[](2);
+    //     path[0] = _underlyingToken;
+    //     path[1] = _collateral;
 
-        uniswapV2Router02.swapTokensForExactTokens(
-            _collateralAmount,
-            type(uint256).max, //need to make sure this is the fair price!
-            path,
-            lemmaToken,
-            type(uint256).max
-        );
-    }
+    //     uniswapV2Router02.swapTokensForExactTokens(
+    //         _collateralAmount,
+    //         type(uint256).max, //need to make sure this is the fair price!
+    //         path,
+    //         lemmaToken,
+    //         type(uint256).max
+    //     );
+    // }
 }
