@@ -1,6 +1,6 @@
 import React from 'react';
 import Grid from '@material-ui/core/Grid';
-import Footer from 'components/Footer/index.js';
+import Footer from '../../components/Footer/index.js';
 import PrivacySection from './section';
 import withStyles from "@material-ui/core/styles/withStyles";
 
@@ -13,16 +13,16 @@ const styles = {
     right: 0,
     bottom: 0,
   },
-}
+};
 
-function Privacy({classes}) {
+function Privacy({ classes }) {
 
   return (
     <Grid container className={classes.root} justify="center">
       <Grid item xs={10}>
-        <PrivacySection/>
+        <PrivacySection />
       </Grid>
-      <Footer/>
+      <Footer />
     </Grid>
   );
 }
