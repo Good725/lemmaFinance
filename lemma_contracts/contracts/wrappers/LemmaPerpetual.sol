@@ -49,7 +49,7 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         lemmaToken = _lemmaToken;
     }
 
-    //open on which side needs to decided by rebalancer
+    //open on which side needs to decided by rebalancer logic
     //underlying asset needs to be given dynamically
     function open(uint256 amount) external override onlyLemmaToken {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
@@ -63,7 +63,7 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         );
     }
 
-    //close on which side needs to be decide by rebalacer
+    //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
     function close(uint256 amount) external override onlyLemmaToken {
         //open postion on perptual protcol

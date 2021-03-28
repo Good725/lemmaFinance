@@ -75,6 +75,8 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
         // console.log('toatalCollateralDeposited', totalCollateralDeposited);
         // console.log('_amount', _amount);
         // console.log('totalSupply', totalSupply());
+
+        //TODO: userShareAmountOfCollateral needs to calculated by querying the protocol to take funding payments into account
         uint256 userShareAmountOfCollateral =
             (totalCollateralDeposited * _amount) / totalSupply();
         uint256 userShareAmountOfUnderlyingToken =
@@ -86,39 +88,51 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
         //     userShareAmountOfUnderlyingToken
         // );
 
+        // console.log('collateral share of user', userShareAmountOfCollateral);
+
+        // console.log(
+        //     'underlying balance now',
+        //     underlyingAsset.balanceOf(address(this))
+        // );
+
+        // console.log(
+        //     'underlying share of user',
+        //     userShareAmountOfUnderlyingToken
+        // );
+
         _burn(msg.sender, _amount);
 
-        // //how much underlying asset to transfer to get back the halfAmount?
-        // uint256 underlyingTokenAmountRequired =
-        //     dex.getUnderlyingTokenAmountRequired(
-        //         address(collateral),
-        //         halfUserShareAmount,
-        //         address(underlyingAsset)
-        //     ); //?
-
-        // dex.buyBackCollateral(
-        //     address(collateral),
-        //     halfUserShareAmount,
-        //     address(underlyingAsset)
-        // );
+        totalUnderlyingAssetBought -= userShareAmountOfUnderlyingToken;
         underlyingAsset.transfer(
             address(dex),
             userShareAmountOfUnderlyingToken
         );
+
         uint256 collateralAmountFromSellingUnderlyingAsset =
             dex.swap(
                 address(underlyingAsset),
                 userShareAmountOfUnderlyingToken,
                 address(collateral)
             );
+        // console.log(
+        //     'total expected',
+        //     userShareAmountOfCollateral +
+        //         collateralAmountFromSellingUnderlyingAsset
+        // );
 
-        console.log(
-            'collateralAmountFromSellingUnderlyingAsset',
-            collateralAmountFromSellingUnderlyingAsset
-        );
+        // console.log(
+        //     'collateralAmountFromSellingUnderlyingAsset',
+        //     collateralAmountFromSellingUnderlyingAsset
+        // );
+
+        // console.log(
+        //     'collateral balance now',
+        //     collateral.balanceOf(address(this))
+        // );
 
         perpetualProtocol.close(userShareAmountOfCollateral);
 
+        totalCollateralDeposited -= userShareAmountOfCollateral;
         collateral.transfer(
             msg.sender,
             userShareAmountOfCollateral +
