@@ -48,7 +48,10 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
     function mint(uint256 _amount) external {
         collateral.transferFrom(msg.sender, address(this), _amount);
 
+        // uint256 halfAmount = (_amount * 99) / (2 * 100);
+
         uint256 halfAmount = _amount / 2;
+
         collateral.transfer(address(perpetualProtocol), halfAmount);
         perpetualProtocol.open(halfAmount);
         totalCollateralDeposited += halfAmount;
@@ -69,19 +72,19 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
     }
 
     function redeem(uint256 _amount) external {
-        console.log('toatalCollateralDeposited', totalCollateralDeposited);
-        console.log('_amount', _amount);
-        console.log('totalSupply', totalSupply());
+        // console.log('toatalCollateralDeposited', totalCollateralDeposited);
+        // console.log('_amount', _amount);
+        // console.log('totalSupply', totalSupply());
         uint256 userShareAmountOfCollateral =
             (totalCollateralDeposited * _amount) / totalSupply();
         uint256 userShareAmountOfUnderlyingToken =
             (totalUnderlyingAssetBought * _amount) / totalSupply();
 
-        console.log('userShareAmountOfCollateral', userShareAmountOfCollateral);
-        console.log(
-            'userShareAmountOfUnderlyingToken',
-            userShareAmountOfUnderlyingToken
-        );
+        // console.log('userShareAmountOfCollateral', userShareAmountOfCollateral);
+        // console.log(
+        //     'userShareAmountOfUnderlyingToken',
+        //     userShareAmountOfUnderlyingToken
+        // );
 
         _burn(msg.sender, _amount);
 

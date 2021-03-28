@@ -83,16 +83,16 @@ async function main() {
 
   let tx = await lemmaToken.mint(1000000);
   tx.wait();
-  // // tx = await lemmaToken.mint(1000000);
-  // // tx.wait();
+  tx = await lemmaToken.mint(1000000);
+  tx.wait();
 
 
   // await tokenTransfers.print(tx.hash);
 
-  // tx = await lemmaToken.redeem(1000000);
-  // tx.wait();
+  tx = await lemmaToken.redeem(1000000);
+  tx.wait();
 
-  // await tokenTransfers.print(tx.hash);
+  await tokenTransfers.print(tx.hash);
 
 }
 

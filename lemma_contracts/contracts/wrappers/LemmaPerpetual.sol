@@ -74,7 +74,6 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
             Decimal.decimal(1), //leverage
             Decimal.decimal(0) //_baseAssetAmountLimit
         );
-        clearingHouse.removeMargin(ETH_USDC_AMM, Decimal.decimal(amount));
 
         USDC.transferFrom(address(this), lemmaToken, amount);
     }
