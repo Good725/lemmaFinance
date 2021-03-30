@@ -4,9 +4,19 @@ pragma solidity =0.8.3;
 import {IPerpetualProtocol} from '../interfaces/IPerpetualProtocol.sol';
 import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {SignedDecimal} from '../utils/SignedDecimal.sol';
 
 interface IClearingHouse {
     enum Side {BUY, SELL}
+
+    struct Position {
+        SignedDecimal.signedDecimal size;
+        Decimal.decimal margin;
+        Decimal.decimal openNotional;
+        SignedDecimal.signedDecimal lastUpdatedCumulativePremiumFraction;
+        uint256 liquidityHistoryIndex;
+        uint256 blockNumber;
+    }
 
     function openPosition(
         IAmm _amm,
@@ -18,6 +28,8 @@ interface IClearingHouse {
 
     function removeMargin(IAmm _amm, Decimal.decimal calldata _removedMargin)
         external;
+
+    function getPosition(IAmm _amm, address _trader) public returns (Struct);
 }
 
 contract LemmaPerpetual is Ownable, IPerpetualProtocol {
@@ -76,5 +88,10 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         );
 
         USDC.transferFrom(address(this), lemmaToken, amount);
+    }
+
+    function getPosition() external override onlyLemmaToken {
+        // get position on Perpetual protocol
+        Position memory pos = clearingHouse.getPosition(ETH_USDC_AMM, address(this));
     }
 }
