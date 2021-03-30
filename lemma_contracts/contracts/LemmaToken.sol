@@ -11,10 +11,11 @@ import 'hardhat/console.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {IPerpetualProtocol} from './interfaces/IPerpetualProtocol.sol';
 import {IDEX} from './interfaces/IDEX.sol';
+import {IERC677Receiver} from './interfaces/IERC677Receiver.sol';
 
 //TODO: decide what contracts need to be upgradeable
 // contract LemmaToken is ERC20Upgradeable {
-contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
+contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
     IERC20 public collateral =
         IERC20(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
     IERC20 public underlyingAsset =
@@ -141,4 +142,11 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC') {
 
         //require(userShare>=minimumUserShare)
     }
+
+    //maybe we can use this later
+    function onTokenTransfer(
+        address from,
+        uint256 amount,
+        bytes calldata data
+    ) external override returns (bool) {}
 }

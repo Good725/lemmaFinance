@@ -29,7 +29,10 @@ interface IClearingHouse {
     function removeMargin(IAmm _amm, Decimal.decimal calldata _removedMargin)
         external;
 
-    function getPosition(IAmm _amm, address _trader) public returns (Struct);
+    function getPosition(IAmm _amm, address _trader)
+        external
+        view
+        returns (Position memory);
 }
 
 contract LemmaPerpetual is Ownable, IPerpetualProtocol {
@@ -90,8 +93,12 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         USDC.transferFrom(address(this), lemmaToken, amount);
     }
 
-    function getPosition() external override onlyLemmaToken {
+    function getPosition()
+        external
+        view
+        returns (IClearingHouse.Position memory pos)
+    {
         // get position on Perpetual protocol
-        Position memory pos = clearingHouse.getPosition(ETH_USDC_AMM, address(this));
+        pos = clearingHouse.getPosition(ETH_USDC_AMM, address(this));
     }
 }
