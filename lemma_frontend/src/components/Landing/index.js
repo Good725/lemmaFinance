@@ -3,11 +3,13 @@ import { withStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab } from '@material-ui/core';
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 import classNames from 'classnames';
+import { useWallet } from 'use-wallet';
 
 import { styles } from './styles';
 
 function LandingPage({ classes }) {
-
+  const wallet = useWallet();
+  console.log("--------------------", {wallet})
   const [amount, setAmount] = useState('');
   const [tabIndex, setTabIndex] = useState("1");
   const [open, setOpen] = useState(false);
@@ -26,6 +28,7 @@ function LandingPage({ classes }) {
   };
 
   const handleConnectWallet = () => {
+    wallet.connect();
   };
 
   const handleAssetClick = (assetNumber) => {
@@ -186,7 +189,7 @@ function LandingPage({ classes }) {
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Wallet Balance</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{tableData[selectedAsset].balance}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{wallet.balance}</Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
