@@ -8,8 +8,6 @@
     "@material-ui/lab": "^4.0.0-alpha.47",
     "axios": "^0.19.2",
     "classnames": "^2.2.6",
-    "firebase": "^5.10.1",
-    "firebase-tools": "^8.0.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-router": "^5.0.0",
