@@ -19,11 +19,19 @@ export const styles = theme => ({
     marginTop: '3vw',
   },
   logo: {
-    border: '3px solid',
-    paddingLeft: '20px',
-    paddingRight: '20px',
-    paddingTop: '5px',
-    paddingBottom: '5px',
+    display: 'inline-block',
+    paddingLeft: '15px',
+  },
+  logoImg: {
+    display: 'inline-block',
+    height: 40
+  },
+  lcText: {
+    textTransform: 'none',
+    border: 'solid 2px',
+    '&:hover': {
+      border: 'solid 2px',
+    },
   },
   title: {
     marginBottom: '1vh',
@@ -69,8 +77,6 @@ export const styles = theme => ({
   tableContainer: {
     maxHeight: 440,
   },
-  actionContainer: {
-  },
   tablePaper: {
     width: '100%',
     paddingTop: '3vw',
@@ -101,7 +107,8 @@ export const styles = theme => ({
     maxHeight: 60
   },
   tab: {
-    minWidth: 140,
+    minWidth: '9.5vw',
+    textTransform: 'none'
   },
   input: {
     width: '100%',

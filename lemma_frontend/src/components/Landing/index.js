@@ -90,14 +90,19 @@ function LandingPage({ classes }) {
       </Snackbar>
       <div className={classes.body}>
         <Grid container justify="center">
-          <Grid container item xs={9} lg={8} className={classes.navigationContainer} justify="space-between">
-            <Typography className={classes.logo} variant="body1"><b>LEMMA</b></Typography>
-            <Button color="primary" variant="outlined" onClick={() => handleConnectWallet()}>
-              Connect Wallet
-            </Button>
+          <Grid container item xs={11} md={9} xl={8} className={classes.navigationContainer} justify="space-between">
+            <Grid item container xs={4} alignItems="center">
+              <Grid item><img className={classes.logoImg} src={require('../../assets/img/logo.png')} alt=""/></Grid>
+              <Grid item><Typography className={classes.logo} variant="body1"><b>LEMMA</b></Typography></Grid>
+            </Grid>
+            <Grid item>
+              <Button color="primary" className={classes.lcText} variant="outlined" onClick={() => handleConnectWallet()}>
+                Connect Wallet
+              </Button>
+            </Grid>
           </Grid>
 
-          <Grid container item xs={9} lg={8} className={classes.mainContainer} direction="row" justify="center">
+          <Grid container item xs={11} md={9} xl={8} className={classes.mainContainer} direction="row" justify="center">
 
             <Grid container item direction="column">
               <Grid item className={classes.title}>The Easiest Way to Arbitrage.</Grid>
@@ -174,14 +179,13 @@ function LandingPage({ classes }) {
                         <TabList
                           onChange={handleTabChange}
                           indicatorColor="primary"
-                          variant="fullWidth"
                           centered
                         >
                           <Tab label="Deposit" value="1" className={classes.tab} />
                           <Tab label="Withdraw" value="2" className={classes.tab} />
                         </TabList>
                         <TabPanel value="1">
-                          <Grid container item spacing={3}>
+                          <Grid container item spacing={4}>
                             <Grid container item xs={12} direction='row' justify="center">
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Earn APY</Typography> </Grid>
@@ -232,7 +236,7 @@ function LandingPage({ classes }) {
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
-                              <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                              <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label={`${tableData[selectedAsset].asset} Wallet Address`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item xs={12}>
                               <Button fullWidth className={classes.button} color="primary" variant="contained" onClick={() => handleWithdrawSubmit()}>
