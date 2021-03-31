@@ -3,11 +3,13 @@ import { withStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab } from '@material-ui/core';
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 import classNames from 'classnames';
+import { useWallet } from 'use-wallet';
 
 import { styles } from './styles';
 
 function LandingPage({ classes }) {
-
+  const wallet = useWallet();
+  console.log("--------------------", {wallet})
   const [amount, setAmount] = useState('');
   const [tabIndex, setTabIndex] = useState("1");
   const [open, setOpen] = useState(false);
@@ -26,6 +28,7 @@ function LandingPage({ classes }) {
   };
 
   const handleConnectWallet = () => {
+    wallet.connect();
   };
 
   const handleAssetClick = (assetNumber) => {
@@ -50,7 +53,7 @@ function LandingPage({ classes }) {
 
   const tableData = [
     {
-      'image_url': require('assets/img/eth.png'),
+      'image_url': require('../../assets/img/eth.png'),
       'asset': 'ETH',
       'balance': '0',
       'deposit': '0',
@@ -59,7 +62,7 @@ function LandingPage({ classes }) {
       'assetNumber': '0'
     },
     {
-      'image_url': require('assets/img/bat.png'),
+      'image_url': require('../../assets/img/bat.png'),
       'asset': 'BAT',
       'balance': '0',
       'deposit': '0',
@@ -68,7 +71,7 @@ function LandingPage({ classes }) {
       'assetNumber': '1'
     },
     {
-      'image_url': require('assets/img/uni.png'),
+      'image_url': require('../../assets/img/uni.png'),
       'asset': 'UNI',
       'balance': '0',
       'deposit': '0',
@@ -76,7 +79,7 @@ function LandingPage({ classes }) {
       'earnings': '0',
       'assetNumber': '2'
     },
-  ]
+  ];
 
   return (
     <div className={classes.root}>
@@ -113,49 +116,49 @@ function LandingPage({ classes }) {
                       <Grid item xs={2}><Typography variant="body1">Earn APY</Typography></Grid>
                       <Grid item xs={2}><Typography variant="body1">Earnings</Typography></Grid>
                     </Grid>
-                    { tableData.map(row => {
+                    {tableData.map(row => {
                       return (
-                        <Grid 
-                          container 
-                          item 
-                          className={classNames(selectedAsset == row.assetNumber ? classes.selectedTableButton : classes.tableButton )} 
+                        <Grid
+                          container
+                          item
+                          className={classNames(selectedAsset == row.assetNumber ? classes.selectedTableButton : classes.tableButton)}
                           onClick={() => handleAssetClick(row.assetNumber)}
                           key={row.asset}
                         >
                           <Grid container item>
                             <Grid container item xs={2} direction="column" justify="center" alignItems="center">
-                              <Grid item> 
-                                <img className={classes.assetLogo} src={row.image_url} alt=""/>
+                              <Grid item>
+                                <img className={classes.assetLogo} src={row.image_url} alt="" />
                               </Grid>
                             </Grid>
                             <Grid container item xs={2} direction="column" justify="center" alignItems="center">
-                              <Grid item> 
+                              <Grid item>
                                 <Typography variant="body2">{row.asset}</Typography>
                               </Grid>
                             </Grid>
                             <Grid container item xs={2} direction="column" justify="center" alignItems="center">
-                              <Grid item> 
+                              <Grid item>
                                 <Typography variant="body2">{row.balance}</Typography>
                               </Grid>
                             </Grid>
                             <Grid container item xs={2} direction="column" justify="center" alignItems="center">
-                              <Grid item> 
+                              <Grid item>
                                 <Typography variant="body2">{row.deposit}</Typography>
                               </Grid>
                             </Grid>
                             <Grid container item xs={2} direction="column" justify="center" alignItems="center">
-                              <Grid item> 
+                              <Grid item>
                                 <Typography variant="body2">{row.apy}</Typography>
                               </Grid>
                             </Grid>
                             <Grid container item xs={2} direction="column" justify="center" alignItems="center">
-                              <Grid item> 
+                              <Grid item>
                                 <Typography variant="body2">{row.earnings}</Typography>
                               </Grid>
                             </Grid>
                           </Grid>
                         </Grid>
-                      )
+                      );
                     })}
                   </Grid>
                 </Paper>
@@ -164,18 +167,18 @@ function LandingPage({ classes }) {
                 <Paper className={classes.actionPaper} elevation={5}>
                   <Grid container item className={classes.actionContainer} direction='column' alignItems='center' spacing={3}>
                     <Grid item>
-                      <img className={classes.assetLogo} src={tableData[selectedAsset].image_url} alt=""/>
+                      <img className={classes.assetLogo} src={tableData[selectedAsset].image_url} alt="" />
                     </Grid>
                     <Grid container item justify="center" spacing={1}>
                       <TabContext value={tabIndex}>
                         <TabList
                           onChange={handleTabChange}
                           indicatorColor="primary"
-                          variant= "fullWidth"
+                          variant="fullWidth"
                           centered
                         >
-                          <Tab label="Deposit" value="1" className={classes.tab}/>
-                          <Tab label="Withdraw" value="2" className={classes.tab}/>
+                          <Tab label="Deposit" value="1" className={classes.tab} />
+                          <Tab label="Withdraw" value="2" className={classes.tab} />
                         </TabList>
                         <TabPanel value="1">
                           <Grid container item spacing={3}>
@@ -186,7 +189,7 @@ function LandingPage({ classes }) {
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Wallet Balance</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{tableData[selectedAsset].balance}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{wallet.balance}</Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
@@ -208,35 +211,35 @@ function LandingPage({ classes }) {
                         </TabPanel>
                         <TabPanel value="2">
                           <Grid container item spacing={3}>
-                              <Grid container item xs={12} direction='row' justify="center">
-                                <Grid container item xs={6} direction='column' alignItems='center'>
-                                  <Grid item> <Typography variant="body1">Deposited</Typography> </Grid>
-                                  <Grid item> <Typography variant="body1">{tableData[selectedAsset].deposit}</Typography> </Grid>
-                                </Grid>
-                                <Grid container item xs={6} direction='column' alignItems='center'>
-                                  <Grid item> <Typography variant="body1">Earnings</Typography> </Grid>
-                                  <Grid item> <Typography variant="body1">{tableData[selectedAsset].earnings}</Typography> </Grid>
-                                </Grid>
+                            <Grid container item xs={12} direction='row' justify="center">
+                              <Grid container item xs={6} direction='column' alignItems='center'>
+                                <Grid item> <Typography variant="body1">Deposited</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{tableData[selectedAsset].deposit}</Typography> </Grid>
                               </Grid>
-                              <Grid container item xs={12} direction='row' justify="space-between">
-                                <Grid item xs={8}>
-                                  <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
-                                </Grid>
-                                <Grid item xs={3}>
-                                  <Button className={classes.secondaryButton} color="secondary" variant="contained" onClick={() => handleAmountChange(tableData[selectedAsset].balance)}>
-                                    Max
-                                  </Button>
-                                </Grid>
-                              </Grid>
-                              <Grid item xs={12}>
-                                <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
-                              </Grid>
-                              <Grid item xs={12}>
-                                <Button fullWidth className={classes.button} color="primary" variant="contained" onClick={() => handleWithdrawSubmit()}>
-                                  Withdraw
-                                </Button>
+                              <Grid container item xs={6} direction='column' alignItems='center'>
+                                <Grid item> <Typography variant="body1">Earnings</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{tableData[selectedAsset].earnings}</Typography> </Grid>
                               </Grid>
                             </Grid>
+                            <Grid container item xs={12} direction='row' justify="space-between">
+                              <Grid item xs={8}>
+                                <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                              </Grid>
+                              <Grid item xs={3}>
+                                <Button className={classes.secondaryButton} color="secondary" variant="contained" onClick={() => handleAmountChange(tableData[selectedAsset].balance)}>
+                                  Max
+                                  </Button>
+                              </Grid>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Button fullWidth className={classes.button} color="primary" variant="contained" onClick={() => handleWithdrawSubmit()}>
+                                Withdraw
+                                </Button>
+                            </Grid>
+                          </Grid>
                         </TabPanel>
                       </TabContext>
                     </Grid>
@@ -244,7 +247,7 @@ function LandingPage({ classes }) {
                 </Paper>
               </Grid>
             </Grid>
-        
+
           </Grid>
         </Grid>
       </div>
