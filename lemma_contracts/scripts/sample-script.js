@@ -7,6 +7,9 @@ const hre = require("hardhat");
 const fetch = require("cross-fetch");
 const { constants } = require("ethers");
 const { defaultAccounts } = require("@ethereum-waffle/provider");
+const CHViewerArtifact = require("@perp/contract/build/contracts/src/ClearingHouseViewer.sol/ClearingHouseViewer.json");
+
+
 
 const tokenTransfers = require("truffle-token-test-utils");//just to visulize token transfers in a transaction
 
@@ -34,12 +37,7 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
 
-  await greeter.deployed();
-
-  console.log("Greeter deployed to:", greeter.address);
 
   const uniswapV2Router02 = "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77";
   const WETH_USDC_Pair = "0xa7354668dA742BB39119546D8f160561847fBDdD";
@@ -55,8 +53,10 @@ async function main() {
 
 
   const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
-  console.log(perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address);
-  const lemmaPerpetual = await LemmaPerpetual.deploy(clearingHouseAddress, perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address, perpMetadata.layers.layer2.contracts.ETHUSDC.address, collateral);
+  const chViewerAddr = perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address;
+  const ammAddress = perpMetadata.layers.layer2.contracts.ETHUSDC.address;
+
+  const lemmaPerpetual = await LemmaPerpetual.deploy(clearingHouseAddress, chViewerAddr, ammAddress, collateral);
 
   await lemmaPerpetual.deployed();
 
@@ -100,14 +100,20 @@ async function main() {
     let tx = await lemmaToken.mint(1000000);
     tx.wait();
 
-    // await tokenTransfers.print(tx.hash, contractNames);
-    // tx = await lemmaToken.mint(1000000);
-    // tx.wait();
+    await tokenTransfers.print(tx.hash, contractNames);
 
+    tx = await lemmaToken.mint(1000000);
+    tx.wait();
 
     await tokenTransfers.print(tx.hash, contractNames);
 
-    tx = await lemmaToken.redeem(500000);
+    tx = await lemmaToken.redeem(1000000);
+    tx.wait();
+    await tokenTransfers.print(tx.hash, contractNames);
+
+
+
+    tx = await lemmaToken.redeem(1000000);
     tx.wait();
     await tokenTransfers.print(tx.hash, contractNames);
   } catch (e) {
@@ -118,6 +124,19 @@ async function main() {
     console.log("lemmaToken :", (await usdc.balanceOf(lemmaToken.address)).toString());
     console.log("lemmaPerpetual :", (await usdc.balanceOf(lemmaPerpetual.address)).toString());
     console.log("lemmaHoneySwap :", (await usdc.balanceOf(lemmaHoneySwap.address)).toString());
+
+    const provider = new ethers.providers.Web3Provider(hre.network.provider);
+    const clearingHouseViewer = new ethers.Contract(chViewerAddr, CHViewerArtifact.abi, provider);
+    const position = await clearingHouseViewer.getPersonalPositionWithFundingPayment(
+      ammAddress,
+      lemmaPerpetual.address,
+    );
+    console.log("position of lemmaPerpetual: size", position.size.d.toString());
+    console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
+    console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
+    console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
+    console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
+
   }
   // tx = await lemmaToken.redeem(1000000);
   // tx.wait();

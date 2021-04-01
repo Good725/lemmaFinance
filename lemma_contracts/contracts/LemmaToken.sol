@@ -49,60 +49,44 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
     function mint(uint256 _amount) external {
         collateral.transferFrom(msg.sender, address(this), _amount);
 
-        // uint256 halfAmount = (_amount * 99) / (2 * 100);
+        // totalCollateralDeposited += _amount;
+        _mint(msg.sender, _amount);
+        //totalSupply is equal to the total USDC deposited
 
         uint256 halfAmount = _amount / 2;
+        //fees to open position on perpetual
+        uint256 feesForOpeningAPositionOnPerpetual =
+            perpetualProtocol.fees(halfAmount);
 
-        collateral.transfer(address(perpetualProtocol), halfAmount);
-        uint256 collateralDeposited = perpetualProtocol.open(halfAmount);
-        totalCollateralDeposited += halfAmount;
-
-        collateral.transfer(address(dex), halfAmount);
+        collateral.transfer(
+            address(perpetualProtocol),
+            halfAmount + feesForOpeningAPositionOnPerpetual
+        );
+        //open position on perpetual
+        perpetualProtocol.open(halfAmount);
+        //Is it equal to halfAmount - feesForOpeningAPositionOnPerpetual
+        uint256 buyUnderlyingAssetWithAmount =
+            _amount - halfAmount - feesForOpeningAPositionOnPerpetual;
+        collateral.transfer(address(dex), buyUnderlyingAssetWithAmount);
+        //buy underlying asset
         uint256 underlyingAssetBought =
-            dex.swap(address(collateral), halfAmount, address(underlyingAsset));
+            dex.swap(
+                address(collateral),
+                buyUnderlyingAssetWithAmount,
+                address(underlyingAsset)
+            );
+
         totalUnderlyingAssetBought += underlyingAssetBought;
-        uint256 toMint;
-        if (totalSupply() == 0) {
-            // toMint = _amount;
-            toMint = halfAmount;
-        } else {
-            // toMint = (totalSupply() * _amount) / totalCollateralDeposited;
-            toMint = (totalSupply() * halfAmount) / totalCollateralDeposited;
-        }
-        console.log(perpetualProtocol.getTotalCollateral());
-        //require(toMint>=minimumToMint)
-        _mint(msg.sender, toMint);
+
+        // //require(toMint>=minimumToMint)
     }
 
     function redeem(uint256 _amount) external {
-        // console.log('toatalCollateralDeposited', totalCollateralDeposited);
-        // console.log('_amount', _amount);
-        // console.log('totalSupply', totalSupply());
-
-        //TODO: userShareAmountOfCollateral needs to calculated by querying the protocol to take funding payments into account
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
-        console.log(perpetualProtocol.getTotalCollateral());
+
         uint256 userShareAmountOfUnderlyingToken =
             (totalUnderlyingAssetBought * _amount) / totalSupply();
-
-        console.log('userShareAmountOfCollateral', userShareAmountOfCollateral);
-        // console.log(
-        //     'userShareAmountOfUnderlyingToken',
-        //     userShareAmountOfUnderlyingToken
-        // );
-
-        // console.log('collateral share of user', userShareAmountOfCollateral);
-
-        // console.log(
-        //     'underlying balance now',
-        //     underlyingAsset.balanceOf(address(this))
-        // );
-
-        // console.log(
-        //     'underlying share of user',
-        //     userShareAmountOfUnderlyingToken
-        // );
 
         _burn(msg.sender, _amount);
 
@@ -111,54 +95,31 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
             address(dex),
             userShareAmountOfUnderlyingToken
         );
-
+        //sell underlying asset
         uint256 collateralAmountFromSellingUnderlyingAsset =
             dex.swap(
                 address(underlyingAsset),
                 userShareAmountOfUnderlyingToken,
                 address(collateral)
             );
-
-        // console.log(
-        //     'collateral balance now',
-        //     collateral.balanceOf(address(this))
-        // );
-
+        //close on perpetual
         uint256 perpetualProtocolFees =
-            perpetualProtocol.fees(userShareAmountOfCollateral);
-        console.log('perpetualProtocolFees', perpetualProtocolFees);
+            perpetualProtocol.fees(userShareAmountOfCollateral - 1);
+
         collateral.transfer(address(perpetualProtocol), perpetualProtocolFees);
 
-        uint256 collateralFromPerpetual =
-            perpetualProtocol.close(userShareAmountOfCollateral);
+        perpetualProtocol.close(userShareAmountOfCollateral - 1);
 
-        console.log(
-            'total expected',
-            userShareAmountOfCollateral +
-                collateralAmountFromSellingUnderlyingAsset -
-                perpetualProtocolFees
-        );
+        //require(userShare>=minimumUserShare)
 
-        console.log(
-            'collateralAmountFromSellingUnderlyingAsset',
-            collateralAmountFromSellingUnderlyingAsset
-        );
-
-        totalCollateralDeposited -= userShareAmountOfCollateral;
-
-        console.log(
-            'USDC balanceOf lemmaToken after closing position',
-            collateral.balanceOf(address(this))
-        );
-
+        //withdraw
         collateral.transfer(
             msg.sender,
             userShareAmountOfCollateral +
                 collateralAmountFromSellingUnderlyingAsset -
-                perpetualProtocolFees
+                perpetualProtocolFees -
+                1
         );
-
-        //require(userShare>=minimumUserShare)
     }
 
     //maybe we can use this later

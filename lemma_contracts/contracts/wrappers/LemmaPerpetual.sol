@@ -92,44 +92,22 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
 
     //open on which side needs to decided by rebalancer logic
     //underlying asset needs to be given dynamically
-    function open(uint256 _amount)
-        external
-        override
-        onlyLemmaToken
-        returns (uint256)
-    {
+    function open(uint256 _amount) external override onlyLemmaToken {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
         //open postion on perptual protcol
-        return openPosition(_amount, IClearingHouse.Side.BUY);
-
-        // console.log('margin');
-        // console.log(
-        //     clearingHouseViewer
-        //         .getPersonalBalanceWithFundingPayment(USDC, address(this))
-        //         .d
-        // );
+        openPosition(_amount, IClearingHouse.Side.BUY);
     }
 
     //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
-    function close(uint256 _amount)
-        external
-        override
-        onlyLemmaToken
-        returns (uint256 _returnedCollateral)
-    {
-        _returnedCollateral = openPosition(_amount, IClearingHouse.Side.SELL);
-        // USDC.transferFrom(address(this), lemmaToken, _returnedCollateral);
+    function close(uint256 _amount) external override onlyLemmaToken {
+        openPosition(_amount, IClearingHouse.Side.SELL);
     }
 
     function convertCollteralAmountTo18Decimals(
         address _collateral,
         uint256 _amount
     ) internal view returns (Decimal.decimal memory) {
-        //(10 ** 18 )* _amount / 10** collateral decimals
-        // return
-        //     (_amount * (1 ether)) /
-        //     (10**IERC20WithDecimalsMethod(_collateral).decimals());
         return
             (Decimal.decimal(_amount)).divD(
                 Decimal.decimal(
@@ -159,128 +137,36 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         return Decimal.decimal(_d);
     }
 
-    // function getPosition()
-    //     external
-    //     view
-    //     returns (IClearingHouse.Position memory pos)
-    // {
-    //     // get position on Perpetual protocol
-    //     pos = clearingHouse.getPosition(ETH_USDC_AMM, address(this));
-    // }
-
-    //totalCollateral that the contract can get out at the moment
-    // function getTotalCollateral() external view override returns (uint256) {
-    //     return
-    //         clearingHouseViewer
-    //             .getPersonalBalanceWithFundingPayment(USDC, address(this))
-    //             .toUint();
-    // }
-
-    function openPosition(uint256 _amount, IClearingHouse.Side _side)
-        internal
-        returns (uint256 _depositedAmount)
-    {
+    function openPosition(uint256 _amount, IClearingHouse.Side _side) internal {
         Decimal.decimal memory assetAmount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
-        console.log('assetAmount', assetAmount.toUint());
+
         Decimal.decimal memory leverage = Decimal.one();
+        //TODO: add calculation for baseAssetAmountLimit with slippage from user
         Decimal.decimal memory baseAssetAmount = Decimal.zero();
 
-        //Will need to take this into account when leverage is > 1
-        // Decimal.decimal memory positionNotional =
-        //     quoteAssetAmount.mulD(leverage);
+        // //Will need to take this into account when leverage is > 1
+        // // Decimal.decimal memory positionNotional =
+        // //     quoteAssetAmount.mulD(leverage);
 
-        Decimal.decimal memory tollRatio = ETH_USDC_AMM.tollRatio();
-        Decimal.decimal memory spreadRatio = ETH_USDC_AMM.spreadRatio();
-
-        Decimal.decimal memory quoteAssetAmount =
-            assetAmount.divD(Decimal.one().addD(tollRatio.addD(spreadRatio)));
-
-        console.log('tollRatio', tollRatio.toUint());
-        console.log('spreadRatio', spreadRatio.toUint());
-        console.log('quoteAssetAmount', quoteAssetAmount.toUint());
-
-        console.log('amount', _amount);
-        console.log(
-            'the actual amount should be equal to amount',
-            convert18DecimalsToCollateralAmount(
-                address(USDC),
-                quoteAssetAmount.addD(
-                    quoteAssetAmount.mulD(tollRatio.addD(spreadRatio))
-                )
-            )
+        clearingHouse.openPosition(
+            ETH_USDC_AMM,
+            _side,
+            assetAmount,
+            leverage,
+            baseAssetAmount
         );
 
+        //If user is withdrawing then ...
         if (_side == IClearingHouse.Side.SELL) {
-            console.log('in');
-            clearingHouse.openPosition(
-                ETH_USDC_AMM,
-                _side,
-                assetAmount,
-                leverage,
-                baseAssetAmount
-            );
             clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
-            console.log(
-                'usdc balanceOf LemmaPerpetual: ',
-                USDC.balanceOf(address(this))
-            );
-            console.log(
-                'to Transfer',
-                convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
-            );
 
             //TODO: add require that leverage should not be greater than one
             USDC.transfer(
                 lemmaToken,
                 convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
             );
-
-            console.log(
-                'magin after closing',
-                clearingHouseViewer
-                    .getPersonalPositionWithFundingPayment(
-                    ETH_USDC_AMM,
-                    address(this)
-                )
-                    .margin
-                    .toUint()
-            );
-            // console.log(
-            //     'size after closing',
-            //     clearingHouseViewer
-            //         .getPersonalPositionWithFundingPayment(
-            //         ETH_USDC_AMM,
-            //         address(this)
-            //     )
-            //         .size
-            //         .toInt()
-            // );
-            console.log(
-                'openNotional after closing',
-                clearingHouseViewer
-                    .getPersonalPositionWithFundingPayment(
-                    ETH_USDC_AMM,
-                    address(this)
-                )
-                    .openNotional
-                    .toUint()
-            );
-        } else {
-            clearingHouse.openPosition(
-                ETH_USDC_AMM,
-                _side,
-                quoteAssetAmount,
-                leverage,
-                baseAssetAmount
-            );
         }
-        //TODO: improve this calculations
-        return
-            convert18DecimalsToCollateralAmount(
-                address(USDC),
-                quoteAssetAmount
-            );
     }
 
     function getTotalCollateral() external view override returns (uint256) {
