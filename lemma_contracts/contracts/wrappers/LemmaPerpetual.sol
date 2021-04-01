@@ -21,6 +21,11 @@ interface IClearingHouse {
 
     function removeMargin(IAmm _amm, Decimal.decimal calldata _removedMargin)
         external;
+
+    function closePosition(
+        IAmm _amm,
+        Decimal.decimal calldata _quoteAssetAmountLimit
+    ) external;
 }
 
 interface IClearingHouseViewer {
@@ -95,13 +100,61 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
     function open(uint256 _amount) external override onlyLemmaToken {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
         //open postion on perptual protcol
-        openPosition(_amount, IClearingHouse.Side.BUY);
+        Decimal.decimal memory assetAmount =
+            convertCollteralAmountTo18Decimals(address(USDC), _amount);
+
+        Decimal.decimal memory leverage = Decimal.one();
+        //TODO: add calculation for baseAssetAmountLimit with slippage from user
+        Decimal.decimal memory baseAssetAmount = Decimal.zero();
+
+        // //Will need to take this into account when leverage is > 1
+        // // Decimal.decimal memory positionNotional =
+        // //     quoteAssetAmount.mulD(leverage);
+
+        clearingHouse.openPosition(
+            ETH_USDC_AMM,
+            IClearingHouse.Side.BUY,
+            assetAmount,
+            leverage,
+            baseAssetAmount
+        );
     }
 
     //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
     function close(uint256 _amount) external override onlyLemmaToken {
-        openPosition(_amount, IClearingHouse.Side.SELL);
+        Decimal.decimal memory assetAmount =
+            convertCollteralAmountTo18Decimals(address(USDC), _amount);
+
+        Decimal.decimal memory leverage = Decimal.one();
+        //TODO: add calculation for baseAssetAmountLimit with slippage from user
+        Decimal.decimal memory baseAssetAmount = Decimal.zero();
+
+        // //Will need to take this into account when leverage is > 1
+        // // Decimal.decimal memory positionNotional =
+        // //     quoteAssetAmount.mulD(leverage);
+
+        if (_amount == getTotalCollateral()) {
+            console.log('in');
+            clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
+        } else {
+            clearingHouse.openPosition(
+                ETH_USDC_AMM,
+                IClearingHouse.Side.SELL,
+                assetAmount,
+                leverage,
+                baseAssetAmount
+            );
+
+            //If user is withdrawing then ...
+            clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
+        }
+
+        //TODO: add require that leverage should not be greater than one
+        USDC.transfer(
+            lemmaToken,
+            convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
+        );
     }
 
     function convertCollteralAmountTo18Decimals(
@@ -137,39 +190,7 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         return Decimal.decimal(_d);
     }
 
-    function openPosition(uint256 _amount, IClearingHouse.Side _side) internal {
-        Decimal.decimal memory assetAmount =
-            convertCollteralAmountTo18Decimals(address(USDC), _amount);
-
-        Decimal.decimal memory leverage = Decimal.one();
-        //TODO: add calculation for baseAssetAmountLimit with slippage from user
-        Decimal.decimal memory baseAssetAmount = Decimal.zero();
-
-        // //Will need to take this into account when leverage is > 1
-        // // Decimal.decimal memory positionNotional =
-        // //     quoteAssetAmount.mulD(leverage);
-
-        clearingHouse.openPosition(
-            ETH_USDC_AMM,
-            _side,
-            assetAmount,
-            leverage,
-            baseAssetAmount
-        );
-
-        //If user is withdrawing then ...
-        if (_side == IClearingHouse.Side.SELL) {
-            clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
-
-            //TODO: add require that leverage should not be greater than one
-            USDC.transfer(
-                lemmaToken,
-                convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
-            );
-        }
-    }
-
-    function getTotalCollateral() external view override returns (uint256) {
+    function getTotalCollateral() public view override returns (uint256) {
         return
             convert18DecimalsToCollateralAmount(
                 address(USDC),

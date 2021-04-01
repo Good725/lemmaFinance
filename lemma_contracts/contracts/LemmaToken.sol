@@ -104,11 +104,11 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
             );
         //close on perpetual
         uint256 perpetualProtocolFees =
-            perpetualProtocol.fees(userShareAmountOfCollateral - 1);
+            perpetualProtocol.fees(userShareAmountOfCollateral);
 
         collateral.transfer(address(perpetualProtocol), perpetualProtocolFees);
 
-        perpetualProtocol.close(userShareAmountOfCollateral - 1);
+        perpetualProtocol.close(userShareAmountOfCollateral);
 
         //require(userShare>=minimumUserShare)
 
@@ -117,8 +117,7 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
             msg.sender,
             userShareAmountOfCollateral +
                 collateralAmountFromSellingUnderlyingAsset -
-                perpetualProtocolFees -
-                1
+                perpetualProtocolFees
         );
     }
 
