@@ -136,4 +136,8 @@ interface IAmm {
         external
         view
         returns (LiquidityChangedSnapshot memory);
+
+    function tollRatio() external view returns (Decimal.decimal memory);
+
+    function spreadRatio() external view returns (Decimal.decimal memory);
 }
