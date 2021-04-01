@@ -36,6 +36,13 @@ module.exports = {
       port: 8545,
 
     },
+    ganache: {
+      url: "http://127.0.0.1:8545",
+      timeout: 200000,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
+    },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
       accounts: {

@@ -54,7 +54,7 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
         uint256 halfAmount = _amount / 2;
 
         collateral.transfer(address(perpetualProtocol), halfAmount);
-        perpetualProtocol.open(halfAmount);
+        uint256 collateralDeposited = perpetualProtocol.open(halfAmount);
         totalCollateralDeposited += halfAmount;
 
         collateral.transfer(address(dex), halfAmount);
@@ -63,11 +63,13 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
         totalUnderlyingAssetBought += underlyingAssetBought;
         uint256 toMint;
         if (totalSupply() == 0) {
-            toMint = _amount;
+            // toMint = _amount;
+            toMint = halfAmount;
         } else {
-            toMint = (totalSupply() * _amount) / totalCollateralDeposited;
+            // toMint = (totalSupply() * _amount) / totalCollateralDeposited;
+            toMint = (totalSupply() * halfAmount) / totalCollateralDeposited;
         }
-
+        console.log(perpetualProtocol.getTotalCollateral());
         //require(toMint>=minimumToMint)
         _mint(msg.sender, toMint);
     }
@@ -79,11 +81,12 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
 
         //TODO: userShareAmountOfCollateral needs to calculated by querying the protocol to take funding payments into account
         uint256 userShareAmountOfCollateral =
-            (totalCollateralDeposited * _amount) / totalSupply();
+            (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
+        console.log(perpetualProtocol.getTotalCollateral());
         uint256 userShareAmountOfUnderlyingToken =
             (totalUnderlyingAssetBought * _amount) / totalSupply();
 
-        // console.log('userShareAmountOfCollateral', userShareAmountOfCollateral);
+        console.log('userShareAmountOfCollateral', userShareAmountOfCollateral);
         // console.log(
         //     'userShareAmountOfUnderlyingToken',
         //     userShareAmountOfUnderlyingToken
@@ -115,29 +118,44 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
                 userShareAmountOfUnderlyingToken,
                 address(collateral)
             );
-        // console.log(
-        //     'total expected',
-        //     userShareAmountOfCollateral +
-        //         collateralAmountFromSellingUnderlyingAsset
-        // );
-
-        // console.log(
-        //     'collateralAmountFromSellingUnderlyingAsset',
-        //     collateralAmountFromSellingUnderlyingAsset
-        // );
 
         // console.log(
         //     'collateral balance now',
         //     collateral.balanceOf(address(this))
         // );
 
-        perpetualProtocol.close(userShareAmountOfCollateral);
+        uint256 perpetualProtocolFees =
+            perpetualProtocol.fees(userShareAmountOfCollateral);
+        console.log('perpetualProtocolFees', perpetualProtocolFees);
+        collateral.transfer(address(perpetualProtocol), perpetualProtocolFees);
+
+        uint256 collateralFromPerpetual =
+            perpetualProtocol.close(userShareAmountOfCollateral);
+
+        console.log(
+            'total expected',
+            userShareAmountOfCollateral +
+                collateralAmountFromSellingUnderlyingAsset -
+                perpetualProtocolFees
+        );
+
+        console.log(
+            'collateralAmountFromSellingUnderlyingAsset',
+            collateralAmountFromSellingUnderlyingAsset
+        );
 
         totalCollateralDeposited -= userShareAmountOfCollateral;
+
+        console.log(
+            'USDC balanceOf lemmaToken after closing position',
+            collateral.balanceOf(address(this))
+        );
+
         collateral.transfer(
             msg.sender,
             userShareAmountOfCollateral +
-                collateralAmountFromSellingUnderlyingAsset
+                collateralAmountFromSellingUnderlyingAsset -
+                perpetualProtocolFees
         );
 
         //require(userShare>=minimumUserShare)
