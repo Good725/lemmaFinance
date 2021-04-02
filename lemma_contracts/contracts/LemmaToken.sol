@@ -9,6 +9,7 @@ import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import 'hardhat/console.sol';
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
 import {IPerpetualProtocol} from './interfaces/IPerpetualProtocol.sol';
 import {IDEX} from './interfaces/IDEX.sol';
 import {IERC677Receiver} from './interfaces/IERC677Receiver.sol';
@@ -50,10 +51,22 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
         collateral.transferFrom(msg.sender, address(this), _amount);
 
         // totalCollateralDeposited += _amount;
-        _mint(msg.sender, _amount);
+
         //totalSupply is equal to the total USDC deposited
 
         uint256 halfAmount = _amount / 2;
+
+        // halfAmount * 2 is just so that leUSDC minted is ~USDC deposited
+        uint256 toMint;
+        if (totalSupply() != 0) {
+            toMint =
+                (totalSupply() * halfAmount) /
+                perpetualProtocol.getTotalCollateral();
+        } else {
+            toMint = halfAmount * 2 * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
+        }
+
+        _mint(msg.sender, toMint);
         //fees to open position on perpetual
         uint256 feesForOpeningAPositionOnPerpetual =
             perpetualProtocol.fees(halfAmount);

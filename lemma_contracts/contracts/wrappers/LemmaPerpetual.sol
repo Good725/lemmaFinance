@@ -5,6 +5,9 @@ import {IPerpetualProtocol} from '../interfaces/IPerpetualProtocol.sol';
 import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {SignedDecimal} from '../utils/SignedDecimal.sol';
+import {
+    IERC20WithDecimalsMethod
+} from '../interfaces/IERC20WithDecimalsMethod.sol';
 
 import 'hardhat/console.sol';
 
@@ -54,10 +57,6 @@ interface IClearingHouseViewer {
         external
         view
         returns (Position memory position);
-}
-
-interface IERC20WithDecimalsMethod {
-    function decimals() external view returns (uint256);
 }
 
 contract LemmaPerpetual is Ownable, IPerpetualProtocol {

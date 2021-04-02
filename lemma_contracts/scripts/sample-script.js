@@ -38,7 +38,6 @@ async function main() {
 
   // We get the contract to deploy
 
-
   const uniswapV2Router02 = "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77";
   const WETH_USDC_Pair = "0xa7354668dA742BB39119546D8f160561847fBDdD";
   const clearingHouseAddress = perpMetadata.layers.layer2.contracts.ClearingHouse.address;
@@ -107,23 +106,30 @@ async function main() {
 
     await tokenTransfers.print(tx.hash, contractNames);
 
-    tx = await lemmaToken.redeem(1000000);
+    tx = await lemmaToken.redeem(ethers.utils.parseUnits("1", "ether"));//1 * 10^18
     tx.wait();
     await tokenTransfers.print(tx.hash, contractNames);
 
 
 
-    tx = await lemmaToken.redeem(1000000);
+    tx = await lemmaToken.redeem(ethers.utils.parseUnits("1", "ether"));
     tx.wait();
     await tokenTransfers.print(tx.hash, contractNames);
   } catch (e) {
     console.log(e);
   }
   finally {
-    console.log("balances at the end");
+    console.log("USDC balances at the end");
     console.log("lemmaToken :", (await usdc.balanceOf(lemmaToken.address)).toString());
     console.log("lemmaPerpetual :", (await usdc.balanceOf(lemmaPerpetual.address)).toString());
     console.log("lemmaHoneySwap :", (await usdc.balanceOf(lemmaHoneySwap.address)).toString());
+
+    console.log("WETH balance at the end");
+    const weth = usdc.attach(underlyingAsset);
+    console.log("lemmaHoneySwap :", (await weth.balanceOf(lemmaHoneySwap.address)).toString());
+    console.log("lemmaToken :", (await weth.balanceOf(lemmaToken.address)).toString());
+
+
 
     const provider = new ethers.providers.Web3Provider(hre.network.provider);
     const clearingHouseViewer = new ethers.Contract(chViewerAddr, CHViewerArtifact.abi, provider);
