@@ -4,32 +4,97 @@ import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab } from '@mate
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 import classNames from 'classnames';
 import { useWallet } from 'use-wallet';
+import Web3 from "web3";
+import erc20 from "../../abis/ERC20.json";
+import BigNumber from "bignumber.js";
+import addresses from "../../abis/addresses.json";
+import LemmaToken from "../../abis/LemmaToken.json";
 
 import { styles } from './styles';
 
 function LandingPage({ classes }) {
   const wallet = useWallet();
-  console.log("--------------------", {wallet})
+
+
+  console.log("--------------------", { wallet });
   const [amount, setAmount] = useState('');
   const [tabIndex, setTabIndex] = useState("1");
   const [open, setOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(0);
+  const [balance, setBalance] = useState('0');
+  const [lBalance, setLBalance] = useState('0');
+  // const [web3, setWeb3] = useState(null);
+  var web3;
+  var account;
+  // const [account, setAccount] = useState(null);
+
 
   const handleAmountChange = event => {
     setAmount(event.target.value);
   };
 
-  const handleDepositSubmit = () => {
+  const handleDepositSubmit = async () => {
     console.log(amount);
+    web3 = new Web3(window.ethereum);
+    let accounts = await web3.eth.getAccounts();
+    account = accounts[0];
+    const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
+    const usdc = new web3.eth.Contract(erc20.abi, addresses.usdc);
+    const amountToDeposit = new BigNumber(amount);
+    const amountToDepositWithDecimals = amountToDeposit.multipliedBy(new BigNumber(10).pow(new BigNumber(6)));
+
+    await usdc.methods.approve(lemmaToken.options.address, amountToDepositWithDecimals).send({ from: accounts[0] });
+
+    await lemmaToken.methods.mint(amountToDepositWithDecimals).send({ from: accounts[0] });
+    await refreshBalances();
   };
 
-  const handleWithdrawSubmit = () => {
+  const handleWithdrawSubmit = async () => {
     console.log(amount);
+    console.log(amount);
+    web3 = new Web3(window.ethereum);
+    let accounts = await web3.eth.getAccounts();
+    account = accounts[0];
+    const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
+
+    const amountToDeposit = new BigNumber(amount);
+    const amountToDepositWithDecimals = amountToDeposit.multipliedBy(new BigNumber(10).pow(new BigNumber(18)));
+
+
+    await lemmaToken.methods.redeem(amountToDepositWithDecimals).send({ from: accounts[0] });
+    await refreshBalances();
   };
 
-  const handleConnectWallet = () => {
-    wallet.connect();
+  const handleConnectWallet = async () => {
+    await wallet.connect();
+    web3 = new Web3(window.ethereum);
+    // await setWeb3(new Web3(window.ethereum));
+    const accounts = await web3.eth.getAccounts();
+    account = accounts[0];
+    await refreshBalances();
+
+
   };
+
+  const refreshBalances = async () => {
+    const usdcBalance = await getBalance(addresses.usdc, account);
+    setBalance(usdcBalance);
+    const LusdcBalance = await getBalance(addresses.lusdc, account);
+    setLBalance(LusdcBalance);
+  };
+  // const convert;
+  const getBalance = async (tokenAddress, _account) => {
+    // const usdcAddress = "0xe0B887D54e71329318a036CF50f30Dbe4444563c";
+    const tokenContract = new web3.eth.Contract(erc20.abi, tokenAddress);
+    const balance = new BigNumber((await tokenContract.methods.balanceOf(_account).call()).toString());
+    const decimals = new BigNumber((await tokenContract.methods.decimals().call()).toString());
+
+    console.log((balance.dividedBy(new BigNumber(10).pow(decimals))).toString());
+    // setBalance(balance.dividedBy(new BigNumber(10).pow(decimals)).toString());
+    return balance.dividedBy(new BigNumber(10).pow(decimals)).toString();
+  };
+
+
 
   const handleAssetClick = (assetNumber) => {
     setSelectedAsset(assetNumber);
@@ -52,33 +117,42 @@ function LandingPage({ classes }) {
   };
 
   const tableData = [
+    // {
+    //   'image_url': require('../../assets/img/eth.png'),
+    //   'asset': 'ETH',
+    //   'balance': '0',
+    //   'deposit': '0',
+    //   'apy': '12%',
+    //   'earnings': '0',
+    //   'assetNumber': '0'
+    // },
+    // {
+    //   'image_url': require('../../assets/img/bat.png'),
+    //   'asset': 'BAT',
+    //   'balance': '0',
+    //   'deposit': '0',
+    //   'apy': '12%',
+    //   'earnings': '0',
+    //   'assetNumber': '1'
+    // },
+    // {
+    //   'image_url': require('../../assets/img/uni.png'),
+    //   'asset': 'UNI',
+    //   'balance': '0',
+    //   'deposit': '0',
+    //   'apy': '12%',
+    //   'earnings': '0',
+    //   'assetNumber': '2'
+    // },
     {
       'image_url': require('../../assets/img/eth.png'),
-      'asset': 'ETH',
+      'USDC': 'ETH',
       'balance': '0',
       'deposit': '0',
       'apy': '12%',
       'earnings': '0',
       'assetNumber': '0'
-    },
-    {
-      'image_url': require('../../assets/img/bat.png'),
-      'asset': 'BAT',
-      'balance': '0',
-      'deposit': '0',
-      'apy': '12%',
-      'earnings': '0',
-      'assetNumber': '1'
-    },
-    {
-      'image_url': require('../../assets/img/uni.png'),
-      'asset': 'UNI',
-      'balance': '0',
-      'deposit': '0',
-      'apy': '12%',
-      'earnings': '0',
-      'assetNumber': '2'
-    },
+    }
   ];
 
   return (
@@ -92,7 +166,7 @@ function LandingPage({ classes }) {
         <Grid container justify="center">
           <Grid container item xs={11} md={9} xl={8} className={classes.navigationContainer} justify="space-between">
             <Grid item container xs={4} alignItems="center">
-              <Grid item><img className={classes.logoImg} src={require('../../assets/img/logo.png')} alt=""/></Grid>
+              <Grid item><img className={classes.logoImg} src={require('../../assets/img/logo.png')} alt="" /></Grid>
               <Grid item><Typography className={classes.logo} variant="body1"><b>LEMMA</b></Typography></Grid>
             </Grid>
             <Grid item>
@@ -116,8 +190,8 @@ function LandingPage({ classes }) {
                     <Grid container item>
                       <Grid item xs={2}><Typography variant="body1">Switch to:</Typography></Grid>
                       <Grid item xs={2}><Typography variant="body1">Asset</Typography></Grid>
-                      <Grid item xs={2}><Typography variant="body1">Wallet Balance</Typography></Grid>
-                      <Grid item xs={2}><Typography variant="body1">Deposited Balance</Typography></Grid>
+                      <Grid item xs={2}><Typography variant="body1">Wallet Balance : {balance}</Typography></Grid>
+                      <Grid item xs={2}><Typography variant="body1">Lemma token Balance:{lBalance}</Typography></Grid>
                       <Grid item xs={2}><Typography variant="body1">Earn APY</Typography></Grid>
                       <Grid item xs={2}><Typography variant="body1">Earnings</Typography></Grid>
                     </Grid>
@@ -193,7 +267,7 @@ function LandingPage({ classes }) {
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Wallet Balance</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{wallet.balance}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{balance}</Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">

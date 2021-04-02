@@ -15,15 +15,15 @@ const App = () => {
       <Router>
         <div>
           <UseWalletProvider
-            chainId={1}
+            chainId={100}
             connectors={{
               // This is how connectors get configured
               portis: { dAppId: 'my-dapp-id-123-xyz' },
             }}
           >
-          <Route exact path="/" component={Landing} />
-          <Route exact path="/privacy" component={Privacy} />
-          <Route exact path="/terms" component={Terms} />
+            <Route exact path="/" component={Landing} />
+            <Route exact path="/privacy" component={Privacy} />
+            <Route exact path="/terms" component={Terms} />
           </UseWalletProvider>
         </div>
       </Router>
