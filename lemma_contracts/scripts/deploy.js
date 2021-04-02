@@ -101,12 +101,12 @@ async function main() {
 
     await tokenTransfers.print(tx.hash, contractNames);
 
-    tx = await lemmaToken.mint(1000000);
+    tx = await lemmaToken.mint(500000);
     tx.wait();
 
     await tokenTransfers.print(tx.hash, contractNames);
 
-    tx = await lemmaToken.redeem(ethers.utils.parseUnits("1", "ether"));//1 * 10^18
+    tx = await lemmaToken.redeem(ethers.utils.parseUnits("0.5", "ether"));//1 * 10^18
     tx.wait();
     await tokenTransfers.print(tx.hash, contractNames);
 

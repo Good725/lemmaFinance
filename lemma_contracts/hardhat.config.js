@@ -38,7 +38,7 @@ module.exports = {
     },
     ganache: {
       url: "http://127.0.0.1:8545",
-      timeout: 200000,
+      timeout: 2000000,
       accounts: {
         mnemonic: process.env.MNEMONIC,
       },

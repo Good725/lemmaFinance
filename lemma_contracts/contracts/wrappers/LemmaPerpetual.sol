@@ -9,7 +9,7 @@ import {
     IERC20WithDecimalsMethod
 } from '../interfaces/IERC20WithDecimalsMethod.sol';
 
-import 'hardhat/console.sol';
+// import 'hardhat/console.sol';
 
 interface IClearingHouse {
     enum Side {BUY, SELL}
@@ -134,7 +134,6 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         // //     quoteAssetAmount.mulD(leverage);
 
         if (_amount == getTotalCollateral()) {
-            console.log('in');
             clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
         } else {
             clearingHouse.openPosition(

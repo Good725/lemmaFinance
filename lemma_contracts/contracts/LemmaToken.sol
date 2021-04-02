@@ -6,7 +6,7 @@ pragma solidity =0.8.3;
 // } from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 
 import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import 'hardhat/console.sol';
+// import 'hardhat/console.sol';
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
@@ -56,13 +56,13 @@ contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
 
         uint256 halfAmount = _amount / 2;
 
-        // halfAmount * 2 is just so that leUSDC minted is ~USDC deposited
         uint256 toMint;
         if (totalSupply() != 0) {
             toMint =
                 (totalSupply() * halfAmount) /
                 perpetualProtocol.getTotalCollateral();
         } else {
+            //  just so that leUSDC minted is ~USDC deposited
             toMint = halfAmount * 2 * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
 
