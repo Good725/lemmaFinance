@@ -16,7 +16,7 @@ import {IERC677Receiver} from './interfaces/IERC677Receiver.sol';
 
 //TODO: decide what contracts need to be upgradeable
 // contract LemmaToken is ERC20Upgradeable {
-contract LemmaToken is ERC20('LemmaUSDC', 'LUSDC'), IERC677Receiver {
+contract LemmaToken is ERC20('LemmaUSDT', 'LUSDT'), IERC677Receiver {
     IERC20 public collateral =
         IERC20(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
     IERC20 public underlyingAsset =
