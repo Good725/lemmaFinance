@@ -32,17 +32,36 @@ module.exports = {
       },
       accounts: {
         mnemonic: process.env.MNEMONIC,
+      }
+    },
+    ganache: {
+      url: "http://127.0.0.1:8545",
+      timeout: 2000000,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
       },
-      port: 8545,
-
     },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
       accounts: {
         mnemonic: process.env.MNEMONIC,
       },
+    },
+    xdai: {
+      url: "https://rpc.xdaichain.com/",
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 10 ** 9,//1 gwei
+
     }
   },
-  solidity: "0.8.3",
+  solidity: {
+    version: "0.8.3",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
 };
 
