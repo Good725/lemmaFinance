@@ -11,6 +11,7 @@ contract("LemmaHoneySwap", accounts => {
     const uniswapV2Router02 = "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77";
     let LemmaHoneySwapContract;
     let LemmaTokenContract;
+    
     it("deploy", async function() {
         LemmaHoneySwapContract = await LemmaHoneySwap.new(uniswapV2Router02);
         console.log(LemmaHoneySwapContract.address);
