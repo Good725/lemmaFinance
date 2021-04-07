@@ -74,16 +74,6 @@ export const styles = theme => ({
   contentContainer: {
     marginTop: '3vw',
   },
-  tableContainer: {
-    maxHeight: 440,
-  },
-  tablePaper: {
-    width: '100%',
-    paddingTop: '3vw',
-    paddingBottom: '2vw',
-    paddingLeft: '2vw',
-    paddingRight: '2vw',
-  },
   actionPaper: {
     width: '100%',
     paddingTop: '2vw',
@@ -91,24 +81,15 @@ export const styles = theme => ({
     paddingLeft: '0.5vw',
     paddingRight: '0.5vw',
   },
-  tableButton: {
-    borderRadius: 15,
-    marginTop: '1vw',
-    '&:hover': {
-      background: "#F4F7FA",
-   },
-  },
-  selectedTableButton: {
-    marginTop: '1vw',
-    background: '#D9F3E7',
-    borderRadius: 15
-  },
   assetLogo: {
-    maxHeight: 60
+    maxHeight: 50
   },
   tab: {
     minWidth: '9.5vw',
     textTransform: 'none'
+  },
+  tabContent: {
+    paddingTop: '2vw',
   },
   input: {
     width: '100%',
@@ -116,12 +97,12 @@ export const styles = theme => ({
   },
   button: {
     color: 'white',
-    height: '50px'
+    height: '54px'
   },
   secondaryButton: {
     color: '#52B788',
     width: '100%',
-    height: '50px'
+    height: '54px'
   }
 
 })
