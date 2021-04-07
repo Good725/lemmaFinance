@@ -77,73 +77,74 @@ async function main() {
   console.log(await lemmaToken.name());
   console.log("LemmaToken deployed to:", lemmaToken.address);
 
-  // //Do the things
+  //Do the things
 
-  // const usdc = lemmaToken.attach(collateral);
-  // await usdc.approve(lemmaToken.address, constants.MaxUint256);
+  const usdc = lemmaToken.attach(collateral);
+  await usdc.approve(lemmaToken.address, constants.MaxUint256);
 
-  // const theAccount = await lemmaHoneySwap.owner();
-  // console.log(("usdc balanceOf: ", await usdc.balanceOf(theAccount)).toString());
+  const theAccount = await lemmaHoneySwap.owner();
+  console.log(("usdc balanceOf: ", await usdc.balanceOf(theAccount)).toString());
 
-  // // console.log(hre.network);
-  // tokenTransfers.setCurrentProvider(hre.network.provider);
-  // contractNames["0x1C232F01118CB8B424793ae03F870aa7D0ac7f77"] = "uniswapV2Router02";
-  // contractNames[lemmaHoneySwap.address] = "lemmaHoneySwap";
-  // contractNames[lemmaPerpetual.address] = "lemmaPerpetual";
-  // contractNames[lemmaToken.address] = "lemmaToken";
-  // contractNames[clearingHouseAddress] = "ClearingHouse";
-  // contractNames[WETH_USDC_Pair] = "WETH_USDC_PAIR";
-  // contractNames[insuranceFundAddress] = "Perpetual Insurance Fund";
-  // // console.log(contractNames);
-  // try {
-  //   let tx = await lemmaToken.mint(1000000);
-  //   tx.wait();
+  // console.log(hre.network);
+  tokenTransfers.setCurrentProvider(hre.network.provider);
+  contractNames["0x1C232F01118CB8B424793ae03F870aa7D0ac7f77"] = "uniswapV2Router02";
+  contractNames[lemmaHoneySwap.address] = "lemmaHoneySwap";
+  contractNames[lemmaPerpetual.address] = "lemmaPerpetual";
+  contractNames[lemmaToken.address] = "lemmaToken";
+  contractNames[clearingHouseAddress] = "ClearingHouse";
+  contractNames[WETH_USDC_Pair] = "WETH_USDC_PAIR";
+  contractNames[insuranceFundAddress] = "Perpetual Insurance Fund";
+  // console.log(contractNames);
+  try {
+    console.log("deposit")
+    let tx = await lemmaToken.mint(100000000);
+    tx.wait();
 
-  //   await tokenTransfers.print(tx.hash, contractNames);
+    await tokenTransfers.print(tx.hash, contractNames);
+    console.log("withdraw")
+    // tx = await lemmaToken.mint(500000);
+    // tx.wait();
 
-  //   tx = await lemmaToken.mint(500000);
-  //   tx.wait();
+    // await tokenTransfers.print(tx.hash, contractNames);
 
-  //   await tokenTransfers.print(tx.hash, contractNames);
-
-  //   tx = await lemmaToken.redeem(ethers.utils.parseUnits("0.5", "ether"));//1 * 10^18
-  //   tx.wait();
-  //   await tokenTransfers.print(tx.hash, contractNames);
-
-
-
-  //   tx = await lemmaToken.redeem(ethers.utils.parseUnits("1", "ether"));
-  //   tx.wait();
-  //   await tokenTransfers.print(tx.hash, contractNames);
-  // } catch (e) {
-  //   console.log(e);
-  // }
-  // finally {
-  //   console.log("USDC balances at the end");
-  //   console.log("lemmaToken :", (await usdc.balanceOf(lemmaToken.address)).toString());
-  //   console.log("lemmaPerpetual :", (await usdc.balanceOf(lemmaPerpetual.address)).toString());
-  //   console.log("lemmaHoneySwap :", (await usdc.balanceOf(lemmaHoneySwap.address)).toString());
-
-  //   console.log("WETH balance at the end");
-  //   const weth = usdc.attach(underlyingAsset);
-  //   console.log("lemmaHoneySwap :", (await weth.balanceOf(lemmaHoneySwap.address)).toString());
-  //   console.log("lemmaToken :", (await weth.balanceOf(lemmaToken.address)).toString());
+    // tx = await lemmaToken.redeem(ethers.utils.parseUnits("0.5", "ether"));//1 * 10^18
+    // tx.wait();
+    // await tokenTransfers.print(tx.hash, contractNames);
 
 
 
-  //   const provider = new ethers.providers.Web3Provider(hre.network.provider);
-  //   const clearingHouseViewer = new ethers.Contract(chViewerAddr, CHViewerArtifact.abi, provider);
-  //   const position = await clearingHouseViewer.getPersonalPositionWithFundingPayment(
-  //     ammAddress,
-  //     lemmaPerpetual.address,
-  //   );
-  //   console.log("position of lemmaPerpetual: size", position.size.d.toString());
-  //   console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
-  //   console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
-  //   console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
-  //   console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
+    tx = await lemmaToken.redeem(ethers.utils.parseUnits("100", "ether"));
+    tx.wait();
+    await tokenTransfers.print(tx.hash, contractNames);
+  } catch (e) {
+    console.log(e);
+  }
+  finally {
+    console.log("USDC balances at the end");
+    console.log("lemmaToken :", (await usdc.balanceOf(lemmaToken.address)).toString());
+    console.log("lemmaPerpetual :", (await usdc.balanceOf(lemmaPerpetual.address)).toString());
+    console.log("lemmaHoneySwap :", (await usdc.balanceOf(lemmaHoneySwap.address)).toString());
 
-  // }
+    console.log("WETH balance at the end");
+    const weth = usdc.attach(underlyingAsset);
+    console.log("lemmaHoneySwap :", (await weth.balanceOf(lemmaHoneySwap.address)).toString());
+    console.log("lemmaToken :", (await weth.balanceOf(lemmaToken.address)).toString());
+
+
+
+    const provider = new ethers.providers.Web3Provider(hre.network.provider);
+    const clearingHouseViewer = new ethers.Contract(chViewerAddr, CHViewerArtifact.abi, provider);
+    const position = await clearingHouseViewer.getPersonalPositionWithFundingPayment(
+      ammAddress,
+      lemmaPerpetual.address,
+    );
+    console.log("position of lemmaPerpetual: size", position.size.d.toString());
+    console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
+    console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
+    console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
+    console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
+
+  }
   // // tx = await lemmaToken.redeem(1000000);
   // // tx.wait();
 
