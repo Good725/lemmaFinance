@@ -52,6 +52,6 @@ contract("LemmaToken", accounts => {
 
   it("Redeem LemmaToken", async function() {
     let amountRedeem = web3.utils.toBN(5 * 10 ** 6);
-    await LemmaTokenContract.redeem(amountDeposit, {from: accounts[1]});
+    await LemmaTokenContract.redeem(amountRedeem, {from: accounts[1]});
   });
 })
