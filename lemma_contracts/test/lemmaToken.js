@@ -58,4 +58,4 @@ contract("LemmaToken", accounts => {
     let test_usdc_balance_1_afterRedeem = await testusdc.methods.balanceOf(accounts[1]).call();
     assert(test_usdc_balance_1_afterRedeem > test_usdc_balance_1);
   });
-})
+});
