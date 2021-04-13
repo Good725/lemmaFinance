@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity =0.8.3;
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+// import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {IDEX} from '../interfaces/IDEX.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+// import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
 interface IUniswapV2Router02 {
     function swapExactTokensForTokens(
@@ -32,7 +35,7 @@ interface IUniswapV2Router02 {
         returns (uint256[] memory amounts);
 }
 
-contract LemmaHoneySwap is Ownable, IDEX {
+contract LemmaHoneySwap is Initializable, OwnableUpgradeable, IDEX {
     IUniswapV2Router02 public uniswapV2Router02;
     address public lemmaToken;
 
@@ -41,7 +44,8 @@ contract LemmaHoneySwap is Ownable, IDEX {
         _;
     }
 
-    constructor(IUniswapV2Router02 _uniswapV2Router02) {
+    function initialize(IUniswapV2Router02 _uniswapV2Router02) public initializer {
+        __Ownable_init();
         uniswapV2Router02 = _uniswapV2Router02;
     }
 
@@ -69,7 +73,7 @@ contract LemmaHoneySwap is Ownable, IDEX {
         //add buyAmountMin
         address _sellToken
     ) external override onlyLemmaToken returns (uint256) {
-        IERC20(_buyToken).approve(address(uniswapV2Router02), _buyAmount);
+        IERC20Upgradeable(_buyToken).approve(address(uniswapV2Router02), _buyAmount);
         address[] memory path = new address[](2);
         path[0] = _buyToken;
         path[1] = _sellToken;

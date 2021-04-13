@@ -2,8 +2,12 @@
 pragma solidity =0.8.3;
 
 import {IPerpetualProtocol} from '../interfaces/IPerpetualProtocol.sol';
-import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+// import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
+// import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {IAmm, Decimal} from '../interfaces/IAmm.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 import {SignedDecimal} from '../utils/SignedDecimal.sol';
 import {
     IERC20WithDecimalsMethod
@@ -49,7 +53,7 @@ interface IClearingHouseViewer {
     }
 
     function getPersonalBalanceWithFundingPayment(
-        IERC20 _quoteToken,
+        IERC20Upgradeable _quoteToken,
         address _trader
     ) external view returns (Decimal.decimal memory margin);
 
@@ -59,11 +63,11 @@ interface IClearingHouseViewer {
         returns (Position memory position);
 }
 
-contract LemmaPerpetual is Ownable, IPerpetualProtocol {
-    IClearingHouse public immutable clearingHouse;
-    IClearingHouseViewer public immutable clearingHouseViewer;
-    IAmm public immutable ETH_USDC_AMM;
-    IERC20 public immutable USDC;
+contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
+    IClearingHouse public clearingHouse;
+    IClearingHouseViewer public clearingHouseViewer;
+    IAmm public ETH_USDC_AMM;
+    IERC20Upgradeable public USDC;
     address public lemmaToken;
 
     using Decimal for Decimal.decimal;
@@ -77,12 +81,26 @@ contract LemmaPerpetual is Ownable, IPerpetualProtocol {
         _;
     }
 
-    constructor(
+    // constructor(
+    //     IClearingHouse _clearingHouse,
+    //     IClearingHouseViewer _clearingHouseViewer,
+    //     IAmm _ETH_USDC_AMM,
+    //     IERC20Upgradeable _USDC
+    // ) {
+    //     clearingHouse = _clearingHouse;
+    //     clearingHouseViewer = _clearingHouseViewer;
+    //     ETH_USDC_AMM = _ETH_USDC_AMM;
+    //     USDC = _USDC;
+    //     _USDC.approve(address(_clearingHouse), type(uint256).max);
+    // }
+
+    function initialize(
         IClearingHouse _clearingHouse,
         IClearingHouseViewer _clearingHouseViewer,
         IAmm _ETH_USDC_AMM,
-        IERC20 _USDC
-    ) {
+        IERC20Upgradeable _USDC
+    ) public initializer {
+        __Ownable_init();
         clearingHouse = _clearingHouse;
         clearingHouseViewer = _clearingHouseViewer;
         ETH_USDC_AMM = _ETH_USDC_AMM;

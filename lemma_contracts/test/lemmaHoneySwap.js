@@ -1,7 +1,8 @@
-const { assert } = require("hardhat");
-const LemmaHoneySwap = artifacts.require("LemmaHoneySwap");
-const LemmaPerpetual = artifacts.require("LemmaPerpetual");
-const LemmaToken = artifacts.require("LemmaToken");
+const { assert, upgrades, ethers } = require("hardhat");
+const { deployProxy } = require("@openzeppelin/hardhat-upgrades");
+// const LemmaHoneySwap = artifacts.require("LemmaHoneySwap");
+// const LemmaPerpetual = artifacts.require("LemmaPerpetual");
+// const LemmaToken = artifacts.require("LemmaToken");
 contract("LemmaHoneySwap", accounts => {
     const clearingHouseAddress = "0xd1ab46526D555285E9b61f066B7673bb9b9B51b6";
     const clearingHouseViewerAddress = "0x2b53BA3d842F76e4D96FecEA77d345d237680E2e";
@@ -13,14 +14,21 @@ contract("LemmaHoneySwap", accounts => {
     let LemmaTokenContract;
     
     it("deploy", async function() {
-        LemmaHoneySwapContract = await LemmaHoneySwap.new(uniswapV2Router02);
+        const LemmaHoneySwap = await ethers.getContractFactory("LemmaHoneySwap");
+        LemmaHoneySwapContract = await upgrades.deployProxy(LemmaHoneySwap, [uniswapV2Router02], { initializer: 'initialize' });
+        console.log(await LemmaHoneySwapContract.owner());
         console.log(LemmaHoneySwapContract.address);
     });
     
     it("Set LemmaToken", async function() {
-        let LemmaPerpetualContract = await LemmaPerpetual.new(clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress);
-        LemmaTokenContract = await LemmaToken.new(usdcAddress, wxdaiAddress, LemmaPerpetualContract.address, LemmaHoneySwapContract.address);
+        const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
+        const LemmaToken = await ethers.getContractFactory("LemmaToken");
+        let LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress], { initializer: 'initialize' });
+    
+        LemmaTokenContract = await upgrades.deployProxy(LemmaToken, [usdcAddress, wxdaiAddress, LemmaPerpetualContract.address, LemmaHoneySwapContract.address], { initializer: 'initialize' });
         await LemmaHoneySwapContract.setLemmaToken(LemmaTokenContract.address, {from: accounts[0]});
+        console.log(await LemmaHoneySwapContract.lemmaToken());
+        console.log(LemmaTokenContract.address);
         assert.equal(await LemmaHoneySwapContract.lemmaToken(), LemmaTokenContract.address);
     });
 });

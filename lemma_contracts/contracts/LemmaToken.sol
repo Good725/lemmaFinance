@@ -9,18 +9,26 @@ import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 // import 'hardhat/console.sol';
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IPerpetualProtocol} from './interfaces/IPerpetualProtocol.sol';
 import {IDEX} from './interfaces/IDEX.sol';
 import {IERC677Receiver} from './interfaces/IERC677Receiver.sol';
 
+import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+// import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+// import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+
 //TODO: decide what contracts need to be upgradeable
 // contract LemmaToken is ERC20Upgradeable {
-contract LemmaToken is ERC20('LemmaUSDT', 'LUSDT'), IERC677Receiver {
-    IERC20 public collateral =
-        IERC20(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
-    IERC20 public underlyingAsset =
-        IERC20(0x359eaF429cd6114c6fcb263dB04586Ad59177CAc); //WETH for testing //has faucet(uint256) method
+contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
+    // IERC20Upgradeable public collateral =
+    //     IERC20Upgradeable(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
+    // IERC20Upgradeable public underlyingAsset =
+    //     IERC20Upgradeable(0x359eaF429cd6114c6fcb263dB04586Ad59177CAc); //WETH for testing //has faucet(uint256) method
+    IERC20Upgradeable public collateral;
+    IERC20Upgradeable public underlyingAsset;
     IPerpetualProtocol public perpetualProtocol; //at first it would be perpetual wrapper
     IDEX public dex;
     uint256 public totalCollateralDeposited;
@@ -35,12 +43,14 @@ contract LemmaToken is ERC20('LemmaUSDT', 'LUSDT'), IERC677Receiver {
     //     __ERC20_init('LemmaUSDC', 'LUSDC');
     // }
 
-    constructor(
-        IERC20 _collateral,
-        IERC20 _underlyingAsset,
+    function initialize(
+        IERC20Upgradeable _collateral,
+        IERC20Upgradeable _underlyingAsset,
         IPerpetualProtocol _perpetualProtocol,
         IDEX _dex
-    ) {
+    ) public initializer {
+        __Ownable_init();
+        __ERC20_init('LemmaUSDT', 'LUSDT');
         collateral = _collateral;
         underlyingAsset = _underlyingAsset;
         perpetualProtocol = _perpetualProtocol;
@@ -139,5 +149,5 @@ contract LemmaToken is ERC20('LemmaUSDT', 'LUSDT'), IERC677Receiver {
         address from,
         uint256 amount,
         bytes calldata data
-    ) external override returns (bool) {}
+    ) external returns (bool) {}
 }
