@@ -28,9 +28,11 @@ module.exports = {
     //   }
     // },
     hardhat: {
+      // forking: {
+      //   url: "https://rpc.xdaichain.com/",
+      // },
       forking: {
-        url: "https://rpc.xdaichain.com/",
-
+        url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
       },
       accounts: {
         mnemonic: process.env.MNEMONIC,
