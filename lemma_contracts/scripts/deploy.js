@@ -12,6 +12,7 @@ const CHViewerArtifact = require("@perp/contract/build/contracts/src/ClearingHou
 
 
 const tokenTransfers = require("truffle-token-test-utils");//just to visulize token transfers in a transaction
+const { upgrades } = require("hardhat");
 
 
 async function main() {
@@ -44,7 +45,7 @@ async function main() {
   const insuranceFundAddress = perpMetadata.layers.layer2.contracts.InsuranceFund.address;
 
   const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
-  const lemmaHoneySwap = await LemmaHoneySwap.deploy(uniswapV2Router02);
+  const lemmaHoneySwap = await upgrades.deployProxy(LemmaHoneySwap, [uniswapV2Router02], { initializer: 'initialize' });
 
   await lemmaHoneySwap.deployed();
 
@@ -55,14 +56,13 @@ async function main() {
   const chViewerAddr = perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address;
   const ammAddress = perpMetadata.layers.layer2.contracts.ETHUSDC.address;
 
-  const lemmaPerpetual = await LemmaPerpetual.deploy(clearingHouseAddress, chViewerAddr, ammAddress, collateral);
-
+  const lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, chViewerAddr, ammAddress, collateral], { initializer: 'initialize' });
   await lemmaPerpetual.deployed();
 
   console.log("LemmaPerpetual deployed to:", lemmaPerpetual.address);
 
   const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
-  const lemmaToken = await LemmaToken.deploy(collateral, underlyingAsset, lemmaPerpetual.address, lemmaHoneySwap.address);
+  const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, underlyingAsset, lemmaPerpetual.address, lemmaHoneySwap.address], { initializer: 'initialize' });
 
   await lemmaToken.deployed();
 
