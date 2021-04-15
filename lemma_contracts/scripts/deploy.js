@@ -13,7 +13,7 @@ const TEST_USDC_ABI = require('../abis/TestUsdc_abi.json');
 
 
 const tokenTransfers = require("truffle-token-test-utils");//just to visulize token transfers in a transaction
-const { ethers } = require("hardhat");
+const { upgrades } = require("hardhat");
 
 
 async function main() {
@@ -50,6 +50,8 @@ async function main() {
   const clearingHouseAddress = perpMetadata.layers.layer2.contracts.ClearingHouse.address;
   const insuranceFundAddress = perpMetadata.layers.layer2.contracts.InsuranceFund.address;
 
+  const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
+  const lemmaHoneySwap = await upgrades.deployProxy(LemmaHoneySwap, [uniswapV2Router02], { initializer: 'initialize' });
 
   // const usdcRinkeby = perpMetadata.layers.layer1.externalContracts.usdc;
   const usdcRinkeby = "0x49e81ba811c70f3e09ab80b1d2e442c69f903968";
@@ -78,14 +80,12 @@ async function main() {
   // const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
   // const lemmaHoneySwap = await LemmaHoneySwap.deploy(uniswapV2Router02);
 
-  // await lemmaHoneySwap.deployed();
+  const lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, chViewerAddr, ammAddress, collateral], { initializer: 'initialize' });
+  await lemmaPerpetual.deployed();
 
-  // console.log("LemmaHoneySwap deployed to:", lemmaHoneySwap.address);
 
-
-  // const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
-  // const chViewerAddr = perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address;
-  // const ammAddress = perpMetadata.layers.layer2.contracts.ETHUSDC.address;
+  const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
+  const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, underlyingAsset, lemmaPerpetual.address, lemmaHoneySwap.address], { initializer: 'initialize' });
 
   // const lemmaPerpetual = await LemmaPerpetual.deploy(clearingHouseAddress, chViewerAddr, ammAddress, collateral);
 
