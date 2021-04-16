@@ -18,6 +18,7 @@ const { upgrades } = require("hardhat");
 
 async function main() {
   const provider = new ethers.providers.Web3Provider(hre.network.provider);
+  tokenTransfers.setCurrentProvider(provider);
   const signer = await ethers.getSigner();
 
   let tx;
@@ -53,50 +54,57 @@ async function main() {
   const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
   const lemmaHoneySwap = await upgrades.deployProxy(LemmaHoneySwap, [uniswapV2Router02], { initializer: 'initialize' });
 
-  // const usdcRinkeby = perpMetadata.layers.layer1.externalContracts.usdc;
-  const usdcRinkeby = "0x49e81ba811c70f3e09ab80b1d2e442c69f903968";
+  const usdcRinkeby = perpMetadata.layers.layer1.externalContracts.usdc;
+  // const usdcRinkeby = "0xc7ad46e0b8a400bb3c915120d284aafba8fc4735";
   const wethRinkeby = "0xc778417e063141139fce010982780140aa0cd5ab";
   const ambBridgeOnEth = perpMetadata.layers.layer1.externalContracts.ambBridgeOnEth;
   const multiTokenMediatorOnEth = perpMetadata.layers.layer1.externalContracts.multiTokenMediatorOnEth;
   const uniswapV2Router02Rinkbey = "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
   const lemmaXDAI = "0x40e414bff6543f937832e86a41de41e2df4530fc";
 
-  const LemmaMainnet = await hre.ethers.getContractFactory("LemmaMainnet");
-  const lemmaMainnet = await LemmaMainnet.deploy(usdcRinkeby, wethRinkeby, lemmaXDAI, uniswapV2Router02Rinkbey, ambBridgeOnEth, multiTokenMediatorOnEth);
+  const ambBridgeOnXDai = "0xc38D4991c951fE8BCE1a12bEef2046eF36b0FA4A";
+  const multiTokenMediatorOnXDai = "0xA34c65d76b997a824a5E384471bBa73b0013F5DA";
 
-  await lemmaMainnet.deployed();
-  console.log(lemmaMainnet.address);
+  const lemmaMainnet = constants.AddressZero;
 
-  const USDCRinkeby = new ethers.Contract(usdcRinkeby, TEST_USDC_ABI, signer);
-  console.log((await USDCRinkeby.balanceOf(signer.address)).toString());
-  tx = await USDCRinkeby.approve(lemmaMainnet.address, constants.MaxUint256);
-  tx.wait();
+  // const LemmaMainnet = await hre.ethers.getContractFactory("LemmaMainnet");
+  // const lemmaMainnet = await LemmaMainnet.deploy(usdcRinkeby, wethRinkeby, lemmaXDAI, uniswapV2Router02Rinkbey, ambBridgeOnEth, multiTokenMediatorOnEth);
 
-  console.log((await USDCRinkeby.allowance(signer.address, lemmaMainnet.address)).toString());
-  tx = await lemmaMainnet.deposit(100000, 0);
-  tx.wait();
+  // await lemmaMainnet.deployed();
+  // // console.log(lemmaMainnet.address);
+
+  // tx = await lemmaMainnet.deposit(0, { value: ethers.utils.parseUnits("0.5", "ether") });
+  // tx.wait();
+  // await tokenTransfers.print(tx.hash, {});
+
+  // const USDCRinkeby = new ethers.Contract(usdcRinkeby, TEST_USDC_ABI, signer);
+  // console.log((await USDCRinkeby.balanceOf(signer.address)).toString());
+  // tx = await USDCRinkeby.approve(lemmaMainnet.address, constants.MaxUint256);
+  // tx.wait();
+
+  // console.log((await USDCRinkeby.allowance(signer.address, lemmaMainnet.address)).toString());
+  // tx = await lemmaMainnet.deposit(100000, 0);
+  // tx.wait();
 
 
   // const LemmaHoneySwap = await hre.ethers.getContractFactory("LemmaHoneySwap");
   // const lemmaHoneySwap = await LemmaHoneySwap.deploy(uniswapV2Router02);
+  const chViewerAddr = perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address;
+  const ammAddress = perpMetadata.layers.layer2.contracts.ETHUSDC.address;
 
+  const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
   const lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, chViewerAddr, ammAddress, collateral], { initializer: 'initialize' });
+  console.log(lemmaPerpetual);
   await lemmaPerpetual.deployed();
 
 
   const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
-  const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, underlyingAsset, lemmaPerpetual.address, lemmaHoneySwap.address], { initializer: 'initialize' });
+  const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, underlyingAsset, lemmaPerpetual.address, constants.AddressZero, ambBridgeOnXDai, multiTokenMediatorOnXDai, constants.AddressZero], { initializer: 'initialize' });
 
-  // const lemmaPerpetual = await LemmaPerpetual.deploy(clearingHouseAddress, chViewerAddr, ammAddress, collateral);
+  await lemmaToken.deployed();
 
-  // await lemmaPerpetual.deployed();
+  console.log(lemmaToken.name());
 
-  // console.log("LemmaPerpetual deployed to:", lemmaPerpetual.address);
-
-  // const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
-  // const lemmaToken = await LemmaToken.deploy(collateral, underlyingAsset, lemmaPerpetual.address, lemmaHoneySwap.address);
-
-  // await lemmaToken.deployed();
 
   // // await lemmaToken.initlialize();
 
@@ -118,7 +126,7 @@ async function main() {
   // console.log(("usdc balanceOf: ", await usdc.balanceOf(theAccount)).toString());
 
   // // console.log(hre.network);
-  // tokenTransfers.setCurrentProvider(hre.network.provider);
+
   // contractNames["0x1C232F01118CB8B424793ae03F870aa7D0ac7f77"] = "uniswapV2Router02";
   // contractNames[lemmaHoneySwap.address] = "lemmaHoneySwap";
   // contractNames[lemmaPerpetual.address] = "lemmaPerpetual";

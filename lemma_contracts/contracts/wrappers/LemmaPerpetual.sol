@@ -116,9 +116,23 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //underlying asset needs to be given dynamically
     function open(uint256 _amount) external override onlyLemmaToken {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
+
         //open postion on perptual protcol
-        Decimal.decimal memory assetAmount =
+        Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
+
+        Decimal.decimal memory assetAmount =
+            amount.divD(
+                (
+                    Decimal.one().addD(
+                        (
+                            ETH_USDC_AMM.tollRatio().addD(
+                                ETH_USDC_AMM.spreadRatio()
+                            )
+                        )
+                    )
+                )
+            );
 
         Decimal.decimal memory leverage = Decimal.one();
         //TODO: add calculation for baseAssetAmountLimit with slippage from user
@@ -140,8 +154,21 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
     function close(uint256 _amount) external override onlyLemmaToken {
-        Decimal.decimal memory assetAmount =
+        Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
+
+        Decimal.decimal memory assetAmount =
+            amount.divD(
+                (
+                    Decimal.one().addD(
+                        (
+                            ETH_USDC_AMM.tollRatio().addD(
+                                ETH_USDC_AMM.spreadRatio()
+                            )
+                        )
+                    )
+                )
+            );
 
         Decimal.decimal memory leverage = Decimal.one();
         //TODO: add calculation for baseAssetAmountLimit with slippage from user
