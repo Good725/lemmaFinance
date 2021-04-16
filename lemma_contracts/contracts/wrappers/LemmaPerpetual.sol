@@ -181,6 +181,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         if (_amount == getTotalCollateral()) {
             clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
         } else {
+            clearingHouse.removeMargin(
+                ETH_USDC_AMM,
+                calcFee(ETH_USDC_AMM, assetAmount)
+            );
             clearingHouse.openPosition(
                 ETH_USDC_AMM,
                 IClearingHouse.Side.SELL,
@@ -188,7 +192,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 leverage,
                 baseAssetAmount
             );
-
             //If user is withdrawing then ...
             clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
         }

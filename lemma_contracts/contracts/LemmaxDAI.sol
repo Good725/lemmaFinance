@@ -75,8 +75,8 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function setDepositInfo(address _account, uint256 _amount) external {
-        require(msg.sender == address(ambBridge));
-        require(ambBridge.messageSender() == address(lemmaMainnet));
+        // require(msg.sender == address(ambBridge));
+        // require(ambBridge.messageSender() == address(lemmaMainnet));
         depositInfo[_account] = _amount;
     }
 
@@ -113,23 +113,21 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
         //require(userShare>=minimumUserShare)
 
         //withdraw
-        collateral.transfer(msg.sender, userShareAmountOfCollateral);
+        // multiTokenTransfer(
+        //     collateral,
+        //     address(lemmaMainnet),
+        //     userShareAmountOfCollateral
+        // );
 
-        multiTokenTransfer(
-            collateral,
-            address(lemmaMainnet),
-            userShareAmountOfCollateral
-        );
-
-        //now realy the depositInfo to lemmaXDAI
-        bytes4 functionSelector = ILemmaMainnet.setWithdrawalInfo.selector;
-        bytes memory data =
-            abi.encodeWithSelector(
-                functionSelector,
-                msg.sender,
-                userShareAmountOfCollateral
-            );
-        callBridge(address(lemmaMainnet), data, gasLimit);
+        // //now realy the depositInfo to lemmaXDAI
+        // bytes4 functionSelector = ILemmaMainnet.setWithdrawalInfo.selector;
+        // bytes memory data =
+        //     abi.encodeWithSelector(
+        //         functionSelector,
+        //         msg.sender,
+        //         userShareAmountOfCollateral
+        //     );
+        // callBridge(address(lemmaMainnet), data, gasLimit);
     }
 
     //maybe we can use this later
