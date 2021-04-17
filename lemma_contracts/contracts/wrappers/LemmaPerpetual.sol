@@ -2,12 +2,16 @@
 pragma solidity =0.8.3;
 
 import {IPerpetualProtocol} from '../interfaces/IPerpetualProtocol.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+
+import {
+    SafeERC20
+} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 // import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
 // import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IAmm, Decimal} from '../interfaces/IAmm.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 import {SignedDecimal} from '../utils/SignedDecimal.sol';
 import {
     IERC20WithDecimalsMethod
@@ -53,7 +57,7 @@ interface IClearingHouseViewer {
     }
 
     function getPersonalBalanceWithFundingPayment(
-        IERC20Upgradeable _quoteToken,
+        IERC20 _quoteToken,
         address _trader
     ) external view returns (Decimal.decimal memory margin);
 
@@ -64,14 +68,15 @@ interface IClearingHouseViewer {
 }
 
 contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
+    using SafeERC20 for IERC20;
+    using Decimal for Decimal.decimal;
+    using SignedDecimal for SignedDecimal.signedDecimal;
+
     IClearingHouse public clearingHouse;
     IClearingHouseViewer public clearingHouseViewer;
     IAmm public ETH_USDC_AMM;
-    IERC20Upgradeable public USDC;
+    IERC20 public USDC;
     address public lemmaToken;
-
-    using Decimal for Decimal.decimal;
-    using SignedDecimal for SignedDecimal.signedDecimal;
 
     //mapping that maps AMMs to an underlying asset
     //only one collateral for now
@@ -85,7 +90,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //     IClearingHouse _clearingHouse,
     //     IClearingHouseViewer _clearingHouseViewer,
     //     IAmm _ETH_USDC_AMM,
-    //     IERC20Upgradeable _USDC
+    //     IERC20 _USDC
     // ) {
     //     clearingHouse = _clearingHouse;
     //     clearingHouseViewer = _clearingHouseViewer;
@@ -98,14 +103,14 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         IClearingHouse _clearingHouse,
         IClearingHouseViewer _clearingHouseViewer,
         IAmm _ETH_USDC_AMM,
-        IERC20Upgradeable _USDC
+        IERC20 _USDC
     ) public initializer {
         __Ownable_init();
         clearingHouse = _clearingHouse;
         clearingHouseViewer = _clearingHouseViewer;
         ETH_USDC_AMM = _ETH_USDC_AMM;
         USDC = _USDC;
-        _USDC.approve(address(_clearingHouse), type(uint256).max);
+        _USDC.safeApprove(address(_clearingHouse), type(uint256).max);
     }
 
     function setLemmaToken(address _lemmaToken) external onlyOwner {
@@ -197,7 +202,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         }
 
         //TODO: add require that leverage should not be greater than one
-        USDC.transfer(
+        USDC.safeTransfer(
             lemmaToken,
             convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
         );

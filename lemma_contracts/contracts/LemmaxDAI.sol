@@ -9,6 +9,9 @@ import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 // import 'hardhat/console.sol';
 
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {
+    SafeERC20
+} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 import {IPerpetualProtocol} from './interfaces/IPerpetualProtocol.sol';
@@ -20,18 +23,15 @@ import {IAMB} from './interfaces/AMB/IAMB.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 // import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import 'hardhat/console.sol';
 
-// import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-
-//TODO: decide what contracts need to be upgradeable
-// contract LemmaToken is ERC20Upgradeable {
+// import 'hardhat/console.sol';
 
 interface ILemmaMainnet {
     function setWithdrawalInfo(address account, uint256 amount) external;
 }
 
 contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
+    using SafeERC20 for IERC20;
     // IERC20Upgradeable public collateral =
     //     IERC20Upgradeable(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
     // IERC20Upgradeable public underlyingAsset =
@@ -49,35 +49,45 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
 
     mapping(address => uint256) public depositInfo;
 
+    event DepositInfoAdded(address indexed account, uint256 indexed amount);
+
     //mappping of protocols to wrappers
     //mapping of protocol to collateral
     //underlying assets supported
-
-    // function initlialize() public initializer {
-    //     __ERC20_init('LemmaUSDC', 'LUSDC');
-    // }
 
     function initialize(
         IERC20 _collateral,
         IPerpetualProtocol _perpetualProtocol,
         IAMB _ambBridge,
-        IMultiTokenMediator _multiTokenMediator,
-        ILemmaMainnet _lemmaMainnet
-    ) public initializer {
+        IMultiTokenMediator _multiTokenMediator
+    )
+        public
+        // ILemmaMainnet _lemmaMainnet
+        initializer
+    {
         __Ownable_init();
         __ERC20_init('LemmaUSDT', 'LUSDT');
         collateral = _collateral;
         perpetualProtocol = _perpetualProtocol;
         ambBridge = _ambBridge;
         multiTokenMediator = _multiTokenMediator;
-        lemmaMainnet = _lemmaMainnet;
+        // lemmaMainnet = _lemmaMainnet;
         gasLimit = 1000000;
     }
 
+    function setLemmaMainnet(ILemmaMainnet _lemmaMainnet) external onlyOwner {
+        lemmaMainnet = _lemmaMainnet;
+    }
+
+    function setGasLimit(uint256 _gasLimit) external onlyOwner {
+        gasLimit = _gasLimit;
+    }
+
     function setDepositInfo(address _account, uint256 _amount) external {
-        // require(msg.sender == address(ambBridge));
-        // require(ambBridge.messageSender() == address(lemmaMainnet));
+        require(_msgSender() == address(ambBridge));
+        require(ambBridge.messageSender() == address(lemmaMainnet));
         depositInfo[_account] = _amount;
+        emit DepositInfoAdded(_account, _amount);
     }
 
     function mint(address _account) external {
@@ -94,9 +104,9 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
             toMint = amount * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
 
-        _mint(msg.sender, toMint);
+        _mint(_msgSender(), toMint);
 
-        collateral.transfer(address(perpetualProtocol), amount);
+        collateral.safeTransfer(address(perpetualProtocol), amount);
         //open position on perpetual
         perpetualProtocol.open(amount);
 
@@ -106,28 +116,28 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
     function withdraw(uint256 _amount) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
-        _burn(msg.sender, _amount);
+        _burn(_msgSender(), _amount);
 
         perpetualProtocol.close(userShareAmountOfCollateral);
 
         //require(userShare>=minimumUserShare)
 
         //withdraw
-        // multiTokenTransfer(
-        //     collateral,
-        //     address(lemmaMainnet),
-        //     userShareAmountOfCollateral
-        // );
+        multiTokenTransfer(
+            collateral,
+            address(lemmaMainnet),
+            userShareAmountOfCollateral
+        );
 
-        // //now realy the depositInfo to lemmaXDAI
-        // bytes4 functionSelector = ILemmaMainnet.setWithdrawalInfo.selector;
-        // bytes memory data =
-        //     abi.encodeWithSelector(
-        //         functionSelector,
-        //         msg.sender,
-        //         userShareAmountOfCollateral
-        //     );
-        // callBridge(address(lemmaMainnet), data, gasLimit);
+        //now realy the depositInfo to lemmaXDAI
+        bytes4 functionSelector = ILemmaMainnet.setWithdrawalInfo.selector;
+        bytes memory data =
+            abi.encodeWithSelector(
+                functionSelector,
+                _msgSender(),
+                userShareAmountOfCollateral
+            );
+        callBridge(address(lemmaMainnet), data, gasLimit);
     }
 
     //maybe we can use this later
@@ -147,10 +157,8 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
     ) internal {
         require(_receiver != address(0), 'receiver is empty');
         // approve to multi token mediator and call 'relayTokens'
-        _token.approve(address(multiTokenMediator), _amount);
-        console.log('relaying');
+        _token.safeApprove(address(multiTokenMediator), _amount);
         multiTokenMediator.relayTokens(address(_token), _receiver, _amount);
-        console.log('relayed tokens successfully');
     }
 
     function callBridge(
