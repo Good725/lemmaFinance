@@ -23,6 +23,7 @@ import {IAMB} from './interfaces/AMB/IAMB.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 // import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol';
 
 // import 'hardhat/console.sol';
 
@@ -30,7 +31,11 @@ interface ILemmaMainnet {
     function setWithdrawalInfo(address account, uint256 amount) external;
 }
 
-contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
+contract LemmaToken is
+    ERC20Upgradeable,
+    OwnableUpgradeable,
+    ERC2771ContextUpgradeable
+{
     using SafeERC20 for IERC20;
     // IERC20Upgradeable public collateral =
     //     IERC20Upgradeable(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
@@ -59,7 +64,8 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
         IERC20 _collateral,
         IPerpetualProtocol _perpetualProtocol,
         IAMB _ambBridge,
-        IMultiTokenMediator _multiTokenMediator
+        IMultiTokenMediator _multiTokenMediator,
+        address trustedForwarder
     )
         public
         // ILemmaMainnet _lemmaMainnet
@@ -67,12 +73,35 @@ contract LemmaToken is ERC20Upgradeable, OwnableUpgradeable {
     {
         __Ownable_init();
         __ERC20_init('LemmaUSDT', 'LUSDT');
+        __ERC2771Context_init(trustedForwarder);
         collateral = _collateral;
         perpetualProtocol = _perpetualProtocol;
         ambBridge = _ambBridge;
         multiTokenMediator = _multiTokenMediator;
         // lemmaMainnet = _lemmaMainnet;
         gasLimit = 1000000;
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address sender)
+    {
+        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
+        return ERC2771ContextUpgradeable._msgData();
     }
 
     function setLemmaMainnet(ILemmaMainnet _lemmaMainnet) external onlyOwner {

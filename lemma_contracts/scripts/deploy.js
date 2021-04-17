@@ -45,7 +45,8 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-
+  const trustedForwaderRinkeby = "0xFD4973FeB2031D4409fB57afEE5dF2051b171104";
+  const trustedForwaderXDAI = "0x86C80a8aa58e0A4fa09A69624c31Ab2a6CAD56b8";
   const uniswapV2Router02 = "0x1C232F01118CB8B424793ae03F870aa7D0ac7f77";
   const WETH_USDC_Pair = "0xa7354668dA742BB39119546D8f160561847fBDdD";
   const clearingHouseAddress = perpMetadata.layers.layer2.contracts.ClearingHouse.address;
@@ -68,7 +69,7 @@ async function main() {
   const lemmaMainnet = constants.AddressZero;
 
   // const LemmaMainnet = await hre.ethers.getContractFactory("LemmaMainnet");
-  // const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcRinkeby, wethRinkeby, lemmaXDAI, uniswapV2Router02Rinkbey, ambBridgeOnEth, multiTokenMediatorOnEth], { initializer: 'initialize' });
+  // const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcRinkeby, wethRinkeby, lemmaXDAI, uniswapV2Router02Rinkbey, ambBridgeOnEth, multiTokenMediatorOnEth,trustedForwarderRinkeby], { initializer: 'initialize' });
 
   // await lemmaMainnet.deployed();
   // // console.log(lemmaMainnet.address);
@@ -98,7 +99,7 @@ async function main() {
 
 
   const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
-  const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai], { initializer: 'initialize' });
+  const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai, trustedForwaderXDAI], { initializer: 'initialize' });
 
   await lemmaToken.deployed();
 
@@ -150,11 +151,8 @@ async function main() {
     tx = await lemmaToken.mint(signer.address);
     tx.wait();
 
-    tx = await lemmaToken.withdraw(ethers.utils.parseEther("0.9"));
+    tx = await lemmaToken.withdraw(ethers.utils.parseEther("1"));
     tx.wait();
-
-
-
   } catch (e) {
     console.log(e);
   }

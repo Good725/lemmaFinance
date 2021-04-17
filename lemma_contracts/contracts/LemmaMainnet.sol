@@ -8,6 +8,7 @@ import {
 } from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol';
 
 // import 'hardhat/console.sol';
 
@@ -58,7 +59,7 @@ interface ILemmaxDAI {
     function setDepositInfo(address account, uint256 amount) external;
 }
 
-contract LemmaMainnet is OwnableUpgradeable {
+contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     //USDT returns void (does not follow standard ERC20 that is why it is necessary)
     using SafeERC20 for IERC20;
     // xDai AMB bridge contract
@@ -86,9 +87,11 @@ contract LemmaMainnet is OwnableUpgradeable {
         ILemmaxDAI _lemmaXDAI,
         IUniswapV2Router02 _uniswapV2Router02,
         IAMB _ambBridge,
-        IMultiTokenMediator _multiTokenMediator
+        IMultiTokenMediator _multiTokenMediator,
+        address trustedForwarder
     ) public initializer {
         __Ownable_init();
+        __ERC2771Context_init(trustedForwarder);
         USDC = _USDC;
         WETH = _WETH;
         lemmaXDAI = _lemmaXDAI;
@@ -96,6 +99,28 @@ contract LemmaMainnet is OwnableUpgradeable {
         ambBridge = _ambBridge;
         multiTokenMediator = _multiTokenMediator;
         gasLimit = 1000000;
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (address sender)
+    {
+        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
+        return ERC2771ContextUpgradeable._msgData();
     }
 
     function setGasLimit(uint256 _gasLimit) external onlyOwner {
@@ -120,12 +145,12 @@ contract LemmaMainnet is OwnableUpgradeable {
         //now realy the depositInfo to lemmaXDAI
         bytes4 functionSelector = ILemmaxDAI.setDepositInfo.selector;
         bytes memory data =
-            abi.encodeWithSelector(functionSelector, msg.sender, amounts[1]);
+            abi.encodeWithSelector(functionSelector, _msgSender(), amounts[1]);
         callBridge(address(lemmaXDAI), data, gasLimit);
     }
 
     function setWithdrawalInfo(address _account, uint256 _amount) external {
-        require(msg.sender == address(ambBridge));
+        require(_msgSender() == address(ambBridge));
         require(ambBridge.messageSender() == address(lemmaXDAI));
         withdrawalInfo[_account] = _amount;
         emit WithdrawalInfoAdded(_account, _amount);
