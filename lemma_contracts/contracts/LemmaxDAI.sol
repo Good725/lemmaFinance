@@ -121,6 +121,7 @@ contract LemmaToken is
 
     function mint(address _account) external {
         uint256 amount = depositInfo[_account];
+        delete depositInfo[_account];
         //totalSupply is equal to the total USDC deposited
 
         uint256 toMint;

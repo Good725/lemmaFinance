@@ -158,6 +158,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
 
     function withdraw(address _account) external {
         uint256 amount = withdrawalInfo[_account];
+        delete withdrawalInfo[_account];
         address[] memory path = new address[](2);
         path[0] = address(USDC);
         path[1] = address(WETH);
