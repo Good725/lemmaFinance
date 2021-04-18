@@ -42,7 +42,6 @@ contract LemmaToken is
     // IERC20Upgradeable public underlyingAsset =
     //     IERC20Upgradeable(0x359eaF429cd6114c6fcb263dB04586Ad59177CAc); //WETH for testing //has faucet(uint256) method
     IERC20 public collateral;
-    IERC20 public underlyingAsset;
     IPerpetualProtocol public perpetualProtocol; //at first it would be perpetual wrapper
 
     // mainnet AMB bridge contract
@@ -117,9 +116,13 @@ contract LemmaToken is
         require(ambBridge.messageSender() == address(lemmaMainnet));
         depositInfo[_account] = _amount;
         emit DepositInfoAdded(_account, _amount);
+        //if AMB call is done after the relaying of tokens
+        if (collateral.balanceOf(address(this)) >= _amount) {
+            mint(_account);
+        }
     }
 
-    function mint(address _account) external {
+    function mint(address _account) public {
         uint256 amount = depositInfo[_account];
         delete depositInfo[_account];
         //totalSupply is equal to the total USDC deposited
@@ -134,7 +137,7 @@ contract LemmaToken is
             toMint = amount * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
 
-        _mint(_msgSender(), toMint);
+        _mint(_account, toMint);
 
         collateral.safeTransfer(address(perpetualProtocol), amount);
         //open position on perpetual

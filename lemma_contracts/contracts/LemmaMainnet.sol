@@ -13,22 +13,6 @@ import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol
 // import 'hardhat/console.sol';
 
 interface IUniswapV2Router02 {
-    function swapExactTokensForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapTokensForExactTokens(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
     function swapExactETHForTokens(
         uint256 amountOutMin,
         address[] calldata path,
@@ -36,23 +20,13 @@ interface IUniswapV2Router02 {
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
-    function swapTokensForExactETH(
-        uint256 amountOut,
-        uint256 amountInMax,
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
-
-    function getAmountsOut(uint256 amountIn, address[] memory path)
-        external
-        view
-        returns (uint256[] memory amounts);
-
-    function getAmountsIn(uint256 amountOut, address[] memory path)
-        external
-        view
-        returns (uint256[] memory amounts);
 }
 
 interface ILemmaxDAI {
@@ -154,16 +128,19 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         require(ambBridge.messageSender() == address(lemmaXDAI));
         withdrawalInfo[_account] = _amount;
         emit WithdrawalInfoAdded(_account, _amount);
+        if (USDC.balanceOf(address(this)) >= _amount) {
+            withdraw(_account);
+        }
     }
 
-    function withdraw(address _account) external {
+    function withdraw(address _account) public {
         uint256 amount = withdrawalInfo[_account];
         delete withdrawalInfo[_account];
         address[] memory path = new address[](2);
         path[0] = address(USDC);
         path[1] = address(WETH);
         // uint256[] memory amounts =
-        uniswapV2Router02.swapTokensForExactETH(
+        uniswapV2Router02.swapExactTokensForETH(
             amount,
             0, //TODO: figure out a way to get this from user
             path,
