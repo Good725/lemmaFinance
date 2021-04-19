@@ -16,7 +16,7 @@ const App = () => {
       <Router>
         <div>
           <UseWalletProvider
-            chainId={100}
+            chainId={4}
             connectors={{
               // This is how connectors get configured
               portis: { dAppId: 'my-dapp-id-123-xyz' },
