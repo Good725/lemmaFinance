@@ -1,10 +1,10 @@
 {
     "rinkeby": {
-        "lemmaMainnet": "0x99c3C3C6E280f6aF1F3D22a5DAC6802A2814bc31"
+        "lemmaMainnet": "0xFE17F35aED616212B7670a2A73ABB674F9FAcEb0"
     },
     "xDAIRinkeby": {
-        "lemmaxDAI": "0xe4DB129B36D137b5DB6B4d502dc6E1198E27aC6e",
-        "lemmaPerpetual": "0x9696308D43ea6a9B216126f9d83a7a7C32084bB0"
+        "lemmaxDAI": "0x78a9a8106cCE1aB4dF9333DC5bA795A5DcC39915",
+        "lemmaPerpetual": "0xdf2Cdde76A0D80989CfD75A599d032d17A60a29F"
     },
     "perpRinkebyXDAI": {
         "layers": {

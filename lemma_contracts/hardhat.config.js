@@ -47,15 +47,13 @@ module.exports = {
     // },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-      },
+      accounts: [process.env.PRIVATE_KEY],
     },
-    // xdai: {
-    //   url: "https://rpc.xdaichain.com/",
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   gasPrice: 10 ** 9,//1 gwei
-    // }
+    xdai: {
+      url: "https://rpc.xdaichain.com/",
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 10 ** 9,//1 gwei
+    }
   },
   solidity: {
     version: "0.8.3",

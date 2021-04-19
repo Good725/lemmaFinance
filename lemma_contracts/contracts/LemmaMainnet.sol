@@ -140,6 +140,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         path[0] = address(USDC);
         path[1] = address(WETH);
         // uint256[] memory amounts =
+        USDC.safeApprove(address(uniswapV2Router02), amount);
         uniswapV2Router02.swapExactTokensForETH(
             amount,
             0, //TODO: figure out a way to get this from user

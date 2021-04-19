@@ -61,7 +61,7 @@ async function main() {
   const ambBridgeOnEth = perpMetadata.layers.layer1.externalContracts.ambBridgeOnEth;
   const multiTokenMediatorOnEth = perpMetadata.layers.layer1.externalContracts.multiTokenMediatorOnEth;
   const uniswapV2Router02Rinkbey = "0x7a250d5630b4cf539739df2c5dacb4c659f2488d";
-  const lemmaXDAI = "0xe4DB129B36D137b5DB6B4d502dc6E1198E27aC6e";
+  const lemmaXDAI = "0x78a9a8106cCE1aB4dF9333DC5bA795A5DcC39915";
 
   const ambBridgeOnXDai = "0xc38D4991c951fE8BCE1a12bEef2046eF36b0FA4A";
   const multiTokenMediatorOnXDai = "0xA34c65d76b997a824a5E384471bBa73b0013F5DA";
@@ -69,13 +69,13 @@ async function main() {
   // const lemmaMainnet = constants.AddressZero;
 
   const LemmaMainnet = await hre.ethers.getContractFactory("LemmaMainnet");
-  const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcRinkeby, wethRinkeby, lemmaXDAI, uniswapV2Router02Rinkbey, ambBridgeOnEth, multiTokenMediatorOnEth, trustedForwaderRinkeby], { initializer: 'initialize' });
+  // const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcRinkeby, wethRinkeby, lemmaXDAI, uniswapV2Router02Rinkbey, ambBridgeOnEth, multiTokenMediatorOnEth, trustedForwaderRinkeby], { initializer: 'initialize' });
 
-  await lemmaMainnet.deployed();
-  console.log(lemmaMainnet.address);
+  // await lemmaMainnet.deployed();
+  // console.log(lemmaMainnet.address);
 
-  tx = await lemmaMainnet.deposit(0, { value: ethers.utils.parseUnits("0.0001", "ether") });
-  tx.wait();
+  // tx = await lemmaMainnet.deposit(0, { value: ethers.utils.parseUnits("0.0001", "ether") });
+  // tx.wait();
   // await tokenTransfers.print(tx.hash, {});
 
   // const USDCRinkeby = new ethers.Contract(usdcRinkeby, TEST_USDC_ABI, signer);
@@ -89,48 +89,50 @@ async function main() {
 
 
 
-  // const chViewerAddr = perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address;
-  // const ammAddress = perpMetadata.layers.layer2.contracts.ETHUSDC.address;
+  const chViewerAddr = perpMetadata.layers.layer2.contracts.ClearingHouseViewer.address;
+  const ammAddress = perpMetadata.layers.layer2.contracts.ETHUSDC.address;
 
-  // const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
+  const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual");
   // const lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, chViewerAddr, ammAddress, collateral], { initializer: 'initialize' });
 
   // await lemmaPerpetual.deployed();
 
-  // // console.log("lemmaPerpetual", lemmaPerpetual.address);
+  // console.log("lemmaPerpetual", lemmaPerpetual.address);
 
 
-  // const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
+  const LemmaToken = await hre.ethers.getContractFactory("LemmaToken");
   // const lemmaToken = await upgrades.deployProxy(LemmaToken, [collateral, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai, trustedForwaderXDAI], { initializer: 'initialize' });
 
   // await lemmaToken.deployed();
 
-  // // console.log("lemmaXDAI", lemmaToken.address);
+  // console.log("lemmaXDAI", lemmaToken.address);
+  const lemmaMainnet = LemmaMainnet.attach("0xFE17F35aED616212B7670a2A73ABB674F9FAcEb0");
+  const lemmaPerpetual = LemmaPerpetual.attach("0xdf2Cdde76A0D80989CfD75A599d032d17A60a29F");
+  const lemmaToken = LemmaToken.attach(lemmaXDAI);
 
-  // await lemmaToken.setLemmaMainnet(lemmaMainnet);
+
+
+  // await lemmaToken.setLemmaMainnet(lemmaMainnet.address);
+  // console.log("lemmaMainnet", await lemmaToken.lemmaMainnet());
+  // await lemmaPerpetual.setLemmaToken(lemmaToken.address);
+  // console.log("lemmaToken", await lemmaPerpetual.lemmaToken());
+
+
+
 
   // console.log(await lemmaToken.name());
   // const usdc = new ethers.Contract(collateral, TEST_USDC_ABI, signer);
 
-  // tx = await lemmaPerpetual.setLemmaToken(lemmaToken.address);
-  // tx.wait();
 
 
 
-  // // // await lemmaToken.initlialize();
-
-
-  // // await lemmaHoneySwap.setLemmaToken(lemmaToken.address);
-  // // await lemmaPerpetual.setLemmaToken(lemmaToken.address);
 
 
 
-  // // console.log(await lemmaToken.name());
-  // // console.log("LemmaToken deployed to:", lemmaToken.address);
 
   // // //Do the things
 
-  // // const usdc = lemmaToken.attach(collateral);
+  const usdc = LemmaToken.attach(collateral);
   // // await usdc.approve(lemmaToken.address, constants.MaxUint256);
 
   // // const theAccount = await lemmaHoneySwap.owner();
@@ -146,39 +148,57 @@ async function main() {
   // contractNames[WETH_USDC_Pair] = "WETH_USDC_PAIR";
   // contractNames[insuranceFundAddress] = "Perpetual Insurance Fund";
   // // // console.log(contractNames);
-  // try {
 
-  //   tx = await usdc.transfer(lemmaToken.address, 1000000);
-  //   tx.wait();
-  //   tx = await lemmaToken.setDepositInfo(signer.address, 1000000);
-  //   tx.wait();
-  //   tx = await lemmaToken.mint(signer.address);
-  //   tx.wait();
 
-  //   tx = await lemmaToken.withdraw(ethers.utils.parseEther("1"));
-  //   tx.wait();
-  // } catch (e) {
-  //   console.log(e);
-  // }
-  // finally {
-  //   console.log("USDC balances at the end");
-  //   console.log("lemmaToken :", (await usdc.balanceOf(lemmaToken.address)).toString());
-  //   console.log("lemmaPerpetual :", (await usdc.balanceOf(lemmaPerpetual.address)).toString());
+  try {
+
+    // tx = await lemmaMainnet.deposit(0, { value: ethers.utils.parseUnits("0.1", "ether") });
+    // tx.wait();
+    // console.log(tx.hash);
+
+    const totalBalance = await lemmaToken.balanceOf(signer.address);
+    console.log(totalBalance.toString());
+    tx = await lemmaToken.withdraw(ethers.utils.parseUnits("10", "ether"));
+    tx.wait();
+
+    // await lemmaToken.mint(signer.address);
 
 
 
-  //   const clearingHouseViewer = new ethers.Contract(chViewerAddr, CHViewerArtifact.abi, provider);
-  //   const position = await clearingHouseViewer.getPersonalPositionWithFundingPayment(
-  //     ammAddress,
-  //     lemmaPerpetual.address,
-  //   );
-  //   console.log("position of lemmaPerpetual: size", position.size.d.toString());
-  //   console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
-  //   console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
-  //   console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
-  //   console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
 
-  // }
+
+
+    //   tx = await usdc.transfer(lemmaToken.address, 1000000);
+    //   tx.wait();
+    //   tx = await lemmaToken.setDepositInfo(signer.address, 1000000);
+    //   tx.wait();
+    //   tx = await lemmaToken.mint(signer.address);
+    //   tx.wait();
+
+    //   tx = await lemmaToken.withdraw(ethers.utils.parseEther("1"));
+    //   tx.wait();
+  } catch (e) {
+    console.log(e);
+  }
+  finally {
+    console.log("USDC balances at the end");
+    console.log("lemmaToken :", (await usdc.balanceOf(lemmaToken.address)).toString());
+    console.log("lemmaPerpetual :", (await usdc.balanceOf(lemmaPerpetual.address)).toString());
+
+
+
+    const clearingHouseViewer = new ethers.Contract(chViewerAddr, CHViewerArtifact.abi, provider);
+    const position = await clearingHouseViewer.getPersonalPositionWithFundingPayment(
+      ammAddress,
+      lemmaPerpetual.address,
+    );
+    console.log("position of lemmaPerpetual: size", position.size.d.toString());
+    console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
+    console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
+    console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
+    console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
+
+  }
 
 
 }
