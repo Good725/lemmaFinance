@@ -1,6 +1,9 @@
 {
-    "usdc": "0xe0B887D54e71329318a036CF50f30Dbe4444563c",
-    "lemmaHoneySwap": "0x89e6ABd8CE0B7F40D6773da8ca7C17AA1b9a1aCa",
-    "lemmaPerpetual": "0xDAC3Ec496b434469f3e0eF201C5932905B4c11D1",
-    "lusdc": "0x40e414bff6543f937832e86a41de41e2df4530fc"
+    "rinkeby": {
+        "lemmaMainnet": "0xFE17F35aED616212B7670a2A73ABB674F9FAcEb0"
+    },
+    "xDAIRinkeby": {
+        "lemmaxDAI": "0x78a9a8106cCE1aB4dF9333DC5bA795A5DcC39915",
+        "lemmaPerpetual": "0xdf2Cdde76A0D80989CfD75A599d032d17A60a29F"
+    }
 }

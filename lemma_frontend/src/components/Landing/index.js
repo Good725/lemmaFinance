@@ -4,11 +4,14 @@ import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab } from '@mate
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 import { useWallet } from 'use-wallet';
 import Web3 from "web3";
-import BigNumber from "bignumber.js";
+import { ethers, BigNumber } from "ethers";
+import { Biconomy } from "@biconomy/mexa";
 
 import erc20 from "../../abis/ERC20.json";
 import addresses from "../../abis/addresses.json";
+import LemmaMainnet from "../../abis/LemmaMainnet.json";
 import LemmaToken from "../../abis/LemmaToken.json";
+
 import { styles } from './styles';
 // import Table from "../Table/index";
 
@@ -35,38 +38,110 @@ function LandingPage({ classes }) {
   };
 
   const handleMaxClick = () => {
-    setAmount(wallet.balance/Math.pow(10, 18));
+    setAmount(wallet.balance / Math.pow(10, 18));
   };
 
   const handleDepositSubmit = async () => {
     console.log(amount);
+
     web3 = new Web3(window.ethereum);
     let accounts = await web3.eth.getAccounts();
     account = accounts[0];
-    const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
-    const usdc = new web3.eth.Contract(erc20.abi, addresses.usdc);
-    const amountToDeposit = new BigNumber(amount);
-    const amountToDepositWithDecimals = amountToDeposit.multipliedBy(new BigNumber(10).pow(new BigNumber(6)));
+    const amountToDeposit = BigNumber.from(amount);
+    const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
-    await usdc.methods.approve(lemmaToken.options.address, amountToDepositWithDecimals).send({ from: accounts[0] });
+    const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
+    await lemmaMainnet.methods.deposit(0).send({ from: account, value: amountToDepositWithDecimals });
+    // const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
+    // const usdc = new web3.eth.Contract(erc20.abi, addresses.usdc);
+    // const amountToDeposit = BigNumber.from(amount);
+    // const amountToDepositWithDecimals = amountToDeposit.multipliedBy(BigNumber.from(10).pow(BigNumber.from(6)));
 
-    await lemmaToken.methods.mint(amountToDepositWithDecimals).send({ from: accounts[0] });
-    await refreshBalances();
+    // await usdc.methods.approve(lemmaToken.options.address, amountToDepositWithDecimals).send({ from: accounts[0] });
+
+    // await lemmaToken.methods.mint(amountToDepositWithDecimals).send({ from: accounts[0] });
+    // await refreshBalances();
   };
 
   const handleWithdrawSubmit = async () => {
     console.log(amount);
     console.log(amount);
+    const xDAIProvider = new Web3.providers.HttpProvider("https://rpc.xdaichain.com/");
+    const biconomy = new Biconomy(xDAIProvider, {
+      walletProvider: window.ethereum,
+      apiKey: "Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39",
+      apiId: "42f4a570-923b-4888-9338-c5506bd5d252",
+      debug: true
+    });
+    const web3Biconomy = new Web3(biconomy);
+
     web3 = new Web3(window.ethereum);
     let accounts = await web3.eth.getAccounts();
-    account = accounts[0];
-    const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
 
-    const amountToDeposit = new BigNumber(amount);
-    const amountToDepositWithDecimals = amountToDeposit.multipliedBy(new BigNumber(10).pow(new BigNumber(18)));
+    const amountToWithdraw = BigNumber.from(amount);
+    const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
-    await lemmaToken.methods.redeem(amountToDepositWithDecimals).send({ from: accounts[0] });
-    await refreshBalances();
+
+    let userAddress = accounts[0];
+
+    biconomy.onEvent(biconomy.READY, async () => {
+      // Initialize your dapp here like getting user accounts etc
+
+      // const lemmaxDAI = new web3Biconomy.eth.Contract(LemmaToken.abi, addresses.xDAIRinkeby.lemmaxDAI);
+
+      // await lemmaxDAI.methods.withdraw(amountToWithdrawWithDecimals).send({ from: accounts[0], signatureType: biconomy.EIP712_SIGN });
+
+      // Initialize Constants
+      let contract = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI,
+        LemmaToken.abi, biconomy.getSignerByAddress(userAddress));
+
+      let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
+
+
+
+      // Create your target method signature.. here we are calling setQuote() method of our contract
+      let { data } = await contract.populateTransaction.withdraw(amountToWithdrawWithDecimals);
+      let provider = biconomy.getEthersProvider();
+
+      // you can also use networkProvider created above
+      let gasLimit = await provider.estimateGas({
+        to: addresses.xDAIRinkeby.lemmaxDAI,
+        from: userAddress,
+        data: data
+      });
+      console.log("Gas limit : ", gasLimit);
+
+      let txParams = {
+        data: data,
+        to: addresses.xDAIRinkeby.lemmaxDAI,
+        from: userAddress,
+        gasLimit: gasLimit, // optional
+        signatureType: "EIP712_SIGN"
+      };
+
+
+      // as ethers does not allow providing custom options while sending transaction
+      // you can also use networkProvider created above               
+      // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options  
+      let tx = await provider.send("eth_sendTransaction", [txParams]);
+      console.log("Transaction hash : ", tx);
+
+      //event emitter methods
+      provider.once(tx, (transaction) => {
+        // Emitted when the transaction has been mined
+        //show success message
+        console.log(transaction);
+        //do something with transaction hash
+      });
+    }).onEvent(biconomy.ERROR, (error, message) => {
+      // Handle error while initializing mexa
+      console.log(error);
+    });
+    // const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
+
+
+    // await lemmaToken.methods.redeem(amountToDepositWithDecimals).send({ from: accounts[0] });
+    // await refreshBalances();
   };
 
   const handleConnectWallet = async () => {
@@ -79,22 +154,22 @@ function LandingPage({ classes }) {
   };
 
   const refreshBalances = async () => {
-    const usdcBalance = await getBalance(addresses.usdc, account);
-    setBalance(usdcBalance);
-    const LusdcBalance = await getBalance(addresses.lusdc, account);
-    setLBalance(LusdcBalance);
+    // const usdcBalance = await getBalance(addresses.usdc, account);
+    // setBalance(usdcBalance);
+    // const LusdcBalance = await getBalance(addresses.lusdc, account);
+    // setLBalance(LusdcBalance);
   };
 
   // const convert;
   const getBalance = async (tokenAddress, _account) => {
     // const usdcAddress = "0xe0B887D54e71329318a036CF50f30Dbe4444563c";
     const tokenContract = new web3.eth.Contract(erc20.abi, tokenAddress);
-    const balance = new BigNumber((await tokenContract.methods.balanceOf(_account).call()).toString());
-    const decimals = new BigNumber((await tokenContract.methods.decimals().call()).toString());
+    const balance = BigNumber.from((await tokenContract.methods.balanceOf(_account).call()).toString());
+    const decimals = BigNumber.from((await tokenContract.methods.decimals().call()).toString());
 
-    console.log((balance.dividedBy(new BigNumber(10).pow(decimals))).toString());
-    // setBalance(balance.dividedBy(new BigNumber(10).pow(decimals)).toString());
-    return balance.dividedBy(new BigNumber(10).pow(decimals)).toString();
+    console.log((balance.dividedBy(BigNumber.from(10).pow(decimals))).toString());
+    // setBalance(balance.dividedBy(BigNumber.from(10).pow(decimals)).toString());
+    return balance.dividedBy(BigNumber.from(10).pow(decimals)).toString();
   };
 
   const handleTabChange = (event, newValue) => {
@@ -139,7 +214,7 @@ function LandingPage({ classes }) {
             </Grid>
             <Grid item>
               <Button color="primary" className={classes.lcText} variant="outlined" onClick={() => handleConnectWallet()}>
-                { wallet.account ?  wallet.account.slice(0,8) + "..." : "Connect Wallet"}
+                {wallet.account ? wallet.account.slice(0, 8) + "..." : "Connect Wallet"}
               </Button>
             </Grid>
           </Grid>
@@ -177,7 +252,7 @@ function LandingPage({ classes }) {
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Wallet Balance</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{balance > -1 ? balance/Math.pow(10, 18) : 0}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{wallet.balance > -1 ? wallet.balance / Math.pow(10, 18) : 0}</Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
