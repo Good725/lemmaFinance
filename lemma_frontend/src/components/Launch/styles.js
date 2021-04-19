@@ -29,14 +29,6 @@ export const styles = theme => ({
     display: 'inline-block',
     height: 40
   },
-  connectButton: {
-    textTransform: 'none',
-    color: 'white',
-    border: 'solid 2px white',
-    '&:hover': {
-      border: 'solid 2px white',
-    },
-  },
   title: {
     marginBottom: '1vh',
     fontFamily: 'Roboto',
@@ -81,7 +73,7 @@ export const styles = theme => ({
   actionPaper: {
     width: '100%',
     paddingTop: '2vw',
-    paddingBottom: '1vw',
+    paddingBottom: '2vw',
     paddingLeft: '0.5vw',
     paddingRight: '0.5vw',
     borderRadius: '20px',
@@ -90,32 +82,23 @@ export const styles = theme => ({
     backdropFilter: 'blur( 8px )',
     border: '1px solid rgba( 255, 255, 255, 0.18 )',
   },
+  content: {
+    fontSize: '1.5vw',
+  },
   assetLogo: {
     maxHeight: 50
-  },
-  tab: {
-    minWidth: '9.5vw',
-    textTransform: 'none',
-    color: '#1E242B',
-    borderBottom: '2px solid white'
-  },
-  tabContent: {
-    paddingTop: '2vw',
   },
   input: {
     width: '100%',
     height: '50px',
-    color: 'white'
+    color: 'white',
+    marginBottom: '2vw',
+    marginTop: '2vw'
   },
   button: {
     color: 'white',
     height: '54px'
   },
-  secondaryButton: {
-    color: '#52B788',
-    width: '100%',
-    height: '54px',
-    backgroundColor: '#D9F3E7'
-  }
+
 
 })

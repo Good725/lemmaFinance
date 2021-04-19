@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route } from "react-router-dom";
 import theme from "./assets/theme";
 
 import Landing from "./components/Landing/index";
+import Launch from "./components/Launch/index";
 import Privacy from "./components/Privacy/index";
 import Terms from "./components/Terms/index";
 import { UseWalletProvider } from 'use-wallet';

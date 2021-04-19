@@ -29,7 +29,6 @@ function LandingPage({ classes }) {
   var web3;
   var account;
 
-
   const handleAmountChange = event => {
     setAmount(event.target.value);
   };
@@ -135,10 +134,10 @@ function LandingPage({ classes }) {
           <Grid container item xs={11} md={9} xl={8} className={classes.navigationContainer} justify="space-between">
             <Grid item container xs={4} alignItems="center">
               <Grid item><img className={classes.logoImg} src={require('../../assets/img/logo.png')} alt="" /></Grid>
-              <Grid item><Typography className={classes.logo} variant="body1"><b>LEMMA</b></Typography></Grid>
+              <Grid item><Typography className={classes.logo} variant="body2"><b>LEMMA</b></Typography></Grid>
             </Grid>
             <Grid item>
-              <Button color="primary" className={classes.lcText} variant="outlined" onClick={() => handleConnectWallet()}>
+              <Button className={classes.connectButton} variant="outlined" onClick={() => handleConnectWallet()}>
                 { wallet.account ?  wallet.account.slice(0,8) + "..." : "Connect Wallet"}
               </Button>
             </Grid>
@@ -148,7 +147,7 @@ function LandingPage({ classes }) {
 
             <Grid container item direction="column">
               <Grid item className={classes.title}>Superior, low risk, sustainable yield.</Grid>
-              <Grid item className={classes.subtitle}>Deposit USDC and we’ll earn you money via cash & carry.</Grid>
+              <Grid item className={classes.subtitle}>Deposit USDC and we’ll earn you money via basis trading.</Grid>
             </Grid>
 
             <Grid container item className={classes.contentContainer} justify="center">
@@ -182,10 +181,10 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
                               <Grid item xs={8}>
-                                <TextField color="primary" variant="outlined" value={amount} autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
                               </Grid>
                               <Grid item xs={3}>
-                                <Button className={classes.secondaryButton} color="secondary" variant="contained" onClick={() => handleMaxClick()}>
+                                <Button className={classes.secondaryButton} variant="contained" onClick={() => handleMaxClick()}>
                                   Max
                                 </Button>
                               </Grid>
@@ -211,21 +210,21 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
                               <Grid item xs={8}>
-                                <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                                <TextField color="primary" variant="filled" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
                               </Grid>
                               <Grid item xs={3}>
-                                <Button className={classes.secondaryButton} color="secondary" variant="contained" onClick={() => handleAmountChange(usdcData.balance)}>
+                                <Button className={classes.secondaryButton} variant="contained" onClick={() => handleAmountChange(usdcData.balance)}>
                                   Max
                                   </Button>
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
-                              <TextField color="primary" variant="outlined" autoFocus={true} className={classes.input} label={`${usdcData.asset} Wallet Address`} onChange={e => handleAmountChange(e)} />
+                              <TextField color="primary" variant="filled" className={classes.input} label={`${usdcData.asset} Wallet Address`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item xs={12}>
                               <Button fullWidth className={classes.button} color="primary" variant="contained" onClick={() => handleWithdrawSubmit()}>
                                 Withdraw
-                                </Button>
+                              </Button>
                             </Grid>
                           </Grid>
                         </TabPanel>
