@@ -1,5 +1,3 @@
-const LemmaPerpetual = artifacts.require("LemmaPerpetual");
-
 contract("LemmaPerpetual", accounts => {
   const clearingHouseAddress = "0xd1ab46526D555285E9b61f066B7673bb9b9B51b6";
   const clearingHouseViewerAddress = "0x2b53BA3d842F76e4D96FecEA77d345d237680E2e";
@@ -7,6 +5,9 @@ contract("LemmaPerpetual", accounts => {
   const usdcAddress = "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83";
 
   it("Deploy LemmaPerpetual", async function() {
-    let LemmaPerpetualContract = await LemmaPerpetual.new(clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress);
+    const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
+    let LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress], { initializer: 'initialize' });
+    console.log(LemmaPerpetualContract.address);
+    console.log(await LemmaPerpetualContract.owner());
   });
 });

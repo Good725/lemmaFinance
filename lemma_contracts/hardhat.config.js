@@ -1,5 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
+require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 
 
@@ -29,12 +30,14 @@ module.exports = {
     hardhat: {
       forking: {
         url: "https://rpc.xdaichain.com/",
-
       },
+      // forking: {
+      //   url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
+      // },
       accounts: {
         mnemonic: process.env.MNEMONIC,
       }
-    }
+    },
     // ganache: {
     //   url: "http://127.0.0.1:8545",
     //   timeout: 2000000,
@@ -42,18 +45,15 @@ module.exports = {
     //     mnemonic: process.env.MNEMONIC,
     //   },
     // },
-    // rinkeby: {
-    //   url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
-    //   accounts: {
-    //     mnemonic: process.env.MNEMONIC,
-    //   },
-    // },
-    // xdai: {
-    //   url: "https://rpc.xdaichain.com/",
-    //   accounts: [process.env.PRIVATE_KEY],
-    //   gasPrice: 10 ** 9,//1 gwei
-
-    // }
+    rinkeby: {
+      url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+    xdai: {
+      url: "https://rpc.xdaichain.com/",
+      accounts: [process.env.PRIVATE_KEY],
+      gasPrice: 10 ** 9,//1 gwei
+    }
   },
   solidity: {
     version: "0.8.3",
