@@ -4,7 +4,7 @@ import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab } from '@mate
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 import { useWallet } from 'use-wallet';
 import Web3 from "web3";
-import { ethers, BigNumber } from "ethers";
+import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
 
 import erc20 from "../../abis/ERC20.json";
@@ -20,7 +20,7 @@ function LandingPage({ classes }) {
   const wallet = useWallet();
 
   console.log("--------------------", { wallet });
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState("0");
   const [tabIndex, setTabIndex] = useState("1");
   const [open, setOpen] = useState(false);
   const [balance, setBalance] = useState('0');
@@ -31,13 +31,18 @@ function LandingPage({ classes }) {
 
   var web3;
   var account;
-
+  const convertTo18Decimals = (number) => {
+    return ethers.utils.parseEther(number);
+  };
+  const convertToRedableFormate = (bignumber) => {
+    return ethers.utils.formatUnits(bignumber);
+  };
   const handleAmountChange = event => {
-    setAmount(event.target.value);
+    setAmount(convertTo18Decimals(event.target.value));
   };
 
   const handleMaxClick = () => {
-    setAmount(wallet.balance / Math.pow(10, 18));
+    setAmount(BigNumber.from(wallet.balance));
   };
 
   const handleDepositSubmit = async () => {
@@ -46,19 +51,12 @@ function LandingPage({ classes }) {
     web3 = new Web3(window.ethereum);
     let accounts = await web3.eth.getAccounts();
     account = accounts[0];
-    const amountToDeposit = BigNumber.from(amount);
-    const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
+    // const amountToDeposit = BigNumber.from(amount);
+    // const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
     const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
-    await lemmaMainnet.methods.deposit(0).send({ from: account, value: amountToDepositWithDecimals });
-    // const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
-    // const usdc = new web3.eth.Contract(erc20.abi, addresses.usdc);
-    // const amountToDeposit = BigNumber.from(amount);
-    // const amountToDepositWithDecimals = amountToDeposit.multipliedBy(BigNumber.from(10).pow(BigNumber.from(6)));
+    await lemmaMainnet.methods.deposit(0).send({ from: account, value: amount });
 
-    // await usdc.methods.approve(lemmaToken.options.address, amountToDepositWithDecimals).send({ from: accounts[0] });
-
-    // await lemmaToken.methods.mint(amountToDepositWithDecimals).send({ from: accounts[0] });
     // await refreshBalances();
   };
 
@@ -77,8 +75,8 @@ function LandingPage({ classes }) {
     web3 = new Web3(window.ethereum);
     let accounts = await web3.eth.getAccounts();
 
-    const amountToWithdraw = BigNumber.from(amount);
-    const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
+    // const amountToWithdraw = BigNumber.from(amount);
+    // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
 
     let userAddress = accounts[0];
@@ -99,7 +97,7 @@ function LandingPage({ classes }) {
 
 
       // Create your target method signature.. here we are calling setQuote() method of our contract
-      let { data } = await contract.populateTransaction.withdraw(amountToWithdrawWithDecimals);
+      let { data } = await contract.populateTransaction.withdraw(amount);
       let provider = biconomy.getEthersProvider();
 
       // you can also use networkProvider created above
@@ -213,7 +211,7 @@ function LandingPage({ classes }) {
             </Grid>
             <Grid item>
               <Button className={classes.connectButton} variant="outlined" onClick={() => handleConnectWallet()}>
-                { wallet.account ?  wallet.account.slice(0,8) + "..." : "Connect Wallet"}
+                {wallet.account ? wallet.account.slice(0, 8) + "..." : "Connect Wallet"}
               </Button>
             </Grid>
           </Grid>
@@ -256,7 +254,7 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
                               <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                                <TextField color="primary" variant="filled" value={convertToRedableFormate(amount)} autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
                               </Grid>
                               <Grid item xs={3}>
                                 <Button className={classes.secondaryButton} variant="contained" onClick={() => handleMaxClick()}>

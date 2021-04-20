@@ -3,7 +3,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Paper, Snackbar, Typography } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
 import { styles } from './styles';
-import { axios_request } from 'utils/rest_request';
+import { axios_request } from '../../utils/rest_request';
 
 function LaunchPage({ classes }) {
 
