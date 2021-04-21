@@ -20,7 +20,7 @@ contract MockAMB {
         xdaiContract = _xdaiContract;
     }
 
-    function messageSender() public view returns (address target) {
+    function messageSender() public view returns (address) {
         uint id;
         assembly {
             id := chainid()
