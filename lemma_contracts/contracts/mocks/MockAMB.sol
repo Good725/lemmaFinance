@@ -12,15 +12,15 @@ contract MockAMB {
         __Ownable_init();
     }
 
-    function setMainnetContract(address _mainnetContract) onlyOwner {
+    function setMainnetContract(address _mainnetContract) public onlyOwner {
         mainnetContract = _mainnetContract;
     }
 
-    function setXDAIContract(address _xdaiContract) onlyOwner {
+    function setXDAIContract(address _xdaiContract) public onlyOwner {
         xdaiContract = _xdaiContract;
     }
 
-    function messageSender() returns (address target) {
+    function messageSender() public view returns (address target) {
         uint id;
         assembly {
             id := chainid()
