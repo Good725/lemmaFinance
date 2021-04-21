@@ -220,7 +220,7 @@ function LandingPage({ classes }) {
 
             <Grid container item direction="column">
               <Grid item className={classes.title}>Superior, low risk, sustainable yield.</Grid>
-              <Grid item className={classes.subtitle}>Deposit ETH and we’ll earn you money via basis trading.</Grid>
+              <Grid item className={classes.subtitle}>Deposit ETH and we’ll earn you more ETH via basis trading.</Grid>
             </Grid>
 
             <Grid container item className={classes.contentContainer} justify="center">
@@ -245,11 +245,11 @@ function LandingPage({ classes }) {
                             <Grid container item xs={12} direction='row' justify="center">
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Earn APY</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{ethData.apy}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1"><b>{ethData.apy}</b></Typography> </Grid>
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Wallet Balance</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{wallet.balance > -1 ? wallet.balance / Math.pow(10, 18) : 0}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1"><b>{wallet.balance > -1 ? wallet.balance / Math.pow(10, 18) : 0}</b></Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
@@ -270,7 +270,7 @@ function LandingPage({ classes }) {
                           </Grid>
                         </TabPanel>
                         <TabPanel value="2" className={classes.tabContent}>
-                          <Grid container item spacing={3}>
+                          <Grid container item spacing={5}>
                             <Grid container item xs={12} direction='row' justify="center">
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Deposited</Typography> </Grid>
@@ -290,9 +290,6 @@ function LandingPage({ classes }) {
                                   Max
                                   </Button>
                               </Grid>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <TextField color="primary" variant="filled" className={classes.input} label={`${ethData.asset} Wallet Address`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item xs={12}>
                               <Button fullWidth className={classes.button} color="primary" variant="contained" onClick={() => handleWithdrawSubmit()}>

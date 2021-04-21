@@ -8,8 +8,7 @@ let theme = createMuiTheme({
       textAlign: 'center',
     },
     body2: {
-      color: '#6A758A',
-      fontSize: '1vw'
+
     }
   },
   palette: {

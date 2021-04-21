@@ -16,7 +16,12 @@ export const styles = theme => ({
     position: 'relative',
   },
   navigationContainer: {
-    marginTop: '2vw',
+    [theme.breakpoints.down('sm')]: {
+      marginTop: '8vw',
+    },
+    [theme.breakpoints.up('md')]: {
+      marginTop: '2vw',
+    },
   },
   mainContainer: {
     marginTop: '3vw',
@@ -24,6 +29,13 @@ export const styles = theme => ({
   logo: {
     display: 'inline-block',
     paddingLeft: '15px',
+    color: '#6A758A',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '4vw',
+    },
+    [theme.breakpoints.up('md')]: {
+      fontSize: '1vw',
+    },
   },
   logoImg: {
     display: 'inline-block',
@@ -31,24 +43,32 @@ export const styles = theme => ({
   },
   connectButton: {
     textTransform: 'none',
-    color: 'white',
-    border: 'solid 2px white',
-    '&:hover': {
-      border: 'solid 2px white',
+    [theme.breakpoints.down('sm')]: {
+      color: '#6A758A',
+      border: 'solid 2px #6A758A',
+      '&:hover': {
+        border: 'solid 2px #6A758A',
+      },
     },
+    [theme.breakpoints.up('md')]: {
+      color: 'white',
+      border: 'solid 2px white',
+      '&:hover': {
+        border: 'solid 2px white',
+      },
+    }
   },
   title: {
     marginBottom: '1vh',
     fontFamily: 'Roboto',
     color: '#1E242B',
-    fontStyle: 'normal',
-    fontWeight: 'normal',
     textAlign: 'center',
+    fontWeight: 'bold',
 
     [theme.breakpoints.down('sm')]: {
-      marginTop: '7vh',
-      fontSize: '7.5vw',
-      lineHeight: '8.5vw'
+      marginTop: '5vh',
+      fontSize: '10vw',
+      lineHeight: '10.5vw',
     },
     [theme.breakpoints.up('md')]: {
       fontSize: '3.2vw',
@@ -57,12 +77,11 @@ export const styles = theme => ({
   },
   subtitle: {
     fontFamily: 'Roboto',
-    fontStyle: 'normal',
-    fontWeight: 'normal',
     color: '#6A758A',
     textAlign: 'center',
 
     [theme.breakpoints.down('sm')]: {
+      marginTop: '2vw',
       fontSize: '5vw',
       lineHeight: '5.5vw',
     },
@@ -77,6 +96,9 @@ export const styles = theme => ({
 
   contentContainer: {
     marginTop: '3vw',
+    [theme.breakpoints.down('sm')]: {
+      marginTop: '10vw',
+    },
   },
   actionPaper: {
     width: '100%',
@@ -89,18 +111,28 @@ export const styles = theme => ({
     boxShadow: '0 8px 32px 0 rgba( 31, 38, 135, 0.37 )',
     backdropFilter: 'blur( 8px )',
     border: '1px solid rgba( 255, 255, 255, 0.18 )',
+    [theme.breakpoints.down('sm')]: {
+      paddingTop: '5vw',
+    },
   },
   assetLogo: {
     maxHeight: 50
   },
   tab: {
-    minWidth: '9.5vw',
     textTransform: 'none',
     color: '#1E242B',
-    borderBottom: '2px solid white'
+    borderBottom: '2px solid white',
+    [theme.breakpoints.down('sm')]: {
+      minWidth: '34.5vw',
+    },
+    [theme.breakpoints.up('md')]: {
+      minWidth: '9.5vw',
+    },
   },
   tabContent: {
-    paddingTop: '2vw',
+    [theme.breakpoints.up('md')]: {
+      paddingTop: '2vw',
+    },
   },
   input: {
     width: '100%',
