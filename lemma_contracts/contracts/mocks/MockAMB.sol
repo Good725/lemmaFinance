@@ -2,21 +2,30 @@
 pragma solidity =0.8.3;
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
+interface Mainnet {
+    function setWithdrawalInfo(address _account, uint256 _amount) external;
+}
+
+interface XDAI {
+    function setDepositInfo(address _account, uint256 _amount) external;
+}
+
 
 contract MockAMB is OwnableUpgradeable {
 
-    address mainnetContract;
-    address xdaiContract;
+    Mainnet public mainnetContract;
+    XDAI public xdaiContract;
   
-    function initialize() public initializer {
+    function initialize(XDAI _xdaiContract) public initializer {
         __Ownable_init();
+        xdaiContract = _xdaiContract;
     }
 
-    function setMainnetContract(address _mainnetContract) public onlyOwner {
+    function setMainnetContract(Mainnet _mainnetContract) public onlyOwner {
         mainnetContract = _mainnetContract;
     }
 
-    function setXDAIContract(address _xdaiContract) public onlyOwner {
+    function setXDAIContract(XDAI _xdaiContract) public onlyOwner {
         xdaiContract = _xdaiContract;
     }
 
@@ -26,9 +35,17 @@ contract MockAMB is OwnableUpgradeable {
             id := chainid()
         }
         if (id == 4) {
-            return mainnetContract;
+            return address(mainnetContract);
         } else {
-            return xdaiContract;
+            return address(xdaiContract);
         }
+    }
+
+    function setWithdrawInfo(address _account, uint _amount) public {
+        mainnetContract.setWithdrawalInfo(_account, _amount);
+    }
+
+    function setDepositInfo(address _account, uint _amount) public {
+        xdaiContract.setDepositInfo(_account, _amount);
     }
 }
