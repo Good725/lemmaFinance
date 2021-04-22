@@ -11,7 +11,6 @@ contract("LemmaMainnet", accounts => {
     const ambBridgeOnEth = "0xD4075FB57fCf038bFc702c915Ef9592534bED5c1";
     const multiTokenMediatorOnEth = "0x30F693708fc604A57F1958E3CFa059F902e6d4CB";
     const trustedForwaderRinkeby = "0xFD4973FeB2031D4409fB57afEE5dF2051b171104";
-    const LEMMA_XDAI_ABI = require('../abis/LemmaXDAI_abi.json');
     let LemmaMainnetContract;
     let ambBridgeContract;
     let lemmaXDAI;
