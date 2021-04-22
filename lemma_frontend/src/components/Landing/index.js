@@ -16,8 +16,8 @@ import { styles } from './styles';
 
 function LandingPage({ classes }) {
   const wallet = useWallet();
-  if(wallet.error && wallet.error.name === "ChainUnsupportedError") {
-    alert("Please switch your wallet to Rinkeby Test Network.")
+  if (wallet.error && wallet.error.name === "ChainUnsupportedError") {
+    alert("Please switch your wallet to Rinkeby Test Network.");
   }
   console.log("--------------------", { wallet });
 
@@ -26,7 +26,7 @@ function LandingPage({ classes }) {
   const [open, setOpen] = useState(false);
 
   // const [balance, setBalance] = useState('0');
-  // const [lBalance, setLBalance] = useState('0');
+  const [lBalance, setLBalance] = useState('0');
   // const [web3, setWeb3] = useState(null);
   // const [account, setAccount] = useState(null);
 
@@ -38,18 +38,18 @@ function LandingPage({ classes }) {
   };
 
   const convertToReadableFormat = (bignumber) => {
-    return ethers.utils.formatUnits(bignumber); 
+    return ethers.utils.formatUnits(bignumber);
   };
 
   const handleMaxClick = () => {
-    if(wallet.balance > -1) {
+    if (wallet.balance > -1) {
       setAmount(convertToReadableFormat(wallet.balance));
     }
   };
 
   const handleAmountChange = event => {
-    if(event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
-      alert('Please enter a number!')
+    if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
+      alert('Please enter a number!');
     }
     else {
       setAmount(event.target.value);
@@ -57,20 +57,20 @@ function LandingPage({ classes }) {
   };
 
   const handleSliderChange = (event, value) => {
-    if(wallet.balance > -1){
+    if (wallet.balance > -1) {
       setAmount(value * convertToReadableFormat(wallet.balance) / 100);
     }
   };
 
   const handleDepositSubmit = async () => {
-    if(wallet.balance > -1) {
+    if (wallet.balance > -1) {
       web3 = new Web3(window.ethereum);
       let accounts = await web3.eth.getAccounts();
       account = accounts[0];
       // const amountToDeposit = BigNumber.from(amount);
       // const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
       const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
-      await lemmaMainnet.methods.deposit(0).send({ from: account, value: amount });
+      await lemmaMainnet.methods.deposit(0).send({ from: account, value: convertTo18Decimals(amount) });
       // await refreshBalances();
     }
     else {
@@ -107,7 +107,7 @@ function LandingPage({ classes }) {
       let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
 
       // Create your target method signature.. here we are calling setQuote() method of our contract
-      let { data } = await contract.populateTransaction.withdraw(amount);
+      let { data } = await contract.populateTransaction.withdraw(convertTo18Decimals(amount));
       let provider = biconomy.getEthersProvider();
 
       // you can also use networkProvider created above
@@ -272,16 +272,16 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
-                              <Slider
-                                defaultValue={0}
-                                aria-labelledby="discrete-slider"
-                                valueLabelDisplay="auto"
-                                onChange={(e, v) => handleSliderChange(e, v)}
-                                step={25}
-                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
-                                min={0}
-                                max={100}
-                              />
+                                <Slider
+                                  defaultValue={0}
+                                  aria-labelledby="discrete-slider"
+                                  valueLabelDisplay="auto"
+                                  onChange={(e, v) => handleSliderChange(e, v)}
+                                  step={25}
+                                  marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                  min={0}
+                                  max={100}
+                                />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
@@ -315,16 +315,16 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
-                              <Slider
-                                defaultValue={0}
-                                aria-labelledby="discrete-slider"
-                                valueLabelDisplay="auto"
-                                onChange={(e, v) => handleSliderChange(e, v)}
-                                step={25}
-                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
-                                min={0}
-                                max={100}
-                              />
+                                <Slider
+                                  defaultValue={0}
+                                  aria-labelledby="discrete-slider"
+                                  valueLabelDisplay="auto"
+                                  onChange={(e, v) => handleSliderChange(e, v)}
+                                  step={25}
+                                  marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                  min={0}
+                                  max={100}
+                                />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
