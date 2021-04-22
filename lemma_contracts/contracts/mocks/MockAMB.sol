@@ -15,6 +15,7 @@ contract MockAMB is OwnableUpgradeable {
 
     Mainnet public mainnetContract;
     XDAI public xdaiContract;
+    uint256 internal constant SEND_TO_ORACLE_DRIVEN_LANE = 0x00;
   
     function initialize(XDAI _xdaiContract) public initializer {
         __Ownable_init();
@@ -47,5 +48,10 @@ contract MockAMB is OwnableUpgradeable {
 
     function setDepositInfo(address _account, uint _amount) public {
         xdaiContract.setDepositInfo(_account, _amount);
+    }
+
+    function requireToPassMessage(address _contract, bytes calldata _data, uint256 _gas) public returns (bytes32) {
+        bytes32 _messageId;
+        return _messageId;
     }
 }
