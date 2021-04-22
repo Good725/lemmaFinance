@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { withStyles } from '@material-ui/core/styles';
-import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab } from '@material-ui/core';
+import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab, Slider } from '@material-ui/core';
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 import { useWallet } from 'use-wallet';
 import Web3 from "web3";
@@ -13,51 +13,69 @@ import LemmaMainnet from "../../abis/LemmaMainnet.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 
 import { styles } from './styles';
-// import Table from "../Table/index";
-
 
 function LandingPage({ classes }) {
   const wallet = useWallet();
-
+  if(wallet.error && wallet.error.name === "ChainUnsupportedError") {
+    alert("Please switch your wallet to Rinkeby Test Network.")
+  }
   console.log("--------------------", { wallet });
-  const [amount, setAmount] = useState("0");
+
+  const [amount, setAmount] = useState("");
   const [tabIndex, setTabIndex] = useState("1");
   const [open, setOpen] = useState(false);
-  const [balance, setBalance] = useState('0');
-  const [lBalance, setLBalance] = useState('0');
 
+  // const [balance, setBalance] = useState('0');
+  // const [lBalance, setLBalance] = useState('0');
   // const [web3, setWeb3] = useState(null);
   // const [account, setAccount] = useState(null);
 
   var web3;
   var account;
+
   const convertTo18Decimals = (number) => {
     return ethers.utils.parseEther(number);
   };
-  const convertToRedableFormate = (bignumber) => {
-    return ethers.utils.formatUnits(bignumber);
-  };
-  const handleAmountChange = event => {
-    setAmount(convertTo18Decimals(event.target.value));
+
+  const convertToReadableFormat = (bignumber) => {
+    return ethers.utils.formatUnits(bignumber); 
   };
 
   const handleMaxClick = () => {
-    setAmount(BigNumber.from(wallet.balance));
+    if(wallet.balance > -1) {
+      setAmount(convertToReadableFormat(wallet.balance));
+    }
+  };
+
+  const handleAmountChange = event => {
+    if(event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
+      alert('Please enter a number!')
+    }
+    else {
+      setAmount(event.target.value);
+    }
+  };
+
+  const handleSliderChange = (event, value) => {
+    if(wallet.balance > -1){
+      setAmount(value * convertToReadableFormat(wallet.balance) / 100);
+    }
   };
 
   const handleDepositSubmit = async () => {
-    console.log(amount);
-
-    web3 = new Web3(window.ethereum);
-    let accounts = await web3.eth.getAccounts();
-    account = accounts[0];
-    // const amountToDeposit = BigNumber.from(amount);
-    // const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
-
-    const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
-    await lemmaMainnet.methods.deposit(0).send({ from: account, value: amount });
-
-    // await refreshBalances();
+    if(wallet.balance > -1) {
+      web3 = new Web3(window.ethereum);
+      let accounts = await web3.eth.getAccounts();
+      account = accounts[0];
+      // const amountToDeposit = BigNumber.from(amount);
+      // const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
+      const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
+      await lemmaMainnet.methods.deposit(0).send({ from: account, value: amount });
+      // await refreshBalances();
+    }
+    else {
+      handleConnectWallet();
+    }
   };
 
   const handleWithdrawSubmit = async () => {
@@ -78,23 +96,15 @@ function LandingPage({ classes }) {
     // const amountToWithdraw = BigNumber.from(amount);
     // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
-
     let userAddress = accounts[0];
-
     biconomy.onEvent(biconomy.READY, async () => {
       // Initialize your dapp here like getting user accounts etc
-
       // const lemmaxDAI = new web3Biconomy.eth.Contract(LemmaToken.abi, addresses.xDAIRinkeby.lemmaxDAI);
-
       // await lemmaxDAI.methods.withdraw(amountToWithdrawWithDecimals).send({ from: accounts[0], signatureType: biconomy.EIP712_SIGN });
-
       // Initialize Constants
       let contract = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI,
         LemmaToken.abi, biconomy.getSignerByAddress(userAddress));
-
       let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
-
-
 
       // Create your target method signature.. here we are calling setQuote() method of our contract
       let { data } = await contract.populateTransaction.withdraw(amount);
@@ -116,7 +126,6 @@ function LandingPage({ classes }) {
         signatureType: "EIP712_SIGN"
       };
 
-
       // as ethers does not allow providing custom options while sending transaction
       // you can also use networkProvider created above               
       // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options  
@@ -135,7 +144,6 @@ function LandingPage({ classes }) {
       console.log(error);
     });
     // const lemmaToken = new web3.eth.Contract(LemmaToken.abi, addresses.lusdc);
-
 
     // await lemmaToken.methods.redeem(amountToDepositWithDecimals).send({ from: accounts[0] });
     // await refreshBalances();
@@ -224,10 +232,10 @@ function LandingPage({ classes }) {
             </Grid>
 
             <Grid container item className={classes.contentContainer} justify="center">
-              <Grid container item xs={12} md={4} className={classes.paperContainer}>
+              <Grid container item xs={12} md={5} lg={4} className={classes.paperContainer}>
                 <Paper className={classes.actionPaper} elevation={5}>
                   <Grid container item className={classes.actionContainer} direction='column' alignItems='center' spacing={4}>
-                    <Grid item>
+                    <Grid item >
                       <img className={classes.assetLogo} src={ethData.image_url} alt="" />
                     </Grid>
                     <Grid container item justify="center">
@@ -237,11 +245,11 @@ function LandingPage({ classes }) {
                           indicatorColor="primary"
                           centered
                         >
-                          <Tab label={`Deposit ${ethData.asset}`} value="1" className={classes.tab} />
-                          <Tab label={`Withdraw ${ethData.asset}`} value="2" className={classes.tab} />
+                          <Tab label="Deposit" value="1" className={classes.tab} />
+                          <Tab label="Withdraw" value="2" className={classes.tab} />
                         </TabList>
                         <TabPanel value="1" className={classes.tabContent}>
-                          <Grid container item spacing={5}>
+                          <Grid container item spacing={4}>
                             <Grid container item xs={12} direction='row' justify="center">
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Earn APY</Typography> </Grid>
@@ -254,12 +262,26 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
                               <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" value={convertToRedableFormate(amount)} autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
                               </Grid>
                               <Grid item xs={3}>
                                 <Button className={classes.secondaryButton} variant="contained" onClick={() => handleMaxClick()}>
                                   Max
                                 </Button>
+                              </Grid>
+                            </Grid>
+                            <Grid item container xs={12} justify="center">
+                              <Grid item xs={11}>
+                              <Slider
+                                defaultValue={0}
+                                aria-labelledby="discrete-slider"
+                                valueLabelDisplay="auto"
+                                onChange={(e, v) => handleSliderChange(e, v)}
+                                step={25}
+                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                min={0}
+                                max={100}
+                              />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
@@ -270,7 +292,7 @@ function LandingPage({ classes }) {
                           </Grid>
                         </TabPanel>
                         <TabPanel value="2" className={classes.tabContent}>
-                          <Grid container item spacing={5}>
+                          <Grid container item spacing={4}>
                             <Grid container item xs={12} direction='row' justify="center">
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Deposited</Typography> </Grid>
@@ -283,12 +305,26 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
                               <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" autoFocus={true} className={classes.input} label="Amount" onChange={e => handleAmountChange(e)} />
+                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
                               </Grid>
                               <Grid item xs={3}>
                                 <Button className={classes.secondaryButton} variant="contained" onClick={() => handleAmountChange(ethData.balance)}>
                                   Max
                                   </Button>
+                              </Grid>
+                            </Grid>
+                            <Grid item container xs={12} justify="center">
+                              <Grid item xs={11}>
+                              <Slider
+                                defaultValue={0}
+                                aria-labelledby="discrete-slider"
+                                valueLabelDisplay="auto"
+                                onChange={(e, v) => handleSliderChange(e, v)}
+                                step={25}
+                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                min={0}
+                                max={100}
+                              />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
@@ -304,7 +340,6 @@ function LandingPage({ classes }) {
                 </Paper>
               </Grid>
             </Grid>
-
           </Grid>
         </Grid>
       </div>

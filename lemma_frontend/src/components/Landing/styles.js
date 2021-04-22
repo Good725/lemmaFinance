@@ -9,8 +9,8 @@ export const styles = theme => ({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundImage: `url(${Background})`
-    // backgroundColor: '#F4F7FA'
+    backgroundImage: `url(${Background})`,
+    backgroundSize: 'cover',
   },
   body: {
     position: 'relative',
@@ -116,12 +116,13 @@ export const styles = theme => ({
     },
   },
   assetLogo: {
-    maxHeight: 50
+    maxHeight: 50,
+    marginBottom: '-16px'
   },
   tab: {
     textTransform: 'none',
     color: '#1E242B',
-    borderBottom: '2px solid white',
+    borderBottom: '2px solid #b9c9af',
     [theme.breakpoints.down('sm')]: {
       minWidth: '34.5vw',
     },
@@ -131,7 +132,7 @@ export const styles = theme => ({
   },
   tabContent: {
     [theme.breakpoints.up('md')]: {
-      paddingTop: '2vw',
+      paddingTop: '1.5vw',
     },
   },
   input: {
