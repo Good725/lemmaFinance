@@ -36,7 +36,7 @@ contract MockAMB is OwnableUpgradeable {
             id := chainid()
         }
         if (id == 4) {
-            return address(mainnetContract);
+            return address(xdaiContract);
         } else {
             return address(xdaiContract);
         }
