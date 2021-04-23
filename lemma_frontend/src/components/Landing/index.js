@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { withStyles } from '@material-ui/core/styles';
 import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab, Slider } from '@material-ui/core';
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
+
 import { useWallet } from 'use-wallet';
 import Web3 from "web3";
 import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
-
 import erc20 from "../../abis/ERC20.json";
 import addresses from "../../abis/addresses.json";
 import LemmaMainnet from "../../abis/LemmaMainnet.json";
@@ -86,6 +86,7 @@ function LandingPage({ classes }) {
       const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
       await lemmaMainnet.methods.deposit(0).send({ from: account, value: convertTo18Decimals(amount) });
       // await refreshBalances();
+      setOpen(true);
     }
     else {
       handleConnectWallet();
@@ -232,7 +233,7 @@ function LandingPage({ classes }) {
     <div className={classes.root}>
       <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
         <Alert elevation={6} variant="filled" onClose={handleClose} severity="success">
-          Signed up successfully!
+          Deposit transaction started, you should receive your LUSDT in ~1 min!
         </Alert>
       </Snackbar>
       <div className={classes.body}>
