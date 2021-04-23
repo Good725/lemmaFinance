@@ -10,13 +10,11 @@ interface XDAI {
     function setDepositInfo(address _account, uint256 _amount) external;
 }
 
-
 contract MockAMB is OwnableUpgradeable {
-
     Mainnet public mainnetContract;
     XDAI public xdaiContract;
     uint256 internal constant SEND_TO_ORACLE_DRIVEN_LANE = 0x00;
-  
+
     function initialize(XDAI _xdaiContract) public initializer {
         __Ownable_init();
         xdaiContract = _xdaiContract;
@@ -31,7 +29,7 @@ contract MockAMB is OwnableUpgradeable {
     }
 
     function messageSender() public view returns (address) {
-        uint id;
+        uint256 id;
         assembly {
             id := chainid()
         }
@@ -42,15 +40,19 @@ contract MockAMB is OwnableUpgradeable {
         }
     }
 
-    function setWithdrawInfo(address _account, uint _amount) public {
+    function setWithdrawInfo(address _account, uint256 _amount) public {
         mainnetContract.setWithdrawalInfo(_account, _amount);
     }
 
-    function setDepositInfo(address _account, uint _amount) public {
+    function setDepositInfo(address _account, uint256 _amount) public {
         xdaiContract.setDepositInfo(_account, _amount);
     }
 
-    function requireToPassMessage(address _contract, bytes calldata _data, uint256 _gas) public returns (bytes32) {
+    function requireToPassMessage(
+        address _contract,
+        bytes calldata _data,
+        uint256 _gas
+    ) public returns (bytes32) {
         bytes32 _messageId;
         return _messageId;
     }
