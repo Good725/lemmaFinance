@@ -19,7 +19,7 @@ import {
 import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
 import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
-// import 'hardhat/console.sol';
+import 'hardhat/console.sol';
 
 contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     using SafeERC20 for IERC20;
@@ -112,7 +112,12 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
-    function close(uint256 _amount) external override onlyLemmaToken {
+    function close(uint256 _amount)
+        external
+        override
+        onlyLemmaToken
+        returns (uint256)
+    {
         Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
 
@@ -144,10 +149,12 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         //     );
         //     clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
         // } else {
+
         clearingHouse.removeMargin(
             ETH_USDC_AMM,
             calcFee(ETH_USDC_AMM, assetAmount)
         );
+        console.log('removed margin enought to cover the fees');
         clearingHouse.openPosition(
             ETH_USDC_AMM,
             IClearingHouse.Side.SELL,
@@ -155,15 +162,23 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             leverage,
             baseAssetAmount
         );
+        console.log('opened position on other side');
+
         //If user is withdrawing then ...
-        clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
+        clearingHouse.removeMargin(
+            ETH_USDC_AMM,
+            assetAmount.subD(Decimal.decimal(1))
+        );
+        console.log('removed margin');
         // }
 
         //TODO: add require that leverage should not be greater than one
-        USDC.safeTransfer(
-            lemmaToken,
-            convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
-        );
+
+        uint256 amountGotBackAfterClosing =
+            convert18DecimalsToCollateralAmount(address(USDC), assetAmount);
+        USDC.safeTransfer(lemmaToken, amountGotBackAfterClosing);
+
+        return amountGotBackAfterClosing;
     }
 
     function convertCollteralAmountTo18Decimals(

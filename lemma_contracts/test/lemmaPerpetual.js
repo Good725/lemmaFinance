@@ -38,15 +38,15 @@ describe("LemmaPerpetual", () => {
     hasUSDC = await ethers.provider.getSigner("0x1A48776f436bcDAA16845A378666cf4BA131eb0F");
 
   });
-  // it("initializations correctly", async function () {
-  //   expect(await this.lemmaPerpetual.owner()).to.equal(owner.address);
-  //   expect(await this.lemmaPerpetual.clearingHouse()).to.equal(clearingHouseAddress);
-  //   expect(await this.lemmaPerpetual.clearingHouseViewer()).to.equal(clearingHouseViewerAddress);
-  //   expect(await this.lemmaPerpetual.ETH_USDC_AMM()).to.equal(ammAddress);
-  //   expect(await this.lemmaPerpetual.USDC()).to.equal(usdcAddress);
-  //   expect(await this.lemmaPerpetual.lemmaToken()).to.equal(lemmaToken.address);
-  //   expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
-  // });
+  it("initializations correctly", async function () {
+    expect(await this.lemmaPerpetual.owner()).to.equal(owner.address);
+    expect(await this.lemmaPerpetual.clearingHouse()).to.equal(clearingHouseAddress);
+    expect(await this.lemmaPerpetual.clearingHouseViewer()).to.equal(clearingHouseViewerAddress);
+    expect(await this.lemmaPerpetual.ETH_USDC_AMM()).to.equal(ammAddress);
+    expect(await this.lemmaPerpetual.USDC()).to.equal(usdcAddress);
+    expect(await this.lemmaPerpetual.lemmaToken()).to.equal(lemmaToken.address);
+    expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
+  });
 
   const getAmountToOpenPositionWith = (amount, tollRatio, spreadRatio) => {
     return (amount.mul(ONE)).div(ONE.add(tollRatio.add(spreadRatio)));
@@ -66,9 +66,8 @@ describe("LemmaPerpetual", () => {
   it("should open position correctly", async function () {
     //transfer USDC to lemmaPerpetual first
 
-    const amount = ethers.utils.parseUnits("100", "6");
-    console.log(amount.toString());
-    console.log((await this.usdc.balanceOf(hasUSDC._address)).toString());
+    const amount = ethers.utils.parseUnits("1000", "6");
+
     await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
 
     //should revert if open position is called by an address other than lemmaToken
@@ -78,37 +77,28 @@ describe("LemmaPerpetual", () => {
 
     const tollRatio = await this.amm.tollRatio();
     const spreadRatio = await this.amm.spreadRatio();
-    console.log("tollRatio", tollRatio.d.toString());
-    console.log("spreadRatio", spreadRatio.d.toString());
 
     const usdcAmountInWei = convertUSDCAmountInWei(amount);
-    console.log("usdcAmountInWei", usdcAmountInWei.toString());
-    const amountToOpenPositionWith = getAmountToOpenPositionWith(usdcAmountInWei, tollRatio.d, spreadRatio.d);
-    console.log("amountToOpenPositionWith", amountToOpenPositionWith.toString());
-    const perpFees = usdcAmountInWei.sub(amountToOpenPositionWith);
-    console.log("perpFees", perpFees);
 
-    // const 
+    const amountToOpenPositionWith = getAmountToOpenPositionWith(usdcAmountInWei, tollRatio.d, spreadRatio.d);
+
+    const perpFees = usdcAmountInWei.sub(amountToOpenPositionWith);
+
+
+
     //returns {spreadFees,tradeFees}
     //totalFees = spreadFees + tradeFees
     const fees = await this.amm.calcFee([amountToOpenPositionWith]);
 
-    // console.log(fees.spreadRatio.d);
-    console.log(fees[0].d);
-    console.log(fees[1].d);
+
     expect(perpFees).to.be.closeTo(fees[0].d.add(fees[1].d), 1);
+    expect(fees[0].d.add(fees[1].d).add(amountToOpenPositionWith)).to.be.closeTo(usdcAmountInWei);
     console.log(fees);
 
     const toalUSDCNeeded = convertWeiAmountToUSDC(amountToOpenPositionWith).add(convertWeiAmountToUSDC(perpFees));
 
-    console.log("totalUSDCNeed", toalUSDCNeeded.toString());
+
     expect(toalUSDCNeeded).to.be.closeTo(amount, 1);
-
-    // console.log("")
-
-
-
-
     const position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
       ammAddress,
       this.lemmaPerpetual.address,
@@ -116,17 +106,7 @@ describe("LemmaPerpetual", () => {
     //since leverage == 1
     expect(position.openNotional.d).to.equal(amountToOpenPositionWith);
 
-
-    console.log("position of lemmaPerpetual: size", position.size.d.toString());
-    console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
-    console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
-    console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
-    console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
-
-
-
-
-
-    console.log((await this.usdc.balanceOf(this.lemmaPerpetual.address)).toString());
   });
+
+
 });

@@ -99,9 +99,27 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
-    function close(uint256 _amount) external override onlyLemmaToken {
-        Decimal.decimal memory assetAmount =
+    function close(uint256 _amount)
+        external
+        override
+        onlyLemmaToken
+        returns (uint256)
+    {
+        Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
+
+        Decimal.decimal memory assetAmount =
+            amount.divD(
+                (
+                    Decimal.one().addD(
+                        (
+                            ETH_USDC_AMM.tollRatio().addD(
+                                ETH_USDC_AMM.spreadRatio()
+                            )
+                        )
+                    )
+                )
+            );
 
         Decimal.decimal memory leverage = Decimal.one();
         //TODO: add calculation for baseAssetAmountLimit with slippage from user
@@ -111,26 +129,35 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         // // Decimal.decimal memory positionNotional =
         // //     quoteAssetAmount.mulD(leverage);
 
-        if (_amount == getTotalCollateral()) {
-            clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
-        } else {
-            clearingHouse.openPosition(
-                ETH_USDC_AMM,
-                IClearingHouse.Side.BUY,
-                assetAmount,
-                leverage,
-                baseAssetAmount
-            );
-
-            //If user is withdrawing then ...
-            clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
-        }
+        // if (_amount == getTotalCollateral()) {
+        //     clearingHouse.removeMargin(
+        //         ETH_USDC_AMM,
+        //         calcFee(ETH_USDC_AMM, assetAmount)
+        //     );
+        //     clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
+        // } else {
+        clearingHouse.removeMargin(
+            ETH_USDC_AMM,
+            calcFee(ETH_USDC_AMM, assetAmount)
+        );
+        clearingHouse.openPosition(
+            ETH_USDC_AMM,
+            IClearingHouse.Side.SELL,
+            assetAmount,
+            leverage,
+            baseAssetAmount
+        );
+        //If user is withdrawing then ...
+        clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
+        // }
 
         //TODO: add require that leverage should not be greater than one
-        USDC.transfer(
-            lemmaToken,
-            convert18DecimalsToCollateralAmount(address(USDC), assetAmount)
-        );
+
+        uint256 amountGotBackAfterClosing =
+            convert18DecimalsToCollateralAmount(address(USDC), assetAmount);
+        USDC.transfer(lemmaToken, amountGotBackAfterClosing);
+
+        return amountGotBackAfterClosing;
     }
 
     function convertCollteralAmountTo18Decimals(
