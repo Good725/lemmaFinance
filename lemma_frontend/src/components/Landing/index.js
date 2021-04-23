@@ -41,12 +41,6 @@ function LandingPage({ classes }) {
     return ethers.utils.formatUnits(bignumber); 
   };
 
-  const handleMaxClick = () => {
-    if(wallet.balance > -1) {
-      setAmount(convertToReadableFormat(wallet.balance));
-    }
-  };
-
   const handleAmountChange = event => {
     if(event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
       alert('Please enter a number!')
@@ -261,21 +255,14 @@ function LandingPage({ classes }) {
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
-                              <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
-                              </Grid>
-                              <Grid item xs={3}>
-                                <Button className={classes.secondaryButton} variant="contained" onClick={() => handleMaxClick()}>
-                                  Max
-                                </Button>
-                              </Grid>
+                              <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
                               <Slider
                                 defaultValue={0}
                                 aria-labelledby="discrete-slider"
-                                valueLabelDisplay="auto"
+                                valueLabelDisplay="off"
                                 onChange={(e, v) => handleSliderChange(e, v)}
                                 step={25}
                                 marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
@@ -304,21 +291,14 @@ function LandingPage({ classes }) {
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
-                              <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
-                              </Grid>
-                              <Grid item xs={3}>
-                                <Button className={classes.secondaryButton} variant="contained" onClick={() => handleAmountChange(ethData.balance)}>
-                                  Max
-                                  </Button>
-                              </Grid>
+                              <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
                               <Slider
                                 defaultValue={0}
                                 aria-labelledby="discrete-slider"
-                                valueLabelDisplay="auto"
+                                valueLabelDisplay="off"
                                 onChange={(e, v) => handleSliderChange(e, v)}
                                 step={25}
                                 marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
