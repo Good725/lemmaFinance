@@ -8,60 +8,16 @@ import {IAmm, Decimal} from '../interfaces/IAmm.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
-import {SignedDecimal} from '../utils/SignedDecimal.sol';
 import {
     IERC20WithDecimalsMethod
 } from '../interfaces/IERC20WithDecimalsMethod.sol';
+import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
+import {
+    IClearingHouseViewer,
+    SignedDecimal
+} from '../interfaces/IClearingHouseViewer.sol';
 
 // import 'hardhat/console.sol';
-
-interface IClearingHouse {
-    enum Side {BUY, SELL}
-
-    function openPosition(
-        IAmm _amm,
-        Side _side,
-        Decimal.decimal calldata _quoteAssetAmount,
-        Decimal.decimal calldata _leverage,
-        Decimal.decimal calldata _baseAssetAmountLimit
-    ) external;
-
-    function removeMargin(IAmm _amm, Decimal.decimal calldata _removedMargin)
-        external;
-
-    function closePosition(
-        IAmm _amm,
-        Decimal.decimal calldata _quoteAssetAmountLimit
-    ) external;
-}
-
-interface IClearingHouseViewer {
-    /// @notice This struct records personal position information
-    /// @param size denominated in amm.baseAsset
-    /// @param margin isolated margin
-    /// @param openNotional the quoteAsset value of position when opening position. the cost of the position
-    /// @param lastUpdatedCumulativePremiumFraction for calculating funding payment, record at the moment every time when trader open/reduce/close position
-    /// @param liquidityHistoryIndex
-    /// @param blockNumber the block number of the last position
-    struct Position {
-        SignedDecimal.signedDecimal size;
-        Decimal.decimal margin;
-        Decimal.decimal openNotional;
-        SignedDecimal.signedDecimal lastUpdatedCumulativePremiumFraction;
-        uint256 liquidityHistoryIndex;
-        uint256 blockNumber;
-    }
-
-    function getPersonalBalanceWithFundingPayment(
-        IERC20Upgradeable _quoteToken,
-        address _trader
-    ) external view returns (Decimal.decimal memory margin);
-
-    function getPersonalPositionWithFundingPayment(IAmm _amm, address _trader)
-        external
-        view
-        returns (Position memory position);
-}
 
 contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     IClearingHouse public clearingHouse;

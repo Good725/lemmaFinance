@@ -16,56 +16,10 @@ import {SignedDecimal} from '../utils/SignedDecimal.sol';
 import {
     IERC20WithDecimalsMethod
 } from '../interfaces/IERC20WithDecimalsMethod.sol';
+import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
+import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
 // import 'hardhat/console.sol';
-
-interface IClearingHouse {
-    enum Side {BUY, SELL}
-
-    function openPosition(
-        IAmm _amm,
-        Side _side,
-        Decimal.decimal calldata _quoteAssetAmount,
-        Decimal.decimal calldata _leverage,
-        Decimal.decimal calldata _baseAssetAmountLimit
-    ) external;
-
-    function removeMargin(IAmm _amm, Decimal.decimal calldata _removedMargin)
-        external;
-
-    function closePosition(
-        IAmm _amm,
-        Decimal.decimal calldata _quoteAssetAmountLimit
-    ) external;
-}
-
-interface IClearingHouseViewer {
-    /// @notice This struct records personal position information
-    /// @param size denominated in amm.baseAsset
-    /// @param margin isolated margin
-    /// @param openNotional the quoteAsset value of position when opening position. the cost of the position
-    /// @param lastUpdatedCumulativePremiumFraction for calculating funding payment, record at the moment every time when trader open/reduce/close position
-    /// @param liquidityHistoryIndex
-    /// @param blockNumber the block number of the last position
-    struct Position {
-        SignedDecimal.signedDecimal size;
-        Decimal.decimal margin;
-        Decimal.decimal openNotional;
-        SignedDecimal.signedDecimal lastUpdatedCumulativePremiumFraction;
-        uint256 liquidityHistoryIndex;
-        uint256 blockNumber;
-    }
-
-    function getPersonalBalanceWithFundingPayment(
-        IERC20 _quoteToken,
-        address _trader
-    ) external view returns (Decimal.decimal memory margin);
-
-    function getPersonalPositionWithFundingPayment(IAmm _amm, address _trader)
-        external
-        view
-        returns (Position memory position);
-}
 
 contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     using SafeERC20 for IERC20;
@@ -183,23 +137,27 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         // // Decimal.decimal memory positionNotional =
         // //     quoteAssetAmount.mulD(leverage);
 
-        if (_amount == getTotalCollateral()) {
-            clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
-        } else {
-            clearingHouse.removeMargin(
-                ETH_USDC_AMM,
-                calcFee(ETH_USDC_AMM, assetAmount)
-            );
-            clearingHouse.openPosition(
-                ETH_USDC_AMM,
-                IClearingHouse.Side.SELL,
-                assetAmount,
-                leverage,
-                baseAssetAmount
-            );
-            //If user is withdrawing then ...
-            clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
-        }
+        // if (_amount == getTotalCollateral()) {
+        //     clearingHouse.removeMargin(
+        //         ETH_USDC_AMM,
+        //         calcFee(ETH_USDC_AMM, assetAmount)
+        //     );
+        //     clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
+        // } else {
+        clearingHouse.removeMargin(
+            ETH_USDC_AMM,
+            calcFee(ETH_USDC_AMM, assetAmount)
+        );
+        clearingHouse.openPosition(
+            ETH_USDC_AMM,
+            IClearingHouse.Side.SELL,
+            assetAmount,
+            leverage,
+            baseAssetAmount
+        );
+        //If user is withdrawing then ...
+        clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
+        // }
 
         //TODO: add require that leverage should not be greater than one
         USDC.safeTransfer(
@@ -212,6 +170,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         address _collateral,
         uint256 _amount
     ) internal view returns (Decimal.decimal memory) {
+        //_amount * 10^18 /10^collateralDecimals
         return
             (Decimal.decimal(_amount)).divD(
                 Decimal.decimal(
@@ -225,12 +184,18 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         Decimal.decimal memory _decimalAmount
     ) internal view returns (uint256) {
         //18 decimals to collateral decimals
+        // return
+        //     _decimalAmount
+        //         .divScalar(
+        //         10**(18 - IERC20WithDecimalsMethod(_collateral).decimals())
+        //     )
+        //         .toUint();
+        //same as what perpetual protocol calulations\
+        // https://github.com/perpetual-protocol/perpetual-protocol/blob/master/src/utils/DecimalERC20.sol#L103
+
         return
-            _decimalAmount
-                .divScalar(
-                10**(18 - IERC20WithDecimalsMethod(_collateral).decimals())
-            )
-                .toUint();
+            _decimalAmount.toUint() /
+            (10**(18 - IERC20WithDecimalsMethod(_collateral).decimals()));
     }
 
     function convertUint256ToDecimal(uint256 _d)
