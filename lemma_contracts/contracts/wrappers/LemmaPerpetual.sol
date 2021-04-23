@@ -118,9 +118,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         onlyLemmaToken
         returns (uint256)
     {
+        console.log('usdcBalance before:', USDC.balanceOf(address(this)));
+
         Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
-
         Decimal.decimal memory assetAmount =
             amount.divD(
                 (
@@ -133,7 +134,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                     )
                 )
             );
-
         Decimal.decimal memory leverage = Decimal.one();
         //TODO: add calculation for baseAssetAmountLimit with slippage from user
         Decimal.decimal memory baseAssetAmount = Decimal.zero();
@@ -150,35 +150,50 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         //     clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
         // } else {
 
-        clearingHouse.removeMargin(
-            ETH_USDC_AMM,
-            calcFee(ETH_USDC_AMM, assetAmount)
-        );
+        // clearingHouse.removeMargin(
+        //     ETH_USDC_AMM,
+        //     calcFee(ETH_USDC_AMM, assetAmount)
+        // );
         console.log('removed margin enought to cover the fees');
-        clearingHouse.openPosition(
-            ETH_USDC_AMM,
-            IClearingHouse.Side.SELL,
-            assetAmount,
-            leverage,
-            baseAssetAmount
-        );
-        console.log('opened position on other side');
+        console.log('totalCollateral', getTotalCollateral());
+        console.log('assetAmount', assetAmount.toUint());
+        console.log('_amount', _amount);
+        if (getTotalCollateral() == _amount) {
+            clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
+            console.log('closed postion');
+        } else {
+            clearingHouse.removeMargin(
+                ETH_USDC_AMM,
+                calcFee(ETH_USDC_AMM, assetAmount)
+            );
+            console.log(
+                'usdcBalance after getting fees:',
+                USDC.balanceOf(address(this))
+            );
+            clearingHouse.openPosition(
+                ETH_USDC_AMM,
+                IClearingHouse.Side.SELL,
+                assetAmount,
+                leverage,
+                baseAssetAmount
+            );
+            clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
+        }
 
-        //If user is withdrawing then ...
-        clearingHouse.removeMargin(
-            ETH_USDC_AMM,
-            assetAmount.subD(Decimal.decimal(1))
-        );
-        console.log('removed margin');
+        // console.log('opened position on other side');
+
+        // //If user is withdrawing then ...
+
+        // console.log('removed margin');
         // }
 
         //TODO: add require that leverage should not be greater than one
+        uint256 usdcBalance = USDC.balanceOf(address(this));
+        console.log('usdcBalance', usdcBalance);
+        USDC.safeTransfer(lemmaToken, usdcBalance);
 
-        uint256 amountGotBackAfterClosing =
-            convert18DecimalsToCollateralAmount(address(USDC), assetAmount);
-        USDC.safeTransfer(lemmaToken, amountGotBackAfterClosing);
-
-        return amountGotBackAfterClosing;
+        return usdcBalance;
+        // return amountGotBackAfterClosing;
     }
 
     function convertCollteralAmountTo18Decimals(
