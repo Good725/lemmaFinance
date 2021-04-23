@@ -19,7 +19,7 @@ import {
 import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
 import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
-import 'hardhat/console.sol';
+// import 'hardhat/console.sol';
 
 contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     using SafeERC20 for IERC20;
@@ -118,7 +118,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         onlyLemmaToken
         returns (uint256)
     {
-        console.log('usdcBalance before:', USDC.balanceOf(address(this)));
+        // console.log('usdcBalance before:', USDC.balanceOf(address(this)));
 
         Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
@@ -142,34 +142,22 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         // // Decimal.decimal memory positionNotional =
         // //     quoteAssetAmount.mulD(leverage);
 
-        // if (_amount == getTotalCollateral()) {
-        //     clearingHouse.removeMargin(
-        //         ETH_USDC_AMM,
-        //         calcFee(ETH_USDC_AMM, assetAmount)
-        //     );
-        //     clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
-        // } else {
-
-        // clearingHouse.removeMargin(
-        //     ETH_USDC_AMM,
-        //     calcFee(ETH_USDC_AMM, assetAmount)
-        // );
-        console.log('removed margin enought to cover the fees');
-        console.log('totalCollateral', getTotalCollateral());
-        console.log('assetAmount', assetAmount.toUint());
-        console.log('_amount', _amount);
+        // console.log('removed margin enought to cover the fees');
+        // console.log('totalCollateral', getTotalCollateral());
+        // console.log('assetAmount', assetAmount.toUint());
+        // console.log('_amount', _amount);
         if (getTotalCollateral() == _amount) {
             clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
-            console.log('closed postion');
+            // console.log('closed postion');
         } else {
             clearingHouse.removeMargin(
                 ETH_USDC_AMM,
                 calcFee(ETH_USDC_AMM, assetAmount)
             );
-            console.log(
-                'usdcBalance after getting fees:',
-                USDC.balanceOf(address(this))
-            );
+            // console.log(
+            //     'usdcBalance after getting fees:',
+            //     USDC.balanceOf(address(this))
+            // );
             clearingHouse.openPosition(
                 ETH_USDC_AMM,
                 IClearingHouse.Side.SELL,
@@ -189,7 +177,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
         //TODO: add require that leverage should not be greater than one
         uint256 usdcBalance = USDC.balanceOf(address(this));
-        console.log('usdcBalance', usdcBalance);
+        // console.log('usdcBalance', usdcBalance);
         USDC.safeTransfer(lemmaToken, usdcBalance);
 
         return usdcBalance;
