@@ -1,6 +1,7 @@
 {
     "rinkeby": {
-        "lemmaMainnet": "0xFE17F35aED616212B7670a2A73ABB674F9FAcEb0"
+        "lemmaMainnet": "0xFE17F35aED616212B7670a2A73ABB674F9FAcEb0",
+        "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
     },
     "xDAIRinkeby": {
         "lemmaxDAI": "0x78a9a8106cCE1aB4dF9333DC5bA795A5DcC39915",
