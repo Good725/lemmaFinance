@@ -144,11 +144,5 @@ export const styles = theme => ({
     color: 'white',
     height: '54px'
   },
-  secondaryButton: {
-    color: '#52B788',
-    width: '100%',
-    height: '54px',
-    backgroundColor: '#D9F3E7'
-  }
 
 })

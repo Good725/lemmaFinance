@@ -45,12 +45,6 @@ function LandingPage({ classes }) {
     return ethers.utils.formatUnits(bignumber);
   };
 
-  const handleMaxClick = () => {
-    if (wallet.balance > -1) {
-      setAmount(convertToReadableFormat(wallet.balance));
-    }
-  };
-
   const handleWithdrawMaxClick = async () => {
     console.log("in");
     web3 = new Web3(window.ethereum);
@@ -65,10 +59,6 @@ function LandingPage({ classes }) {
 
     const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
     console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser));
-
-
-
-
   };
 
   const handleAmountChange = event => {
@@ -296,27 +286,20 @@ function LandingPage({ classes }) {
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
-                              <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
-                              </Grid>
-                              <Grid item xs={3}>
-                                <Button className={classes.secondaryButton} variant="contained" onClick={() => handleMaxClick()}>
-                                  Max
-                                </Button>
-                              </Grid>
+                              <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
-                                <Slider
-                                  defaultValue={0}
-                                  aria-labelledby="discrete-slider"
-                                  valueLabelDisplay="auto"
-                                  onChange={(e, v) => handleSliderChange(e, v)}
-                                  step={25}
-                                  marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
-                                  min={0}
-                                  max={100}
-                                />
+                              <Slider
+                                defaultValue={0}
+                                aria-labelledby="discrete-slider"
+                                valueLabelDisplay="off"
+                                onChange={(e, v) => handleSliderChange(e, v)}
+                                step={25}
+                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                min={0}
+                                max={100}
+                              />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
@@ -339,27 +322,20 @@ function LandingPage({ classes }) {
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
-                              <Grid item xs={8}>
-                                <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
-                              </Grid>
-                              <Grid item xs={3}>
-                                <Button className={classes.secondaryButton} variant="contained" onClick={() => handleWithdrawMaxClick()}>
-                                  Max
-                                  </Button>
-                              </Grid>
+                              <TextField color="primary" variant="filled" value={amount} autoFocus={true} className={classes.input} label={`${ethData.asset} Amount`} onChange={e => handleAmountChange(e)} />
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
-                                <Slider
-                                  defaultValue={0}
-                                  aria-labelledby="discrete-slider"
-                                  valueLabelDisplay="auto"
-                                  onChange={(e, v) => handleSliderChange(e, v)}
-                                  step={25}
-                                  marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
-                                  min={0}
-                                  max={100}
-                                />
+                              <Slider
+                                defaultValue={0}
+                                aria-labelledby="discrete-slider"
+                                valueLabelDisplay="off"
+                                onChange={(e, v) => handleSliderChange(e, v)}
+                                step={25}
+                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                min={0}
+                                max={100}
+                              />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
