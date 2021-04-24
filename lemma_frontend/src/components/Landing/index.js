@@ -27,6 +27,8 @@ function LandingPage({ classes }) {
   const [amount, setAmount] = useState("");
   const [tabIndex, setTabIndex] = useState("1");
   const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState("");
   const XDAI_URL = "https://rpc.xdaichain.com/";
 
   // const [balance, setBalance] = useState('0');
@@ -81,11 +83,14 @@ function LandingPage({ classes }) {
       web3 = new Web3(window.ethereum);
       let accounts = await web3.eth.getAccounts();
       account = accounts[0];
+
       // const amountToDeposit = BigNumber.from(amount);
       // const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
       const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
       await lemmaMainnet.methods.deposit(0).send({ from: account, value: convertTo18Decimals(amount) });
       // await refreshBalances();
+      setMessage("Deposit completed successfully, you should receive your LUSDT in ~1 min!");
+      setStatus("success");
       setOpen(true);
     }
     else {
@@ -232,8 +237,8 @@ function LandingPage({ classes }) {
   return (
     <div className={classes.root}>
       <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
-        <Alert elevation={6} variant="filled" onClose={handleClose} severity="success">
-          Deposit transaction started, you should receive your LUSDT in ~1 min!
+        <Alert elevation={6} variant="filled" onClose={handleClose} severity={status}>
+          {message}
         </Alert>
       </Snackbar>
       <div className={classes.body}>
@@ -243,10 +248,17 @@ function LandingPage({ classes }) {
               <Grid item><img className={classes.logoImg} src={require('../../assets/img/logo.png')} alt="" /></Grid>
               <Grid item><Typography className={classes.logo} variant="body2"><b>LEMMA</b></Typography></Grid>
             </Grid>
-            <Grid item>
-              <Button className={classes.connectButton} variant="outlined" onClick={() => handleConnectWallet()}>
-                {wallet.account ? wallet.account.slice(0, 8) + "..." : "Connect Wallet"}
-              </Button>
+            <Grid item container xs={8} justify="flex-end" spacing={5}>
+              <Grid item>
+                <Button className={classes.navButton} href="/registration">
+                  Reserve Allocation!
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button className={classes.connectButton} variant="outlined" onClick={() => handleConnectWallet()}>
+                  {wallet.account ? wallet.account.slice(0, 8) + "..." : "Connect Wallet"}
+                </Button>
+              </Grid>
             </Grid>
           </Grid>
 
@@ -283,7 +295,7 @@ function LandingPage({ classes }) {
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Wallet Balance</Typography> </Grid>
-                                <Grid item> <Typography variant="body1"><b>{wallet.balance > -1 ? wallet.balance / Math.pow(10, 18) : 0}</b></Typography> </Grid>
+                                <Grid item> <Typography variant="body1"><b>{wallet.balance > -1 ? (wallet.balance / Math.pow(10, 18)).toFixed(6) : 0}</b></Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
