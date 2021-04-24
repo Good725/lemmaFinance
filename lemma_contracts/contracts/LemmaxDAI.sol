@@ -53,6 +53,8 @@ contract LemmaToken is
 
     mapping(address => uint256) public depositInfo;
 
+    event USDCDeposited(address indexed account, uint256 indexed amount);
+    event USDCWithdrawed(address indexed account, uint256 indexed amount);
     event DepositInfoAdded(address indexed account, uint256 indexed amount);
 
     //mappping of protocols to wrappers
@@ -116,7 +118,7 @@ contract LemmaToken is
         require(ambBridge.messageSender() == address(lemmaMainnet));
         depositInfo[_account] = _amount;
         emit DepositInfoAdded(_account, _amount);
-        //if AMB call is done after the relaying of tokens
+        //if AMB call is done after relaying of tokens
         if (collateral.balanceOf(address(this)) >= _amount) {
             mint(_account);
         }
@@ -133,7 +135,7 @@ contract LemmaToken is
                 (totalSupply() * amount) /
                 perpetualProtocol.getTotalCollateral();
         } else {
-            //  just so that leUSDC minted is ~USDC deposited
+            //  just so that lUSDC minted is ~USDC deposited
             toMint = amount * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
 
@@ -143,6 +145,8 @@ contract LemmaToken is
         //open position on perpetual
         perpetualProtocol.open(amount);
 
+        emit USDCDeposited(_account, amount);
+
         // //require(toMint>=minimumToMint)
     }
 
@@ -151,7 +155,8 @@ contract LemmaToken is
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
         _burn(_msgSender(), _amount);
 
-        perpetualProtocol.close(userShareAmountOfCollateral);
+        uint256 amountGotBackAfterClosing =
+            perpetualProtocol.close(userShareAmountOfCollateral);
 
         //require(userShare>=minimumUserShare)
 
@@ -159,7 +164,7 @@ contract LemmaToken is
         multiTokenTransfer(
             collateral,
             address(lemmaMainnet),
-            userShareAmountOfCollateral
+            amountGotBackAfterClosing
         );
 
         //now realy the depositInfo to lemmaXDAI
@@ -168,9 +173,11 @@ contract LemmaToken is
             abi.encodeWithSelector(
                 functionSelector,
                 _msgSender(),
-                userShareAmountOfCollateral
+                amountGotBackAfterClosing
             );
         callBridge(address(lemmaMainnet), data, gasLimit);
+
+        emit USDCWithdrawed(_msgSender(), amountGotBackAfterClosing);
     }
 
     //maybe we can use this later

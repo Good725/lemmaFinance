@@ -1,6 +1,8 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
 require("@openzeppelin/hardhat-upgrades");
+require("@nomiclabs/hardhat-ethers");
+
 require("dotenv").config();
 
 
@@ -47,11 +49,15 @@ module.exports = {
     // },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      }
     },
     xdai: {
       url: "https://rpc.xdaichain.com/",
-      accounts: [process.env.PRIVATE_KEY],
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
       gasPrice: 10 ** 9,//1 gwei
     }
   },
