@@ -99,7 +99,7 @@ function LandingPage({ classes }) {
     const biconomy = new Biconomy(xDAIProvider, {
       walletProvider: window.ethereum,
       apiKey: "Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39",
-      apiId: "42f4a570-923b-4888-9338-c5506bd5d252",
+      apiId: "2db6160d-6dcc-4c62-bb99-6d92b9ffca52",
       debug: true
     });
     // const web3Biconomy = new Web3(biconomy);
@@ -290,16 +290,16 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
-                              <Slider
-                                defaultValue={0}
-                                aria-labelledby="discrete-slider"
-                                valueLabelDisplay="off"
-                                onChange={(e, v) => handleSliderChange(e, v)}
-                                step={25}
-                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
-                                min={0}
-                                max={100}
-                              />
+                                <Slider
+                                  defaultValue={0}
+                                  aria-labelledby="discrete-slider"
+                                  valueLabelDisplay="off"
+                                  onChange={(e, v) => handleSliderChange(e, v)}
+                                  step={25}
+                                  marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                  min={0}
+                                  max={100}
+                                />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
@@ -326,16 +326,16 @@ function LandingPage({ classes }) {
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
-                              <Slider
-                                defaultValue={0}
-                                aria-labelledby="discrete-slider"
-                                valueLabelDisplay="off"
-                                onChange={(e, v) => handleSliderChange(e, v)}
-                                step={25}
-                                marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
-                                min={0}
-                                max={100}
-                              />
+                                <Slider
+                                  defaultValue={0}
+                                  aria-labelledby="discrete-slider"
+                                  valueLabelDisplay="off"
+                                  onChange={(e, v) => handleSliderChange(e, v)}
+                                  step={25}
+                                  marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
+                                  min={0}
+                                  max={100}
+                                />
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
