@@ -169,12 +169,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         }
 
         // console.log('opened position on other side');
-
-        // //If user is withdrawing then ...
-
-        // console.log('removed margin');
-        // }
-
         //TODO: add require that leverage should not be greater than one
         uint256 usdcBalance = USDC.balanceOf(address(this));
         // console.log('usdcBalance', usdcBalance);

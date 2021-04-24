@@ -51,8 +51,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     mapping(address => uint256) public withdrawalInfo;
     uint256 public totalUSDCDeposited;
 
-    // event Deposit(address indexed account, uint256 indexed amount);
-    // event Withdraw(address indexed account, uint256 indexed amount);
+    event ETHDeposited(address indexed account, uint256 indexed amount);
+    event ETHWithdrawed(address indexed account, uint256 indexed amount);
     event WithdrawalInfoAdded(address indexed account, uint256 indexed amount);
 
     function initialize(
@@ -121,6 +121,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         bytes memory data =
             abi.encodeWithSelector(functionSelector, _msgSender(), amounts[1]);
         callBridge(address(lemmaXDAI), data, gasLimit);
+        emit ETHDeposited(_msgSender(), msg.value);
     }
 
     function setWithdrawalInfo(address _account, uint256 _amount) external {
@@ -141,13 +142,15 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         path[1] = address(WETH);
         // uint256[] memory amounts =
         USDC.safeApprove(address(uniswapV2Router02), amount);
-        uniswapV2Router02.swapExactTokensForETH(
-            amount,
-            0, //TODO: figure out a way to get this from user
-            path,
-            _account,
-            type(uint256).max
-        );
+        uint256[] memory amounts =
+            uniswapV2Router02.swapExactTokensForETH(
+                amount,
+                0, //TODO: figure out a way to get this from user
+                path,
+                _account,
+                type(uint256).max
+            );
+        emit ETHWithdrawed(_account, amounts[1]);
     }
 
     //
