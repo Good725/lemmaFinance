@@ -15,9 +15,8 @@ contract MockAMB is OwnableUpgradeable {
     XDAI public xdaiContract;
     uint256 internal constant SEND_TO_ORACLE_DRIVEN_LANE = 0x00;
 
-    function initialize(XDAI _xdaiContract) public initializer {
+    function initialize() public initializer {
         __Ownable_init();
-        xdaiContract = _xdaiContract;
     }
 
     function setMainnetContract(Mainnet _mainnetContract) public onlyOwner {
@@ -36,7 +35,7 @@ contract MockAMB is OwnableUpgradeable {
         if (id == 4) {
             return address(xdaiContract);
         } else {
-            return address(xdaiContract);
+            return address(mainnetContract);
         }
     }
 
