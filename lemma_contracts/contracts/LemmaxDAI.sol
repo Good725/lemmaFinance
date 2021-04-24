@@ -151,7 +151,8 @@ contract LemmaToken is
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
         _burn(_msgSender(), _amount);
 
-        perpetualProtocol.close(userShareAmountOfCollateral);
+        uint256 amountGotBackAfterClosing =
+            perpetualProtocol.close(userShareAmountOfCollateral);
 
         //require(userShare>=minimumUserShare)
 
@@ -159,7 +160,7 @@ contract LemmaToken is
         multiTokenTransfer(
             collateral,
             address(lemmaMainnet),
-            userShareAmountOfCollateral
+            amountGotBackAfterClosing
         );
 
         //now realy the depositInfo to lemmaXDAI
@@ -168,7 +169,7 @@ contract LemmaToken is
             abi.encodeWithSelector(
                 functionSelector,
                 _msgSender(),
-                userShareAmountOfCollateral
+                amountGotBackAfterClosing
             );
         callBridge(address(lemmaMainnet), data, gasLimit);
     }
