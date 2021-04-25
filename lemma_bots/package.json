@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "rollup -c",
-    "start": "npx rollup -c && node dist/xdai.js"
+    "start": "npx rollup -c && node dist/mainnet.js"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^16.0.0",

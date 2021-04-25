@@ -5,9 +5,9 @@ import json from '@rollup/plugin-json';
 import builtins from 'builtin-modules';
 
 export default {
-  input: 'src/xdai.ts',
+  input: 'src/mainnet.ts',
   output: {
-    file: 'dist/xdai.js',
+    file: 'dist/mainnet.js',
     format: 'cjs',
   },
   plugins: [
