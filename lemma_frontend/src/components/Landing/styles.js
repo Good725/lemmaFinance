@@ -58,6 +58,10 @@ export const styles = theme => ({
       },
     }
   },
+  navButton: {
+    textTransform: 'none',
+    color: "white"
+  },
   title: {
     marginBottom: '1vh',
     fontFamily: 'Roboto',
@@ -143,6 +147,5 @@ export const styles = theme => ({
   button: {
     color: 'white',
     height: '54px'
-  },
-
+  }
 })

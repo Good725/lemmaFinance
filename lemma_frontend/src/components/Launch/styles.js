@@ -24,10 +24,21 @@ export const styles = theme => ({
   logo: {
     display: 'inline-block',
     paddingLeft: '15px',
+    color: '#6A758A',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '4vw',
+    },
+    [theme.breakpoints.up('md')]: {
+      fontSize: '1vw',
+    },
   },
   logoImg: {
     display: 'inline-block',
     height: 40
+  },
+  navButton: {
+    textTransform: 'none',
+    color: "white"
   },
   title: {
     marginBottom: '1vh',
@@ -73,7 +84,6 @@ export const styles = theme => ({
   actionPaper: {
     width: '100%',
     paddingTop: '2vw',
-    paddingBottom: '2vw',
     paddingLeft: '0.5vw',
     paddingRight: '0.5vw',
     borderRadius: '20px',
@@ -84,21 +94,56 @@ export const styles = theme => ({
   },
   content: {
     fontSize: '1.5vw',
+    marginBottom: '1vw'
   },
   assetLogo: {
     maxHeight: 50
   },
+  stepperContainer: {
+    backgroundColor: 'transparent'
+  },
+  stepActionContainer: {
+    marginBottom: theme.spacing(2),
+  },
+  stepButton: {
+    marginTop: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    color: 'white',
+  },
   input: {
     width: '100%',
-    height: '50px',
     color: 'white',
-    marginBottom: '2vw',
-    marginTop: '2vw'
+    marginTop: '1vw',
+    marginBottom: '1.5vw',
   },
-  button: {
-    color: 'white',
-    height: '54px'
+  twitterButton: {
+    backgroundColor: "#1DA1F2",
+    width: "100%",
+    color: "white",
+    marginTop: '1vw',
+    height: '51px',
+    '&:hover': {
+      backgroundColor: '#55b8f5',
+    },
   },
-
-
+  twitterFab: {
+    backgroundColor: "#1DA1F2",
+    color: "white",
+    marginTop: '1vw',
+    marginBottom: '1.5vw',
+    '&:hover': {
+      backgroundColor: '#55b8f5',
+    },
+  },
+  discordFab: {
+    backgroundColor: "#7289DA",
+    marginTop: '1vw',
+    marginBottom: '1.5vw',
+    '&:hover': {
+      backgroundColor: '#91a3e2',
+    },
+  },
+  discordIcon: {
+    width: '32px',
+  }
 })

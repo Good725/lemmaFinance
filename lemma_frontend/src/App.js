@@ -23,6 +23,7 @@ const App = () => {
             }}
           >
             <Route exact path="/" component={Landing} />
+            <Route exact path="/registration" component={Launch} />
             <Route exact path="/privacy" component={Privacy} />
             <Route exact path="/terms" component={Terms} />
           </UseWalletProvider>
