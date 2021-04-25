@@ -104,8 +104,8 @@ function LandingPage({ classes }) {
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
       walletProvider: window.ethereum,
-      apiKey: "Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39",
-      apiId: "2db6160d-6dcc-4c62-bb99-6d92b9ffca52",
+      apiKey: "8u2bSHCoH.849e2a72-c03f-4784-bc0e-8ad964ee3ad5",
+      apiId: "884b7c59-4933-4de3-80fd-b1ce4a7f3e8c",
       debug: true
     });
     // const web3Biconomy = new Web3(biconomy);

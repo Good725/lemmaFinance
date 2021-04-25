@@ -36,7 +36,7 @@ export async function handler(credentials: RelayerParams) {
         const account = events[i].args.account;
         const amount: BigNumber = events[i].args.amount;
 
-        const amountOnLemma: BigNumber = await lemmaMainnet.withdrwalInfo(account);
+        const amountOnLemma: BigNumber = await lemmaMainnet.withdrawalInfo(account);
 
 
         if (!amountOnLemma.isZero()) {

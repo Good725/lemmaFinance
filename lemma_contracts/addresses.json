@@ -9,8 +9,9 @@
         "trustedForwarder": "0x86C80a8aa58e0A4fa09A69624c31Ab2a6CAD56b8"
     },
     "mainnet": {
-        "trustedForwader": "0x84a0856b038eaAd1cC7E297cF34A7e72685A8693",
-        "weth": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+        "trustedForwarder": "0x84a0856b038eaAd1cC7E297cF34A7e72685A8693",
+        "weth": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
     },
     "xDAIRinkeby": {
         "lemmaxDAI": "0xD901A53f2A3625752cEB6B2249c0909e352b684f",
