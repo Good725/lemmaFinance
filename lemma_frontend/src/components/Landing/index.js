@@ -29,6 +29,7 @@ function LandingPage({ classes }) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("");
+  const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
   const XDAI_URL = "https://rpc.xdaichain.com/";
 
   // const [balance, setBalance] = useState('0');
@@ -39,29 +40,15 @@ function LandingPage({ classes }) {
   var web3;
   var account;
 
-  const convertTo18Decimals = (number) => {
-    return ethers.utils.parseEther(number);
+  const convertTo18Decimals = (number, decimals = 18) => {
+    return ethers.utils.parseUnits(number.toString(), decimals);
   };
 
-  const convertToReadableFormat = (bignumber) => {
-    return ethers.utils.formatUnits(bignumber);
+  const convertToReadableFormat = (bignumber, decimals = 18) => {
+    return ethers.utils.formatUnits(bignumber, decimals);
   };
 
-  const handleWithdrawMaxClick = async () => {
-    console.log("in");
-    web3 = new Web3(window.ethereum);
-    let accounts = await web3.eth.getAccounts();
-    const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
-    const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
-    console.log("userBalanceOfLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
-    const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
-    const totalCollateral = await lemmaPerpetual.getTotalCollateral();
-    console.log("totalCollateral", convertToReadableFormat(totalCollateral));
-    const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
 
-    const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
-    console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser));
-  };
 
   const handleAmountChange = event => {
     if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
@@ -77,6 +64,13 @@ function LandingPage({ classes }) {
       setAmount(value * convertToReadableFormat(wallet.balance) / 100);
     }
   };
+
+  const handleWithdrawSliderChange = (event, value) => {
+    if (wallet.balance > -1) {
+      setAmount(value * convertToReadableFormat(withdrawableETH) / 100);
+    }
+  };
+
 
   const handleDepositSubmit = async () => {
     if (wallet.balance > -1) {
@@ -99,8 +93,27 @@ function LandingPage({ classes }) {
   };
 
   const handleWithdrawSubmit = async () => {
-    // console.log(amount);
-    // console.log(amount);
+    web3 = new Web3(window.ethereum);
+    let accounts = await web3.eth.getAccounts();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
+    const amounts = await uniswapV2Router02.getAmountsIn(convertTo18Decimals(amount), [addresses.rinkeby.usdc, addresses.rinkeby.weth]);
+
+    const usdcNeeded = amounts[0];
+
+    const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
+    const totalCollateral = await lemmaPerpetual.getTotalCollateral();
+
+    const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
+    // const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
+    const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
+
+    const lUSDCAmount = (usdcNeeded.mul(totalSupplyOfLUSDC)).div(totalCollateral);
+
+    console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
+
+
+
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
       walletProvider: window.ethereum,
@@ -110,8 +123,7 @@ function LandingPage({ classes }) {
     });
     // const web3Biconomy = new Web3(biconomy);
 
-    web3 = new Web3(window.ethereum);
-    let accounts = await web3.eth.getAccounts();
+
 
     // const amountToWithdraw = BigNumber.from(amount);
     // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
@@ -127,7 +139,7 @@ function LandingPage({ classes }) {
       // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
 
       // Create your target method signature.. here we are calling setQuote() method of our contract
-      let { data } = await contract.populateTransaction.withdraw(convertTo18Decimals(amount));
+      let { data } = await contract.populateTransaction.withdraw(lUSDCAmount);
       let provider = biconomy.getEthersProvider();
 
       // you can also use networkProvider created above
@@ -173,6 +185,7 @@ function LandingPage({ classes }) {
     // await setWeb3(new Web3(window.ethereum));
     const accounts = await web3.eth.getAccounts();
     account = accounts[0];
+
     await refreshBalances();
   };
 
@@ -182,14 +195,31 @@ function LandingPage({ classes }) {
     // const LusdcBalance = await getBalance(addresses.lusdc, account);
     // setLBalance(LusdcBalance);
     web3 = new Web3(window.ethereum);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+
     // await setWeb3(new Web3(window.ethereum));
     const accounts = await web3.eth.getAccounts();
     account = accounts[0];
 
-    const lusdcBalance = await getBalance(addresses.xDAIRinkeby.lemmaxDAI, account);
+    const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
+    const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
+    console.log("userBalanceOfLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
+    const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
+    const totalCollateral = await lemmaPerpetual.getTotalCollateral();
+    console.log("totalCollateral", convertToReadableFormat(totalCollateral, 6));
+    const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
+    console.log("totalSupplyOfLUSDC", convertToReadableFormat(totalSupplyOfLUSDC));
 
+    const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
+    console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser, 6));
 
-    console.log("lUSDC Balance:", convertToReadableFormat(lusdcBalance));
+    const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
+
+    const amounts = await uniswapV2Router02.getAmountsOut(usdcDeservedByUser, [addresses.rinkeby.usdc, addresses.rinkeby.weth]);
+    console.log(convertToReadableFormat(amounts[1]));
+    const maxWithdrwableEth = amounts[1];
+
+    setWithdrawableETH(maxWithdrwableEth);
   };
 
   // const convert;
@@ -343,7 +373,7 @@ function LandingPage({ classes }) {
                                   defaultValue={0}
                                   aria-labelledby="discrete-slider"
                                   valueLabelDisplay="off"
-                                  onChange={(e, v) => handleSliderChange(e, v)}
+                                  onChange={(e, v) => handleWithdrawSliderChange(e, v)}
                                   step={25}
                                   marks={[{ value: 0, label: '0%', }, { value: 25, label: '25%', }, { value: 50, label: '50%', }, { value: 75, label: '75%', }, { value: 100, label: '100%', }]}
                                   min={0}
