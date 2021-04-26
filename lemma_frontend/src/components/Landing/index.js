@@ -81,16 +81,25 @@ function LandingPage({ classes }) {
     if (wallet.balance > -1) {
       web3 = new Web3(window.ethereum);
       let accounts = await web3.eth.getAccounts();
-      account = accounts[0];
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+
 
       // const amountToDeposit = BigNumber.from(amount);
       // const amountToDepositWithDecimals = amountToDeposit.mul(BigNumber.from(10).pow(BigNumber.from(18)));
       const lemmaMainnet = new web3.eth.Contract(LemmaMainnet.abi, addresses.rinkeby.lemmaMainnet);
-      await lemmaMainnet.methods.deposit(0).send({ from: account, value: convertTo18Decimals(amount) });
+      await lemmaMainnet.methods.deposit(0).send({ from: accounts[0], value: convertTo18Decimals(amount) });
+
       // await refreshBalances();
       setMessage("Deposit completed successfully, you should receive your LUSDT in ~1 min!");
       setStatus("success");
       setOpen(true);
+
+      //set a listener for minting LUSDC on 
+      // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, provider);
+      // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
+      const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
+      const lusdcMintedFilter = lemmaToken.filters.Transfer(/**from ==*/ethers.constants.AddressZero,/**to == */ accounts[0]);
+      lemmaToken.once(lusdcMintedFilter, onSuccesfulDeposit);
     }
     else {
       handleConnectWallet();
@@ -98,93 +107,105 @@ function LandingPage({ classes }) {
   };
 
   const handleWithdrawSubmit = async () => {
-    web3 = new Web3(window.ethereum);
-    let accounts = await web3.eth.getAccounts();
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
-    const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
-    console.log("useBalanceOFLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
+    if (wallet.balance > -1) {
+      web3 = new Web3(window.ethereum);
+      let accounts = await web3.eth.getAccounts();
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
+      const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
+      console.log("useBalanceOFLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
 
-    const ethToWithdraw = convertTo18Decimals(amount);
-    console.log("ethToWithdraw", amount);
-    console.log("withdrwableETH", convertToReadableFormat(withdrawableETH));
-    //TODO: This is temperary fix
-    //make sure frontend deals with only bignumbers
-    let lUSDCAmount;
+      const ethToWithdraw = convertTo18Decimals(amount);
+      console.log("ethToWithdraw", amount);
+      console.log("withdrwableETH", convertToReadableFormat(withdrawableETH));
+      //TODO: This is temperary fix
+      //make sure frontend deals with only bignumbers
+      let lUSDCAmount;
 
-    const percentageOfETHToWithdraw = ((withdrawableETH.sub(ethToWithdraw)).mul(ONE)).div(withdrawableETH);
-    lUSDCAmount = userBalanceOfLUSDC.sub((userBalanceOfLUSDC.mul(percentageOfETHToWithdraw)).div(ONE));
+      const percentageOfETHToWithdraw = ((withdrawableETH.sub(ethToWithdraw)).mul(ONE)).div(withdrawableETH);
+      lUSDCAmount = userBalanceOfLUSDC.sub((userBalanceOfLUSDC.mul(percentageOfETHToWithdraw)).div(ONE));
 
-    if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
-      lUSDCAmount = userBalanceOfLUSDC;
+      if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
+        lUSDCAmount = userBalanceOfLUSDC;
+      }
+      console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
+
+
+
+      const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
+      const biconomy = new Biconomy(xDAIProvider, {
+        walletProvider: window.ethereum,
+        apiKey: "8u2bSHCoH.849e2a72-c03f-4784-bc0e-8ad964ee3ad5",
+        apiId: "13905749-edfe-4367-a4e8-c1fdf7cf9e1b",
+        debug: true
+      });
+      // const web3Biconomy = new Web3(biconomy);
+
+
+
+      // const amountToWithdraw = BigNumber.from(amount);
+      // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
+
+      let userAddress = accounts[0];
+      biconomy.onEvent(biconomy.READY, async () => {
+        // Initialize your dapp here like getting user accounts etc
+        // const lemmaxDAI = new web3Biconomy.eth.Contract(LemmaToken.abi, addresses.xDAIRinkeby.lemmaxDAI);
+        // await lemmaxDAI.methods.withdraw(amountToWithdrawWithDecimals).send({ from: accounts[0], signatureType: biconomy.EIP712_SIGN });
+        // Initialize Constants
+        let contract = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI,
+          LemmaToken.abi, biconomy.getSignerByAddress(userAddress));
+        // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
+
+        // Create your target method signature.. here we are calling setQuote() method of our contract
+        let { data } = await contract.populateTransaction.withdraw(lUSDCAmount);
+        let provider = biconomy.getEthersProvider();
+
+        // you can also use networkProvider created above
+        let gasLimit = await provider.estimateGas({
+          to: addresses.xDAIRinkeby.lemmaxDAI,
+          from: userAddress,
+          data: data
+        });
+        console.log("Gas limit : ", gasLimit);
+
+        let txParams = {
+          data: data,
+          to: addresses.xDAIRinkeby.lemmaxDAI,
+          from: userAddress,
+          gasLimit: gasLimit, // optional
+          signatureType: "EIP712_SIGN"
+        };
+
+        // as ethers does not allow providing custom options while sending transaction
+        // you can also use networkProvider created above               
+        // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options  
+        let tx = await provider.send("eth_sendTransaction", [txParams]);
+        console.log("Transaction hash : ", tx);
+
+        //event emitter methods
+        provider.once(tx, (transaction) => {
+          // Emitted when the transaction has been mined
+          //show success message
+          console.log(transaction);
+
+          setMessage("Withdraw started successfully, you will receive your ETH back in ~1 minutes");
+          setStatus("success");
+          setOpen(true);
+
+
+          const lemmaMainnet = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, new ethers.providers.Web3Provider(window.ethereum));
+          const lemmaMainnetETHWithdrawedFilter = lemmaMainnet.filters.ETHWithdrawed(accounts[0]);
+          lemmaMainnet.once(lemmaMainnetETHWithdrawedFilter, onSuccesfulWithdrawal);
+          //do something with transaction hash
+        });
+      }).onEvent(biconomy.ERROR, (error, message) => {
+        // Handle error while initializing mexa
+        console.log(error);
+      });
     }
-    console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
-
-
-
-    const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
-    const biconomy = new Biconomy(xDAIProvider, {
-      walletProvider: window.ethereum,
-      apiKey: "8u2bSHCoH.849e2a72-c03f-4784-bc0e-8ad964ee3ad5",
-      apiId: "13905749-edfe-4367-a4e8-c1fdf7cf9e1b",
-      debug: true
-    });
-    // const web3Biconomy = new Web3(biconomy);
-
-
-
-    // const amountToWithdraw = BigNumber.from(amount);
-    // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
-
-    let userAddress = accounts[0];
-    biconomy.onEvent(biconomy.READY, async () => {
-      // Initialize your dapp here like getting user accounts etc
-      // const lemmaxDAI = new web3Biconomy.eth.Contract(LemmaToken.abi, addresses.xDAIRinkeby.lemmaxDAI);
-      // await lemmaxDAI.methods.withdraw(amountToWithdrawWithDecimals).send({ from: accounts[0], signatureType: biconomy.EIP712_SIGN });
-      // Initialize Constants
-      let contract = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI,
-        LemmaToken.abi, biconomy.getSignerByAddress(userAddress));
-      // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
-
-      // Create your target method signature.. here we are calling setQuote() method of our contract
-      let { data } = await contract.populateTransaction.withdraw(lUSDCAmount);
-      let provider = biconomy.getEthersProvider();
-
-      // you can also use networkProvider created above
-      let gasLimit = await provider.estimateGas({
-        to: addresses.xDAIRinkeby.lemmaxDAI,
-        from: userAddress,
-        data: data
-      });
-      console.log("Gas limit : ", gasLimit);
-
-      let txParams = {
-        data: data,
-        to: addresses.xDAIRinkeby.lemmaxDAI,
-        from: userAddress,
-        gasLimit: gasLimit, // optional
-        signatureType: "EIP712_SIGN"
-      };
-
-      // as ethers does not allow providing custom options while sending transaction
-      // you can also use networkProvider created above               
-      // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options  
-      let tx = await provider.send("eth_sendTransaction", [txParams]);
-      console.log("Transaction hash : ", tx);
-
-      //event emitter methods
-      provider.once(tx, (transaction) => {
-        // Emitted when the transaction has been mined
-        //show success message
-        console.log(transaction);
-        //do something with transaction hash
-      });
-    }).onEvent(biconomy.ERROR, (error, message) => {
-      // Handle error while initializing mexa
-      console.log(error);
-    });
-
-    // await refreshBalances();
+    else {
+      handleConnectWallet();
+    }
   };
 
   const handleConnectWallet = async () => {
@@ -284,7 +305,19 @@ function LandingPage({ classes }) {
     setEarings(earnings);
 
 
+  };
 
+  const onSuccesfulDeposit = async () => {
+    refreshBalances();
+    setMessage("Deposit completed successfully");
+    setStatus("success");
+    setOpen(true);
+  };
+  const onSuccesfulWithdrawal = async () => {
+    refreshBalances();
+    setMessage("Withdraw completed successfully");
+    setStatus("success");
+    setOpen(true);
   };
 
   // const convert;
