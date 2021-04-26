@@ -33,12 +33,7 @@ function LandingPage({ classes }) {
   const [deposited, setDeposited] = useState(BigNumber.from(0));
   const [earnings, setEarings] = useState(BigNumber.from(0));
   const XDAI_URL = "https://rpc.xdaichain.com/";
-
-
-  // const [balance, setBalance] = useState('0');
-  // const [lBalance, setLBalance] = useState('0');
-  // const [web3, setWeb3] = useState(null);
-  // const [account, setAccount] = useState(null);
+  const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
 
   var web3;
   var account;
@@ -97,7 +92,7 @@ function LandingPage({ classes }) {
       //set a listener for minting LUSDC on 
       // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, provider);
       // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
-      const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
+      const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_WSS_URL));
       const lusdcMintedFilter = lemmaToken.filters.Transfer(/**from ==*/ethers.constants.AddressZero,/**to == */ accounts[0]);
       lemmaToken.once(lusdcMintedFilter, onSuccesfulDeposit);
     }
