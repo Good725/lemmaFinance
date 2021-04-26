@@ -14,7 +14,7 @@ import axios from 'axios';
 
 
 const biconomyApiKey = 'qtEU79q8w.a181871e-c3fd-4901-8440-23aa88902e5c';
-const biconomyMethodAPIKey = 'bafacb9f-fc60-46c1-ba59-8383bbab0942b';
+const biconomyMethodAPIKey = 'bafacb9f-fc60-46c1-ba59-8383bbab0942';
 const headers = {
     'x-api-key': biconomyApiKey,
     'Content-Type': 'application/json',

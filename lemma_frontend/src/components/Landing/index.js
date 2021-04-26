@@ -224,7 +224,7 @@ function LandingPage({ classes }) {
       console.log("totalCollateral", convertToReadableFormat(totalCollateral, 6));
       const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
       console.log("totalSupplyOfLUSDC", convertToReadableFormat(totalSupplyOfLUSDC));
-
+      //TODO: add 0.1% perp fees that is not considered in following formula
       const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
       console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser, 6));
 

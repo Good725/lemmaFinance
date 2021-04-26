@@ -12,7 +12,8 @@ import { isGetAccessor } from 'typescript';
 import axios from 'axios';
 
 
-
+//TODO: use the same biconomy keys for both files
+//move it to a .json file
 const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
 const biconomyMethodAPIKey = '029fc735-e13f-4213-b782-1565647b0575';
 const headers = {
