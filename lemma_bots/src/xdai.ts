@@ -12,7 +12,8 @@ import { isGetAccessor } from 'typescript';
 import axios from 'axios';
 
 
-
+//TODO: use the same biconomy keys for both files
+//move it to a .json file
 const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
 const biconomyMethodAPIKey = '029fc735-e13f-4213-b782-1565647b0575';
 const headers = {
@@ -34,12 +35,7 @@ export async function handler(credentials: RelayerParams) {
   for (let i = 0; i < events.length; i++) {
     const account = events[i].args.account;
     const amount: BigNumber = events[i].args.amount;
-
-
-
     const amountOnLemma: BigNumber = await lemmaToken.depositInfo(account);
-
-
     if (!amountOnLemma.isZero()) {
       console.log("in")
       const apiData = {

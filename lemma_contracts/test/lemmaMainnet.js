@@ -1,6 +1,5 @@
 const { BigNumber } = require("ethers");
 const { ethers, assert } = require("hardhat");
-const { TASK_NODE } = require("hardhat/builtin-tasks/task-names");
 const providers = require('ethers').providers;
 
 contract("LemmaMainnet", accounts => {
@@ -23,9 +22,12 @@ contract("LemmaMainnet", accounts => {
         const LemmaMainnet = await ethers.getContractFactory("LemmaMainnet");
         const AMBBridge = await ethers.getContractFactory("MockAMB");
         usdc = new ethers.Contract(usdcAddress, USDC_ABI, accounts[0]);
-        ambBridgeContract = await upgrades.deployProxy(AMBBridge, [lemmaxDAIAddress], { initializer: 'initialize' });
+        ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });
         LemmaMainnetContract = await upgrades.deployProxy(LemmaMainnet, [usdcAddress, wethAddress, lemmaxDAIAddress, uniswapV2Router02Address, ambBridgeContract.address, multiTokenMediatorOnEth, trustedForwaderRinkeby], { initializer: 'initialize' });
-        // lemmaXDAIContract = new ethers.Contract(lemmaxDAIAddress, LEMMA_XDAI_ABI, accounts[0]);
+    });
+
+    it("Set xdai and mainnet contract on AMB", async function() {
+        await ambBridgeContract.setXDAIContract(lemmaxDAIAddress);
         await ambBridgeContract.setMainnetContract(LemmaMainnetContract.address);
     });
 
@@ -50,10 +52,16 @@ contract("LemmaMainnet", accounts => {
         let usdcBalanceXDAI = await usdc.balanceOf(multiTokenMediatorOnEth);
         console.log(usdcBalanceXDAI.toString());
         assert.equal(balanceBeforeDeposit - balanceAfterDeposit - payableValue, feeEth);
+
+        // TODO Uniswap Fee exists
     });
 
     it("Withdraw", async function() {
-        let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
-        await ambBridgeContract.setWithdrawInfo(accounts[0].address, minimumUSDCAmountOut);
+        let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
+        let balanceBeforeWithdraw = await accounts[0].getBalance();
+        console.log(balanceBeforeWithdraw.toString());
+        await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
+        let balanceAfterWithdraw = await accounts[0].getBalance();
+        console.log(balanceAfterWithdraw.toString());
     });
   });

@@ -127,9 +127,9 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     function setWithdrawalInfo(address _account, uint256 _amount) external {
         require(_msgSender() == address(ambBridge));
         require(ambBridge.messageSender() == address(lemmaXDAI));
-        withdrawalInfo[_account] = _amount;
+        withdrawalInfo[_account] += _amount;
         emit WithdrawalInfoAdded(_account, _amount);
-        if (USDC.balanceOf(address(this)) >= _amount) {
+        if (USDC.balanceOf(address(this)) >= withdrawalInfo[_account]) {
             withdraw(_account);
         }
     }
