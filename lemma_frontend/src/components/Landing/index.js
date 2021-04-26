@@ -30,7 +30,10 @@ function LandingPage({ classes }) {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("");
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
+  const [deposited, setDeposited] = useState(BigNumber.from(0));
+  const [earnings, setEarings] = useState(BigNumber.from(0));
   const XDAI_URL = "https://rpc.xdaichain.com/";
+
 
   // const [balance, setBalance] = useState('0');
   // const [lBalance, setLBalance] = useState('0');
@@ -47,6 +50,8 @@ function LandingPage({ classes }) {
   const convertToReadableFormat = (bignumber, decimals = 18) => {
     return ethers.utils.formatUnits(bignumber, decimals);
   };
+
+  const ONE = convertTo18Decimals(1);
 
 
 
@@ -96,20 +101,23 @@ function LandingPage({ classes }) {
     web3 = new Web3(window.ethereum);
     let accounts = await web3.eth.getAccounts();
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
-    const amounts = await uniswapV2Router02.getAmountsIn(convertTo18Decimals(amount), [addresses.rinkeby.usdc, addresses.rinkeby.weth]);
-
-    const usdcNeeded = amounts[0];
-
-    const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
-    const totalCollateral = await lemmaPerpetual.getTotalCollateral();
-
     const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
-    // const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
-    const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
+    const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
+    console.log("useBalanceOFLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
 
-    const lUSDCAmount = (usdcNeeded.mul(totalSupplyOfLUSDC)).div(totalCollateral);
+    const ethToWithdraw = convertTo18Decimals(amount);
+    console.log("ethToWithdraw", amount);
+    console.log("withdrwableETH", convertToReadableFormat(withdrawableETH));
+    //TODO: This is temperary fix
+    //make sure frontend deals with only bignumbers
+    let lUSDCAmount;
 
+    const percentageOfETHToWithdraw = ((withdrawableETH.sub(ethToWithdraw)).mul(ONE)).div(withdrawableETH);
+    lUSDCAmount = userBalanceOfLUSDC.sub((userBalanceOfLUSDC.mul(percentageOfETHToWithdraw)).div(ONE));
+
+    if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
+      lUSDCAmount = userBalanceOfLUSDC;
+    }
     console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
 
 
@@ -202,11 +210,16 @@ function LandingPage({ classes }) {
     account = accounts[0];
 
     const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
+    const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
+    const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
+    const lemmaMainnet = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, provider);
+
     const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
     console.log("userBalanceOfLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
 
+    let maxWithdrwableEth = new BigNumber.from("0");
+
     if (userBalanceOfLUSDC.gt(BigNumber.from("0"))) {
-      const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
       const totalCollateral = await lemmaPerpetual.getTotalCollateral();
       console.log("totalCollateral", convertToReadableFormat(totalCollateral, 6));
       const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
@@ -215,14 +228,63 @@ function LandingPage({ classes }) {
       const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
       console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser, 6));
 
-      const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
 
       const amounts = await uniswapV2Router02.getAmountsOut(usdcDeservedByUser, [addresses.rinkeby.usdc, addresses.rinkeby.weth]);
       console.log(convertToReadableFormat(amounts[1]));
-      const maxWithdrwableEth = amounts[1];
+      maxWithdrwableEth = amounts[1];
 
       setWithdrawableETH(maxWithdrwableEth);
     }
+    //to get the deposited balance
+
+    //look for the deposit events on the lemmaMainnet
+    //look at the mint and burn events on lemmaToken
+
+    const ethDepositedFilter = lemmaMainnet.filters.ETHDeposited(/*accounts == */accounts[0]);
+    const ethDepositedEvents = await lemmaMainnet.queryFilter(ethDepositedFilter);
+    console.log(ethDepositedEvents);
+    let totalETHDeposited = BigNumber.from("0");
+    ethDepositedEvents.forEach(ethDepositedEvent => {
+      const ethDeposited = ethDepositedEvent.args.amount;
+      totalETHDeposited = totalETHDeposited.add(ethDeposited);
+    });
+    console.log("totalETHDeposited", convertToReadableFormat(totalETHDeposited));
+
+    const lusdcMintedFilter = lemmaToken.filters.Transfer(/**from ==*/ethers.constants.AddressZero,/**to == */ accounts[0]);
+    const lusdcMintedEvents = await lemmaToken.queryFilter(lusdcMintedFilter);
+    console.log(lusdcMintedEvents);
+    let totalLUSDCMinted = BigNumber.from("0");
+    lusdcMintedEvents.forEach(lusdcMintedEvents => {
+      const lUSDCMinted = lusdcMintedEvents.args.value;
+      totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
+    });
+    console.log("totalLUSDCMinted", convertToReadableFormat(totalLUSDCMinted));
+
+    const lusdcBurntFilter = lemmaToken.filters.Transfer(/**from ==*/accounts[0],/**to == */ethers.constants.AddressZero);
+    const lusdcBurntEvents = await lemmaToken.queryFilter(lusdcBurntFilter);
+    console.log(lusdcBurntEvents);
+    let totalLUSDCBurnt = BigNumber.from("0");
+    lusdcBurntEvents.forEach(lusdcBurntEvents => {
+      const lUSDCBurnt = lusdcBurntEvents.args.value;
+      totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
+    });
+    console.log("totalLUSDCBurnt", convertToReadableFormat(totalLUSDCBurnt));
+
+    const percentageOfLUSDCWithdrawed = ((totalLUSDCMinted.sub(totalLUSDCBurnt)).mul(ONE)).div(totalLUSDCMinted);
+    const ETHDeposited = (totalETHDeposited.mul(percentageOfLUSDCWithdrawed)).div(ONE);
+
+    console.log("ETHDeposited", convertToReadableFormat(ETHDeposited));
+
+
+    //according to those decide the total deposited balance
+    setDeposited(ETHDeposited);
+    const earnings = maxWithdrwableEth.sub(ETHDeposited);
+
+    console.log("earings", convertToReadableFormat(earnings));
+    setEarings(earnings);
+
+
+
   };
 
   // const convert;
@@ -360,11 +422,11 @@ function LandingPage({ classes }) {
                             <Grid container item xs={12} direction='row' justify="center">
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Deposited</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{ethData.deposit}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{(Number(convertToReadableFormat(deposited))).toFixed(6)}</Typography> </Grid>
                               </Grid>
                               <Grid container item xs={6} direction='column' alignItems='center'>
                                 <Grid item> <Typography variant="body1">Earnings</Typography> </Grid>
-                                <Grid item> <Typography variant="body1">{ethData.earnings}</Typography> </Grid>
+                                <Grid item> <Typography variant="body1">{Number((convertToReadableFormat(earnings))).toFixed(6)}</Typography> </Grid>
                               </Grid>
                             </Grid>
                             <Grid container item xs={12} direction='row' justify="space-between">
