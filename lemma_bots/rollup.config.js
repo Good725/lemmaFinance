@@ -4,7 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import json from '@rollup/plugin-json';
 import builtins from 'builtin-modules';
 
-export default {
+export default [{
   input: 'src/mainnet.ts',
   output: {
     file: 'dist/mainnet.js',
@@ -23,4 +23,24 @@ export default {
     'axios',
     /^defender-relay-client(\/.*)?$/,
   ],
-};
+},
+{
+  input: 'src/xdai.ts',
+  output: {
+    file: 'dist/xdai.js',
+    format: 'cjs',
+  },
+  plugins: [
+    resolve({ preferBuiltins: true }),
+    commonjs(),
+    json({ compact: true }),
+    typescript(),
+  ],
+  external: [
+    ...builtins,
+    'ethers',
+    'web3',
+    'axios',
+    /^defender-relay-client(\/.*)?$/,
+  ],
+}];

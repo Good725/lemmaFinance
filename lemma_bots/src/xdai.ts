@@ -34,12 +34,7 @@ export async function handler(credentials: RelayerParams) {
   for (let i = 0; i < events.length; i++) {
     const account = events[i].args.account;
     const amount: BigNumber = events[i].args.amount;
-
-
-
     const amountOnLemma: BigNumber = await lemmaToken.depositInfo(account);
-
-
     if (!amountOnLemma.isZero()) {
       console.log("in")
       const apiData = {

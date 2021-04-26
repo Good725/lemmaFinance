@@ -118,7 +118,7 @@ function LandingPage({ classes }) {
     const biconomy = new Biconomy(xDAIProvider, {
       walletProvider: window.ethereum,
       apiKey: "8u2bSHCoH.849e2a72-c03f-4784-bc0e-8ad964ee3ad5",
-      apiId: "884b7c59-4933-4de3-80fd-b1ce4a7f3e8c",
+      apiId: "13905749-edfe-4367-a4e8-c1fdf7cf9e1b",
       debug: true
     });
     // const web3Biconomy = new Web3(biconomy);
@@ -204,22 +204,25 @@ function LandingPage({ classes }) {
     const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, erc20.abi, ethers.getDefaultProvider(XDAI_URL));
     const userBalanceOfLUSDC = await lemmaToken.balanceOf(accounts[0]);
     console.log("userBalanceOfLUSDC", convertToReadableFormat(userBalanceOfLUSDC));
-    const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
-    const totalCollateral = await lemmaPerpetual.getTotalCollateral();
-    console.log("totalCollateral", convertToReadableFormat(totalCollateral, 6));
-    const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
-    console.log("totalSupplyOfLUSDC", convertToReadableFormat(totalSupplyOfLUSDC));
 
-    const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
-    console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser, 6));
+    if (userBalanceOfLUSDC.gt(BigNumber.from("0"))) {
+      const lemmaPerpetual = new ethers.Contract(addresses.xDAIRinkeby.lemmaPerpetual, LemmaPerpetual.abi, ethers.getDefaultProvider(XDAI_URL));
+      const totalCollateral = await lemmaPerpetual.getTotalCollateral();
+      console.log("totalCollateral", convertToReadableFormat(totalCollateral, 6));
+      const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
+      console.log("totalSupplyOfLUSDC", convertToReadableFormat(totalSupplyOfLUSDC));
 
-    const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
+      const usdcDeservedByUser = (totalCollateral.mul(userBalanceOfLUSDC)).div(totalSupplyOfLUSDC);
+      console.log("usdcDeservedByUser", convertToReadableFormat(usdcDeservedByUser, 6));
 
-    const amounts = await uniswapV2Router02.getAmountsOut(usdcDeservedByUser, [addresses.rinkeby.usdc, addresses.rinkeby.weth]);
-    console.log(convertToReadableFormat(amounts[1]));
-    const maxWithdrwableEth = amounts[1];
+      const uniswapV2Router02 = new ethers.Contract(addresses.rinkeby.uniswapV2Router02, IUniswapV2Router02.abi, provider);
 
-    setWithdrawableETH(maxWithdrwableEth);
+      const amounts = await uniswapV2Router02.getAmountsOut(usdcDeservedByUser, [addresses.rinkeby.usdc, addresses.rinkeby.weth]);
+      console.log(convertToReadableFormat(amounts[1]));
+      const maxWithdrwableEth = amounts[1];
+
+      setWithdrawableETH(maxWithdrwableEth);
+    }
   };
 
   // const convert;

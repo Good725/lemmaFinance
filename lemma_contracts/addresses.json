@@ -1,9 +1,10 @@
 {
     "rinkeby": {
-        "lemmaMainnet": "0xa01995e625902dF1520c665825559d8CB2ab243a",
+        "lemmaMainnet": "0xBDd42b35D7217739d8ff53a4a54e17addb09C804",
         "weth": "0xc778417e063141139fce010982780140aa0cd5ab",
         "trustedForwarder": "0xFD4973FeB2031D4409fB57afEE5dF2051b171104",
-        "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+        "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+        "usdc": "0x40D3B2F06f198D2B789B823CdBEcD1DB78090D74"
     },
     "xdai": {
         "trustedForwarder": "0x86C80a8aa58e0A4fa09A69624c31Ab2a6CAD56b8"
@@ -14,8 +15,8 @@
         "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
     },
     "xDAIRinkeby": {
-        "lemmaxDAI": "0xD901A53f2A3625752cEB6B2249c0909e352b684f",
-        "lemmaPerpetual": "0xC86B78286f3fe870347Acf0d3730721B0b74517F"
+        "lemmaxDAI": "0x6900C64b2F95781FDeDd1C23029402C3ab437094",
+        "lemmaPerpetual": "0x9fE48432c8C93af7b48805b0e574033Dc871C489"
     },
     "perpRinkebyXDAI": {
         "layers": {

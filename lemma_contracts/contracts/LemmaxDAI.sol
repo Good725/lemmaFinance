@@ -116,10 +116,10 @@ contract LemmaToken is
     function setDepositInfo(address _account, uint256 _amount) external {
         require(_msgSender() == address(ambBridge));
         require(ambBridge.messageSender() == address(lemmaMainnet));
-        depositInfo[_account] = _amount;
+        depositInfo[_account] += _amount;
         emit DepositInfoAdded(_account, _amount);
         //if AMB call is done after relaying of tokens
-        if (collateral.balanceOf(address(this)) >= _amount) {
+        if (collateral.balanceOf(address(this)) >= depositInfo[_account]) {
             mint(_account);
         }
     }

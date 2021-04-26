@@ -14,7 +14,7 @@ import axios from 'axios';
 
 
 const biconomyApiKey = 'qtEU79q8w.a181871e-c3fd-4901-8440-23aa88902e5c';
-const biconomyMethodAPIKey = '5692dc1c-eb28-4256-8e83-690f388c3c99';
+const biconomyMethodAPIKey = 'bafacb9f-fc60-46c1-ba59-8383bbab0942b';
 const headers = {
     'x-api-key': biconomyApiKey,
     'Content-Type': 'application/json',
@@ -35,10 +35,7 @@ export async function handler(credentials: RelayerParams) {
     for (let i = 0; i < events.length; i++) {
         const account = events[i].args.account;
         const amount: BigNumber = events[i].args.amount;
-
         const amountOnLemma: BigNumber = await lemmaMainnet.withdrawalInfo(account);
-
-
         if (!amountOnLemma.isZero()) {
             console.log("in")
             const apiData = {
