@@ -251,7 +251,7 @@ function LandingPage({ classes }) {
             <Grid item container xs={8} justify="flex-end" spacing={5}>
               <Grid item>
                 <Button className={classes.navButton} href="/registration">
-                  Reserve Allocation!
+                  Early Access
                 </Button>
               </Grid>
               <Grid item>
