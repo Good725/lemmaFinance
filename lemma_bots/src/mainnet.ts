@@ -53,12 +53,12 @@ export async function handler(credentials: RelayerParams) {
             //param for the withdraw method
             apiData.params = [account];
             // console.log("in");
-            try {
-                await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
-            }
-            catch (e) {
-                console.log(e);
-            }
+            // try {
+            await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+            // }
+            // catch (e) {
+            //     console.log(e);
+            // }
             //tell biconomy to make a mint transaction
         }
 
