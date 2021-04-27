@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { withStyles } from "@material-ui/core/styles";
 import {
   Grid,
@@ -412,6 +412,12 @@ function LandingPage({ classes }) {
     earnings: "0",
     assetNumber: "0",
   };
+
+  useEffect(() => {
+    if (isConnected) {
+      refreshBalances();
+    }
+  }, [isConnected]);
 
   return (
     <div className={classes.root}>
