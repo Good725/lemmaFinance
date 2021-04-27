@@ -15,7 +15,7 @@ import axios from 'axios';
 //TODO: use the same biconomy keys for both files
 //move it to a .json file
 const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
-const biconomyMethodAPIKey = '029fc735-e13f-4213-b782-1565647b0575';
+const biconomyMethodAPIKey = 'b9e3a7f2-b78a-416c-b057-d8a36ba76400';
 const headers = {
   'x-api-key': biconomyApiKey,
   'Content-Type': 'application/json',
@@ -52,12 +52,12 @@ export async function handler(credentials: RelayerParams) {
       apiData.to = lemmaToken.address;
       apiData.params = [account];
       // console.log("in");
-      try {
-        await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
-      }
-      catch (e) {
-        console.log(e);
-      }
+      // try {
+      await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+      // }
+      // catch (e) {
+      //   console.log(e);
+      // }
       //tell biconomy to make a mint transaction
     }
 
