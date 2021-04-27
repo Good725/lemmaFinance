@@ -16,18 +16,19 @@ export const useConnectedWeb3Context = () => {
   return context;
 };
 
-export const ConnectedWeb3 = ({ children }) => {
-  const [state, setState] = useState({
-    account: '',
-    signer: null,
-    provider: null,
-    networkId: null,
-    ethBalance: BigNumber.from(0),
-    isConnected: false
-  })
+const initialState = {
+  account: '',
+  signer: null,
+  provider: null,
+  networkId: null,
+  ethBalance: BigNumber.from(0),
+  isConnected: false
+}
 
-  const onConnect = async () => {
-    const provider = await web3Modal.connect();
+export const ConnectedWeb3 = ({ children }) => {
+  const [state, setState] = useState(initialState)
+
+  const syncState = async (provider) => {
     const etherProvider = new ethers.providers.Web3Provider(provider)
     const signer = etherProvider.getSigner();
     const account = await signer.getAddress();
@@ -42,18 +43,25 @@ export const ConnectedWeb3 = ({ children }) => {
       ethBalance,
       isConnected: true
     });
+  }
+
+  const onConnect = async () => {
+    const provider = await web3Modal.connect();
+    syncState(provider);
+
+    provider.on("accountsChanged", () => {
+      syncState(provider);
+    });
+    
+    // Subscribe to chainId change
+    provider.on("chainChanged", () => {
+      syncState(provider);
+    });
 
     // Subscribe to provider disconnection
     provider.on('disconnect', (error) => {
       console.log(error);
-      setState({
-        account: '',
-        signer: null,
-        provider: null,
-        networkId: null,
-        ethBalance: BigNumber.from(0),
-        isConnected: false
-      })
+      setState(initialState)
     });
   };
 
