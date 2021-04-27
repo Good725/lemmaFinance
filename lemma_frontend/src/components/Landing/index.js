@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { withStyles } from "@material-ui/core/styles";
 import {
   Grid,
@@ -413,6 +413,12 @@ function LandingPage({ classes }) {
     assetNumber: "0",
   };
 
+  useEffect(() => {
+    if (isConnected) {
+      refreshBalances();
+    }
+  }, [isConnected]);
+
   return (
     <div className={classes.root}>
       <Snackbar
@@ -587,8 +593,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
