@@ -37,7 +37,7 @@ export const ConnectedWeb3 = ({ children }) => {
 
     setState({
       account,
-      signer,
+      signer: etherProvider,
       provider,
       networkId,
       ethBalance,
