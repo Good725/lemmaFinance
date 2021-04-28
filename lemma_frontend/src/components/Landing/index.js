@@ -18,6 +18,7 @@ import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
 import erc20 from "../../abis/ERC20.json";
 import addresses from "../../abis/addresses.json";
+import constants from "../../abis/constants.json";
 import LemmaMainnet from "../../abis/LemmaMainnet.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
@@ -161,8 +162,8 @@ function LandingPage({ classes }) {
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
       walletProvider: window.ethereum,
-      apiKey: "8u2bSHCoH.849e2a72-c03f-4784-bc0e-8ad964ee3ad5",
-      apiId: "13905749-edfe-4367-a4e8-c1fdf7cf9e1b",
+      apiKey: constants.biconomy.xdai.withdraw.apiKey,
+      apiId: constants.biconomy.xdai.withdraw.methodAPIKey,
       debug: true,
     });
     // const web3Biconomy = new Web3(biconomy);
@@ -403,8 +404,8 @@ function LandingPage({ classes }) {
       ethers.getDefaultProvider(XDAI_WSS_URL)
     );
 
-    const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
-    const biconomyMethodAPIKey = 'b9e3a7f2-b78a-416c-b057-d8a36ba76400';
+    const biconomyApiKey = constants.biconomy.xdai.mint.apiKey;
+    const biconomyMethodAPIKey = constants.biconomy.xdai.mint.methodAPIKey;
     const headers = {
       'x-api-key': biconomyApiKey,
       'Content-Type': 'application/json',
