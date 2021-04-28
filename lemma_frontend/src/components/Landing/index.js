@@ -84,12 +84,11 @@ function LandingPage({ classes }) {
       handleConnectWallet();
       return;
     }
-
     const lemmaMainnet = new ethers.Contract(
       addresses.rinkeby.lemmaMainnet,
       LemmaMainnet.abi,
-      provider
-    ).connect(signer);
+      signer
+    );
 
     await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
 
@@ -101,7 +100,7 @@ function LandingPage({ classes }) {
     setOpen(true);
 
     //set a listener for minting LUSDC on
-    // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, provider);
+    // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
     // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
     const lemmaToken = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaxDAI,
@@ -260,15 +259,16 @@ function LandingPage({ classes }) {
       LemmaPerpetual.abi,
       ethers.getDefaultProvider(XDAI_URL)
     );
+
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
-      provider
+      signer
     );
     const lemmaMainnet = new ethers.Contract(
       addresses.rinkeby.lemmaMainnet,
       LemmaMainnet.abi,
-      provider
+      signer
     );
 
     const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
