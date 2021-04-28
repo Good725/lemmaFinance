@@ -104,8 +104,8 @@ function LandingPage({ classes }) {
 
     await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
 
-    // await refreshBalances();
-    setLoadMessage( "Deposit completed successfully, you should receive your LUSDT in ~1 min!" );
+
+    setLoadMessage("Deposit completed successfully, you should receive your LUSDT in ~1 min!");
     setLoadOpen(true);
 
     //set a listener for minting LUSDC on
@@ -310,12 +310,17 @@ function LandingPage({ classes }) {
         convertToReadableFormat(usdcDeservedByUser, 6)
       );
       if (!usdcDeservedByUser.isZero()) {
-        const amounts = await uniswapV2Router02.getAmountsOut(
-          usdcDeservedByUser,
-          [addresses.rinkeby.usdc, addresses.rinkeby.weth]
-        );
-        console.log(convertToReadableFormat(amounts[1]));
-        maxWithdrwableEth = amounts[1];
+        try {
+          const amounts = await uniswapV2Router02.getAmountsOut(
+            usdcDeservedByUser,
+            [addresses.rinkeby.usdc, addresses.rinkeby.weth]
+          );
+          console.log(convertToReadableFormat(amounts[1]));
+          maxWithdrwableEth = amounts[1];
+        }
+        catch (e) {
+          console.log(e);
+        }
       }
 
       setWithdrawableETH(maxWithdrwableEth);
@@ -401,6 +406,7 @@ function LandingPage({ classes }) {
   };
 
   const onDepositInfoAdded = async () => {
+    console.log("being your own bot");
     const lemmaToken = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaxDAI,
       LemmaToken.abi,
@@ -433,6 +439,9 @@ function LandingPage({ classes }) {
 
       //tell biconomy to make a mint transaction
       await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+    }
+    else {
+      console.log("not necessary");
     }
 
   };
@@ -479,7 +488,7 @@ function LandingPage({ classes }) {
         </Alert>
       </Snackbar>
       <Snackbar open={loadOpen} onClose={handleClose} anchorOrigin={alertAnchor}>
-        <Alert elevation={6} icon={<CircularProgress color="secondary" size="20px"/>} variant="filled" onClose={handleClose} severity="info">
+        <Alert elevation={6} icon={<CircularProgress color="secondary" size="20px" />} variant="filled" onClose={handleClose} severity="info">
           {loadMessage}
         </Alert>
       </Snackbar>
