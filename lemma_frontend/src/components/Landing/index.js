@@ -513,7 +513,12 @@ function LandingPage({ classes }) {
                 </Typography>
               </Grid>
             </Grid>
-            <Grid item container xs={8} justify="flex-end" spacing={5}>
+            <Grid item container xs={8} justify="flex-end" spacing={4}>
+              <Grid item>
+                <Button className={classes.navButton} href="https://mgava.gitbook.io/lemma/">
+                  Docs
+                </Button>
+              </Grid>
               <Grid item>
                 <Button className={classes.navButton} href="/registration">
                   Early Access
