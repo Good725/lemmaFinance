@@ -101,8 +101,13 @@ function LandingPage({ classes }) {
       LemmaMainnet.abi,
       signer
     );
-
-    await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
+    const gasFees = convertTo18Decimals("0.001");//TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
+    if ((convertTo18Decimals(amount).add(gasFees)).gte(ethBalance)) {
+      await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount).sub(gasFees) });
+    }
+    else {
+      await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
+    }
 
 
     setLoadMessage("Deposit completed successfully, you should receive your LUSDT in ~1 min!");
