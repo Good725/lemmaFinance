@@ -11,12 +11,9 @@ export const styles = (theme) => ({
   },
   body: {
     position: "relative",
-    height: "100%",
     backgroundImage: `url(${Background})`,
     backgroundSize: "cover",
-    [theme.breakpoints.down("sm")]: {
-      height: "unset",
-    },
+    minHeight: "100vh",
   },
   navigationContainer: {
     [theme.breakpoints.down("sm")]: {
@@ -103,6 +100,7 @@ export const styles = (theme) => ({
 
   contentContainer: {
     marginTop: "3vw",
+    marginBottom: "3vw",
     [theme.breakpoints.down("sm")]: {
       marginTop: "10vw",
       marginBottom: "10vw",
