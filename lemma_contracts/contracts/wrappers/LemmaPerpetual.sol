@@ -70,6 +70,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         _USDC.safeApprove(address(_clearingHouse), type(uint256).max);
     }
 
+    /// @notice set lemma token deployed on xdai network.
+    /// @dev Only owner can call this function.
+    /// @param _lemmaToken LemmaToken address of xdai network.
     function setLemmaToken(address _lemmaToken) external onlyOwner {
         lemmaToken = _lemmaToken;
     }

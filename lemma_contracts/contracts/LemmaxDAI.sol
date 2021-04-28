@@ -64,6 +64,7 @@ contract LemmaToken is
     //mapping of protocol to collateral
     //underlying assets supported
     /// @notice Initialize proxy
+    /// @param _per
     function initialize(
         IERC20 _collateral,
         IPerpetualProtocol _perpetualProtocol,
@@ -114,7 +115,7 @@ contract LemmaToken is
     function setLemmaMainnet(ILemmaMainnet _lemmaMainnet) external onlyOwner {
         lemmaMainnet = _lemmaMainnet;
     }
-    
+
     /// @notice Set gas limit that is used to call bridge.
     /// @dev Only owner can set gas limit.
     function setGasLimit(uint256 _gasLimit) external onlyOwner {
@@ -136,7 +137,7 @@ contract LemmaToken is
         }
     }
 
-    /// @notice Mint lemma token on xdai network.
+    /// @notice Mint lemma token to _account on xdai network.
     /// @param account The lemma token is minted to.
     function mint(address _account) public {
         uint256 amount = depositInfo[_account];
@@ -164,7 +165,7 @@ contract LemmaToken is
         // //require(toMint>=minimumToMint)
     }
 
-    /// @notice Burn lemma tokens and set withdrawinfo to lemma contract of mainnet.
+    /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
     /// @param amount The number of lemma tokens to be burned.
     function withdraw(uint256 _amount) external {
         uint256 userShareAmountOfCollateral =
@@ -206,7 +207,10 @@ contract LemmaToken is
     //
     // INTERNAL
     //
-    /// @dev This function is used for sending USDC to multiTokenMediator
+    /// @dev This function is used for sending _token as _amount to _receiver via multiTokenMediator
+    /// @param _token Token address to be sent.
+    /// @param _receiver The address _token is sent to via multiTokenTransfer.
+    /// @param _amount The number of _token to be sent.
     function multiTokenTransfer(
         IERC20 _token,
         address _receiver,
