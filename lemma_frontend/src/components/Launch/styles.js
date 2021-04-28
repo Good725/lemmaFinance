@@ -11,13 +11,10 @@ export const styles = (theme) => ({
     // backgroundColor: '#F4F7FA'
   },
   body: {
-    height: "100%",
     position: "relative",
     backgroundImage: `url(${Background})`,
     backgroundSize: "cover",
-    [theme.breakpoints.down("sm")]: {
-      height: "unset",
-    },
+    minHeight: "100vh",
   },
   navigationContainer: {
     marginTop: "2vw",
@@ -84,7 +81,7 @@ export const styles = (theme) => ({
 
   contentContainer: {
     marginTop: "3vw",
-    marginBottom: "10vw",
+    marginBottom: "3vw",
   },
   actionPaper: {
     width: "100%",

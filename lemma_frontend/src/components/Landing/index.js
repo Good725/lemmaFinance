@@ -9,7 +9,7 @@ import {
   Typography,
   Tab,
   Slider,
-  CircularProgress
+  CircularProgress,
 } from "@material-ui/core";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
 import Web3 from "web3";
@@ -25,7 +25,6 @@ import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
 import LemmaPerpetual from "../../abis/LemmaPerpetual.json";
 import { useConnectedWeb3Context } from "../../context";
-
 
 import { styles } from "./styles";
 
@@ -55,7 +54,6 @@ function LandingPage({ classes }) {
   const [earnings, setEarings] = useState(BigNumber.from(0));
   const XDAI_URL = "https://rpc.xdaichain.com/";
   const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
-
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -104,8 +102,9 @@ function LandingPage({ classes }) {
 
     await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
 
-
-    setLoadMessage("Deposit completed successfully, you should receive your LUSDT in ~1 min!");
+    setLoadMessage(
+      "Deposit completed successfully, you should receive your LUSDT in ~1 min!"
+    );
     setLoadOpen(true);
 
     //set a listener for minting LUSDC on
@@ -116,7 +115,9 @@ function LandingPage({ classes }) {
       LemmaToken.abi,
       ethers.getDefaultProvider(XDAI_WSS_URL)
     );
-    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.filters.DepositInfoAdded(/**account */account);
+    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.filters.DepositInfoAdded(
+      /**account */ account
+    );
     const lusdcMintedFilter = lemmaToken.filters.Transfer(
       /**from ==*/ ethers.constants.AddressZero,
       /**to == */ account
@@ -161,7 +162,6 @@ function LandingPage({ classes }) {
       lUSDCAmount = userBalanceOfLUSDC;
     }
     console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
-
 
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
@@ -221,7 +221,9 @@ function LandingPage({ classes }) {
           //show success successMessage
           console.log(transaction);
 
-          setLoadMessage("Withdraw started successfully, you will receive your ETH back in ~1 minutes");
+          setLoadMessage(
+            "Withdraw started successfully, you will receive your ETH back in ~1 minutes"
+          );
           setLoadOpen(true);
 
           const lemmaMainnet = new ethers.Contract(
@@ -281,7 +283,15 @@ function LandingPage({ classes }) {
     );
 
     // const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
-    const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] = await Promise.all([lemmaToken.balanceOf(account), lemmaPerpetual.getTotalCollateral(), lemmaToken.totalSupply()]);
+    const [
+      userBalanceOfLUSDC,
+      totalCollateral,
+      totalSupplyOfLUSDC,
+    ] = await Promise.all([
+      lemmaToken.balanceOf(account),
+      lemmaPerpetual.getTotalCollateral(),
+      lemmaToken.totalSupply(),
+    ]);
 
     console.log(
       "userBalanceOfLUSDC",
@@ -317,8 +327,7 @@ function LandingPage({ classes }) {
           );
           console.log(convertToReadableFormat(amounts[1]));
           maxWithdrwableEth = amounts[1];
-        }
-        catch (e) {
+        } catch (e) {
           console.log(e);
         }
       }
@@ -416,19 +425,19 @@ function LandingPage({ classes }) {
     const biconomyApiKey = constants.biconomy.xdai.mint.apiKey;
     const biconomyMethodAPIKey = constants.biconomy.xdai.mint.methodAPIKey;
     const headers = {
-      'x-api-key': biconomyApiKey,
-      'Content-Type': 'application/json',
+      "x-api-key": biconomyApiKey,
+      "Content-Type": "application/json",
     };
     const amountOnLemma = await lemmaToken.depositInfo(account);
     if (!amountOnLemma.isZero()) {
       console.log("in");
       const apiData = {
-        'userAddress': '',
+        userAddress: "",
         // 'from': '',
-        'to': '',
+        to: "",
         // 'gasLimit': '',
-        'params': Array(0),
-        'apiId': biconomyMethodAPIKey,
+        params: Array(0),
+        apiId: biconomyMethodAPIKey,
       };
 
       apiData.userAddress = ethers.constants.AddressZero;
@@ -438,12 +447,15 @@ function LandingPage({ classes }) {
       // console.log("in");
 
       //tell biconomy to make a mint transaction
-      await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
-    }
-    else {
+      await axios({
+        method: "post",
+        url: "https://api.biconomy.io/api/v2/meta-tx/native",
+        headers: headers,
+        data: apiData,
+      });
+    } else {
       console.log("not necessary");
     }
-
   };
 
   const handleTabChange = (event, newValue) => {
@@ -482,18 +494,48 @@ function LandingPage({ classes }) {
 
   return (
     <div className={classes.root}>
-      <Snackbar open={successOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
-        <Alert elevation={6} variant="filled" onClose={handleClose} severity="success">
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={6000}
+        onClose={handleClose}
+        anchorOrigin={alertAnchor}
+      >
+        <Alert
+          elevation={6}
+          variant="filled"
+          onClose={handleClose}
+          severity="success"
+        >
           {successMessage}
         </Alert>
       </Snackbar>
-      <Snackbar open={loadOpen} onClose={handleClose} anchorOrigin={alertAnchor}>
-        <Alert elevation={6} icon={<CircularProgress color="secondary" size="20px" />} variant="filled" onClose={handleClose} severity="info">
+      <Snackbar
+        open={loadOpen}
+        onClose={handleClose}
+        anchorOrigin={alertAnchor}
+      >
+        <Alert
+          elevation={6}
+          icon={<CircularProgress color="secondary" size="20px" />}
+          variant="filled"
+          onClose={handleClose}
+          severity="info"
+        >
           {loadMessage}
         </Alert>
       </Snackbar>
-      <Snackbar open={errorOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
-        <Alert elevation={6} variant="filled" onClose={handleClose} severity="error">
+      <Snackbar
+        open={errorOpen}
+        autoHideDuration={6000}
+        onClose={handleClose}
+        anchorOrigin={alertAnchor}
+      >
+        <Alert
+          elevation={6}
+          variant="filled"
+          onClose={handleClose}
+          severity="error"
+        >
           {errorMessage}
         </Alert>
       </Snackbar>
@@ -524,7 +566,10 @@ function LandingPage({ classes }) {
             </Grid>
             <Grid item container xs={8} justify="flex-end" spacing={4}>
               <Grid item>
-                <Button className={classes.navButton} href="https://mgava.gitbook.io/lemma/">
+                <Button
+                  className={classes.navButton}
+                  href="https://mgava.gitbook.io/lemma/"
+                >
                   Docs
                 </Button>
               </Grid>
@@ -659,8 +704,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
