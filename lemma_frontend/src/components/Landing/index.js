@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { withStyles } from '@material-ui/core/styles';
-import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab, Slider } from '@material-ui/core';
+import { Grid, Button, TextField, Paper, Snackbar, Typography, Tab, Slider, CircularProgress } from '@material-ui/core';
 import { TabPanel, TabContext, Alert, TabList } from '@material-ui/lab';
 
 import { useWallet } from 'use-wallet';
@@ -26,9 +26,13 @@ function LandingPage({ classes }) {
 
   const [amount, setAmount] = useState("");
   const [tabIndex, setTabIndex] = useState("1");
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [status, setStatus] = useState("");
+
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [loadOpen, setLoadOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
   const [deposited, setDeposited] = useState(BigNumber.from(0));
   const [earnings, setEarings] = useState(BigNumber.from(0));
@@ -85,9 +89,7 @@ function LandingPage({ classes }) {
       await lemmaMainnet.methods.deposit(0).send({ from: accounts[0], value: convertTo18Decimals(amount) });
 
       // await refreshBalances();
-      setMessage("Deposit completed successfully, you should receive your LUSDT in ~1 min!");
-      setStatus("success");
-      setOpen(true);
+      setLoadOpen(true);
 
       //set a listener for minting LUSDC on 
       // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, provider);
@@ -180,12 +182,11 @@ function LandingPage({ classes }) {
         //event emitter methods
         provider.once(tx, (transaction) => {
           // Emitted when the transaction has been mined
-          //show success message
+          //show success successMessage
           console.log(transaction);
 
-          setMessage("Withdraw started successfully, you will receive your ETH back in ~1 minutes");
-          setStatus("success");
-          setOpen(true);
+          setSuccessMessage("Withdraw started successfully, you will receive your ETH back in ~1 minutes");
+          setSuccessOpen(true);
 
 
           const lemmaMainnet = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, new ethers.providers.Web3Provider(window.ethereum));
@@ -193,7 +194,7 @@ function LandingPage({ classes }) {
           lemmaMainnet.once(lemmaMainnetETHWithdrawedFilter, onSuccesfulWithdrawal);
           //do something with transaction hash
         });
-      }).onEvent(biconomy.ERROR, (error, message) => {
+      }).onEvent(biconomy.ERROR, (error, successMessage) => {
         // Handle error while initializing mexa
         console.log(error);
       });
@@ -304,15 +305,14 @@ function LandingPage({ classes }) {
 
   const onSuccesfulDeposit = async () => {
     refreshBalances();
-    setMessage("Deposit completed successfully");
-    setStatus("success");
-    setOpen(true);
+    setSuccessMessage("Deposit completed successfully");
+    setSuccessOpen(true);
   };
+
   const onSuccesfulWithdrawal = async () => {
     refreshBalances();
-    setMessage("Withdraw completed successfully");
-    setStatus("success");
-    setOpen(true);
+    setSuccessMessage("Withdraw completed successfully");
+    setSuccessOpen(true);
   };
 
   // const convert;
@@ -339,7 +339,9 @@ function LandingPage({ classes }) {
     if (reason === 'clickaway') {
       return;
     }
-    setOpen(false);
+    setSuccessOpen(false);
+    setLoadOpen(false);
+    setErrorOpen(false);
   };
 
   const alertAnchor = {
@@ -359,9 +361,19 @@ function LandingPage({ classes }) {
 
   return (
     <div className={classes.root}>
-      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
-        <Alert elevation={6} variant="filled" onClose={handleClose} severity={status}>
-          {message}
+      <Snackbar open={successOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
+        <Alert elevation={6} variant="filled" onClose={handleClose} severity="success">
+          {successMessage}
+        </Alert>
+      </Snackbar>
+      <Snackbar open={loadOpen} onClose={handleClose} anchorOrigin={alertAnchor}>
+        <Alert elevation={6} icon={<CircularProgress color="secondary" size="20px"/>} variant="filled" onClose={handleClose} severity="info">
+          Transaction started, you should receive LUSDT within ~1 minute.
+        </Alert>
+      </Snackbar>
+      <Snackbar open={errorOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
+        <Alert elevation={6} variant="filled" onClose={handleClose} severity="error">
+          {errorMessage}
         </Alert>
       </Snackbar>
       <div className={classes.body}>
