@@ -20,7 +20,9 @@ import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
 import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
 // import 'hardhat/console.sol';
-
+/// @title Lemma Perpetual contract for interacting with perpetual protocol.
+/// @author yashnaman
+/// @dev All function calls are currently implemented.
 contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     using SafeERC20 for IERC20;
     using Decimal for Decimal.decimal;
@@ -53,6 +55,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //     _USDC.approve(address(_clearingHouse), type(uint256).max);
     // }
 
+    /// @notice Initialize proxy
     function initialize(
         IClearingHouse _clearingHouse,
         IClearingHouseViewer _clearingHouseViewer,
@@ -73,6 +76,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     //open on which side needs to decided by rebalancer logic
     //underlying asset needs to be given dynamically
+    /// @notice open on which side needs to decided by rebalancer logic
+    /// @dev This function can be called through lemma token contract
+    /// @param amount The number of USDC to open perpetual protocol.
     function open(uint256 _amount) external override onlyLemmaToken {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
 
@@ -112,6 +118,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     //close on which side needs to be decide by rebalacer logic
     //underlying asset needs to be given dynamically
+    /// @notice close on which side needs to be decide by rebalacer logic
+    /// @dev This function can be called through lemma token contract.
+    /// @param amount The number of USDC to be closed from perpetual protocol.
     function close(uint256 _amount)
         external
         override
@@ -178,6 +187,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         // return amountGotBackAfterClosing;
     }
 
+    /// @dev Convert collteral amount to 18 decimals
+    /// @param collateral The address of collateral.
+    /// @param amount The number of collateral to be converted to 18 decimals.
     function convertCollteralAmountTo18Decimals(
         address _collateral,
         uint256 _amount
@@ -191,6 +203,8 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             );
     }
 
+    /// @dev Convert 18 decimals to amount according to collateral.
+    /// @param collateral The address of collateral.
     function convert18DecimalsToCollateralAmount(
         address _collateral,
         Decimal.decimal memory _decimalAmount
@@ -218,6 +232,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         return Decimal.decimal(_d);
     }
 
+    /// @dev Return total collateral amount.
     function getTotalCollateral() public view override returns (uint256) {
         return
             convert18DecimalsToCollateralAmount(

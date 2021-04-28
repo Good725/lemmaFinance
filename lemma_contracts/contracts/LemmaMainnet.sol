@@ -12,6 +12,7 @@ import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol
 
 // import 'hardhat/console.sol';
 
+/// @title UniswapV2Router02 Interface
 interface IUniswapV2Router02 {
     function swapExactETHForTokens(
         uint256 amountOutMin,
@@ -29,16 +30,20 @@ interface IUniswapV2Router02 {
     ) external returns (uint256[] memory amounts);
 }
 
+/// @title LemmaToken interface. LemmaToken is exist on XDAI network.
 interface ILemmaxDAI {
     function setDepositInfo(address account, uint256 amount) external;
 }
 
+/// @title LemmaContract for Mainnet.
+/// @author yashnaman
+/// @dev All function calls are currently implemented.
 contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     //USDT returns void (does not follow standard ERC20 that is why it is necessary)
     using SafeERC20 for IERC20;
-    // xDai AMB bridge contract
+    /// @notice xDai AMB bridge contract
     IAMB public ambBridge;
-    // xDai multi-tokens mediator
+    /// @notice xDai multi-tokens mediator
     IMultiTokenMediator public multiTokenMediator;
 
     ILemmaxDAI public lemmaXDAI;
@@ -55,6 +60,9 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     event ETHWithdrawed(address indexed account, uint256 indexed amount);
     event WithdrawalInfoAdded(address indexed account, uint256 indexed amount);
 
+    /// @notice Initialize proxy.
+    /// @param lemmaXDAI Lemma token deployed on xdai network.
+    /// @param ambBridge Bridge contract address
     function initialize(
         IERC20 _USDC,
         IERC20 _WETH,
@@ -97,10 +105,15 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         return ERC2771ContextUpgradeable._msgData();
     }
 
+    /// @notice Set gas limit that is used to call bridge.
+    /// @dev Only owner can set gas limit.
     function setGasLimit(uint256 _gasLimit) external onlyOwner {
         gasLimit = _gasLimit;
     }
 
+    /// @notice Pay ethereum to deposit USDC.
+    /// @dev Paid eth is converted to USDC on Uniswap and then deposited to lemmaXDAI.
+    /// @param _minimumUSDCAmountOut is the minumum amount to get from Paid Eth.
     function deposit(uint256 _minimumUSDCAmountOut) external payable {
         address[] memory path = new address[](2);
         path[0] = address(WETH);
@@ -124,6 +137,10 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         emit ETHDeposited(_msgSender(), msg.value);
     }
 
+    /// @notice Set Withdraw Info
+    /// @dev This function can be called by only lemmaXDAI contract via ambBridge contract.
+    /// @param _account is an account for withdrawing.
+    /// @param  _amount is the USDC amount converted to Weth.
     function setWithdrawalInfo(address _account, uint256 _amount) external {
         require(_msgSender() == address(ambBridge));
         require(ambBridge.messageSender() == address(lemmaXDAI));
@@ -134,6 +151,9 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         }
     }
 
+    /// @notice Withdraw eth based on the USDC amount set by WithdrawInfo.
+    /// @dev The USDC set by withdrawInfo is converted to Weth on uniswap and the weth is transferred to the account.
+    /// @param _account is an account withdrawn to.
     function withdraw(address _account) public {
         uint256 amount = withdrawalInfo[_account];
         delete withdrawalInfo[_account];
@@ -153,9 +173,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         emit ETHWithdrawed(_account, amounts[1]);
     }
 
-    //
-    // INTERNAL
-    //
+    /// @dev This function is used for sending USDC to multiTokenMediator
     function multiTokenTransfer(
         IERC20 _token,
         address _receiver,
@@ -167,6 +185,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         multiTokenMediator.relayTokens(address(_token), _receiver, _amount);
     }
 
+    /// @param _contractOnOtherSide is lemma toke address deployed on xdai network
+    /// @param _data is ABI-encodes
     function callBridge(
         address _contractOnOtherSide,
         bytes memory _data,
