@@ -12,6 +12,7 @@ import {
 } from "@material-ui/core";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
 import Web3 from "web3";
+import axios from "axios";
 
 import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
@@ -22,6 +23,7 @@ import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
 import LemmaPerpetual from "../../abis/LemmaPerpetual.json";
 import { useConnectedWeb3Context } from "../../context";
+
 
 import { styles } from "./styles";
 
@@ -46,6 +48,7 @@ function LandingPage({ classes }) {
   const XDAI_URL = "https://rpc.xdaichain.com/";
   const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
 
+
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
   };
@@ -55,6 +58,7 @@ function LandingPage({ classes }) {
   };
 
   const ONE = convertTo18Decimals(1);
+  const ZERO = BigNumber.from("0");
 
   const handleAmountChange = (event) => {
     if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
@@ -104,14 +108,16 @@ function LandingPage({ classes }) {
     // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
     const lemmaToken = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaxDAI,
-      erc20.abi,
+      LemmaToken.abi,
       ethers.getDefaultProvider(XDAI_WSS_URL)
     );
+    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.filters.DepositInfoAdded(/**account */account);
     const lusdcMintedFilter = lemmaToken.filters.Transfer(
       /**from ==*/ ethers.constants.AddressZero,
       /**to == */ account
     );
     lemmaToken.once(lusdcMintedFilter, onSuccesfulDeposit);
+    lemmaToken.once(lemmaXDAIDepositInfoAddedFilter, onDepositInfoAdded);
   };
 
   const handleWithdrawSubmit = async () => {
@@ -122,7 +128,7 @@ function LandingPage({ classes }) {
 
     const lemmaToken = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaxDAI,
-      erc20.abi,
+      LemmaToken.abi,
       ethers.getDefaultProvider(XDAI_URL)
     );
     const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
@@ -150,6 +156,7 @@ function LandingPage({ classes }) {
       lUSDCAmount = userBalanceOfLUSDC;
     }
     console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
+
 
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
@@ -251,7 +258,7 @@ function LandingPage({ classes }) {
 
     const lemmaToken = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaxDAI,
-      erc20.abi,
+      LemmaToken.abi,
       ethers.getDefaultProvider(XDAI_URL)
     );
     const lemmaPerpetual = new ethers.Contract(
@@ -271,7 +278,9 @@ function LandingPage({ classes }) {
       signer
     );
 
-    const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
+    // const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
+    const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] = await Promise.all([lemmaToken.balanceOf(account), lemmaPerpetual.getTotalCollateral(), lemmaToken.totalSupply()]);
+
     console.log(
       "userBalanceOfLUSDC",
       convertToReadableFormat(userBalanceOfLUSDC)
@@ -280,12 +289,12 @@ function LandingPage({ classes }) {
     let maxWithdrwableEth = new BigNumber.from("0");
 
     if (userBalanceOfLUSDC.gt(BigNumber.from("0"))) {
-      const totalCollateral = await lemmaPerpetual.getTotalCollateral();
+      // const totalCollateral = await lemmaPerpetual.getTotalCollateral();
       console.log(
         "totalCollateral",
         convertToReadableFormat(totalCollateral, 6)
       );
-      const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
+      // const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
       console.log(
         "totalSupplyOfLUSDC",
         convertToReadableFormat(totalSupplyOfLUSDC)
@@ -298,13 +307,14 @@ function LandingPage({ classes }) {
         "usdcDeservedByUser",
         convertToReadableFormat(usdcDeservedByUser, 6)
       );
-
-      const amounts = await uniswapV2Router02.getAmountsOut(
-        usdcDeservedByUser,
-        [addresses.rinkeby.usdc, addresses.rinkeby.weth]
-      );
-      console.log(convertToReadableFormat(amounts[1]));
-      maxWithdrwableEth = amounts[1];
+      if (!usdcDeservedByUser.isZero()) {
+        const amounts = await uniswapV2Router02.getAmountsOut(
+          usdcDeservedByUser,
+          [addresses.rinkeby.usdc, addresses.rinkeby.weth]
+        );
+        console.log(convertToReadableFormat(amounts[1]));
+        maxWithdrwableEth = amounts[1];
+      }
 
       setWithdrawableETH(maxWithdrwableEth);
     }
@@ -385,6 +395,44 @@ function LandingPage({ classes }) {
     setMessage("Withdraw completed successfully");
     setStatus("success");
     setOpen(true);
+  };
+  const onDepositInfoAdded = async () => {
+    const lemmaToken = new ethers.Contract(
+      addresses.xDAIRinkeby.lemmaxDAI,
+      LemmaToken.abi,
+      ethers.getDefaultProvider(XDAI_WSS_URL)
+    );
+
+    const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
+    const biconomyMethodAPIKey = 'b9e3a7f2-b78a-416c-b057-d8a36ba76400';
+    const headers = {
+      'x-api-key': biconomyApiKey,
+      'Content-Type': 'application/json',
+    };
+    const amountOnLemma = await lemmaToken.depositInfo(account);
+    if (!amountOnLemma.isZero()) {
+      console.log("in");
+      const apiData = {
+        'userAddress': '',
+        // 'from': '',
+        'to': '',
+        // 'gasLimit': '',
+        'params': Array(0),
+        'apiId': biconomyMethodAPIKey,
+      };
+
+      apiData.userAddress = ethers.constants.AddressZero;
+      // apiData.from = accounts[0];
+      apiData.to = lemmaToken.address;
+      apiData.params = [account];
+      // console.log("in");
+
+      //tell biconomy to make a mint transaction
+      await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+
+
+    }
+
   };
 
   const handleTabChange = (event, newValue) => {
