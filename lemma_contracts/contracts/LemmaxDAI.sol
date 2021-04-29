@@ -126,8 +126,8 @@ contract LemmaToken is
     /// @param _account The account lemma token is minted to.
     /// @param _amount The amount of lemma token is minted.
     function setDepositInfo(address _account, uint256 _amount) external {
-        require(_msgSender() == address(ambBridge));
-        require(ambBridge.messageSender() == address(lemmaMainnet));
+        require(_msgSender() == address(ambBridge), "not ambBridge");
+        require(ambBridge.messageSender() == address(lemmaMainnet), "ambBridge's messageSender is not lemmaMainnet");
         depositInfo[_account] += _amount;
         emit DepositInfoAdded(_account, _amount);
         //if AMB call is done after relaying of tokens

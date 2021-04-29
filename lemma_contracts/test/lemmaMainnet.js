@@ -50,8 +50,6 @@ contract("LemmaMainnet", accounts => {
         await usdc.connect(accounts[0]).approve(LemmaMainnetContract.address, amountTransfer);
         await usdc.connect(accounts[0]).transfer(LemmaMainnetContract.address, amountTransfer);
         let usdc_balance_contract_1 = await usdc.balanceOf(LemmaMainnetContract.address);
-        console.log(usdc_balance_account_1.toString());
-        console.log(usdc_balance_contract_1.toString());
     });
 
     it("Set gasLimit", async function() {
@@ -63,28 +61,14 @@ contract("LemmaMainnet", accounts => {
         let payableValue = BigNumber.from((10**17).toString());
         let balanceBeforeDeposit = await accounts[0].getBalance();
         const provider = providers.getDefaultProvider('rinkeby');
-       
-        console.log(balanceBeforeDeposit.toString());
-      
         const tx = await LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});
 
         let balance_contract = await usdc.balanceOf(LemmaMainnetContract.address);
-        console.log(balance_contract.toString()); 
-
         const { gasUsed } = await tx.wait();
         const gasPrice = tx.gasPrice;
         const feeEth = gasUsed * gasPrice;
-        console.log(feeEth.toString());
-
         let balanceAfterDeposit = await accounts[0].getBalance();
-        console.log(balanceAfterDeposit.toString());
-        console.log((balanceBeforeDeposit - balanceAfterDeposit - payableValue).toString());
-        // console.log(usdc);
         let usdcBalanceXDAI = await usdc.balanceOf(multiTokenMediatorOnEth);
-        console.log(usdcBalanceXDAI.toString());
-        // assert.equal(balanceBeforeDeposit - balanceAfterDeposit - payableValue, feeEth);
-
-        // TODO Uniswap Fee exists
     });
 
     it("Only ambBridge contract can call setWithdrawalInfo function", async function() {
@@ -114,34 +98,15 @@ contract("LemmaMainnet", accounts => {
 
     it("Withdraw", async function() {
         let usdcBalanceContractBeforeWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
-        console.log(usdcBalanceContractBeforeWithdraw.toString());
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
         let balanceBeforeWithdraw = await accounts[0].getBalance();
-        console.log(balanceBeforeWithdraw.toString());
-
-        let aaaaa = await LemmaMainnetContract.getValue(accounts[0].address);
-        console.log(aaaaa.toString());
 
         await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
         let balanceAfterWithdraw = await accounts[0].getBalance();
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
-        console.log(usdcBalanceContractAfterWithdraw.toString());
-        let aa = usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut;
-        console.log(aa.toString());
-        if (usdcBalanceContractBeforeWithdraw >= withdrawUSDCAmountOut) {
-            console.log("opop");
-            try {
-                assert.equal(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
-            } catch (error) {
-                console.log(error.message);
-                assert(error.message, "expected { Object (_hex, _isBigNumber) } to equal 10000000");
-            }
-            
-        } else {
-            console.log("lplplp");
-            assert.equal(usdcBalanceContractBeforeWithdraw, usdcBalanceContractAfterWithdraw);
-        }
-        console.log(balanceAfterWithdraw.toString());
+
+        assert(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
+    
     });
 
     it("Can not withdraw more amount than the contract's balance", async function() {

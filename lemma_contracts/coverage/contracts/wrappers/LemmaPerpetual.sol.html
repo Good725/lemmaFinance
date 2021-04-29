@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/wrappers/LemmaPerpetual.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../index.html">all files</a> / <a href="index.html">contracts/wrappers/</a> LemmaPerpetual.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">81.25% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>26/32</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>4/4</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">81.82% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>9/11</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">87.88% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>29/33</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: MIT
+pragma solidity =0.8.3;
+&nbsp;
+import {IPerpetualProtocol} from '../interfaces/IPerpetualProtocol.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+&nbsp;
+import {
+    SafeERC20
+} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+// import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
+// import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {IAmm, Decimal} from '../interfaces/IAmm.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import {SignedDecimal} from '../utils/SignedDecimal.sol';
+import {
+    IERC20WithDecimalsMethod
+} from '../interfaces/IERC20WithDecimalsMethod.sol';
+import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
+import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
+&nbsp;
+// import 'hardhat/console.sol';
+/// @title Lemma Perpetual contract for interacting with perpetual protocol.
+/// @author yashnaman
+/// @dev All function calls are currently implemented.
+contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
+    using SafeERC20 for IERC20;
+    using Decimal for Decimal.decimal;
+    using SignedDecimal for SignedDecimal.signedDecimal;
+&nbsp;
+    IClearingHouse public clearingHouse;
+    IClearingHouseViewer public clearingHouseViewer;
+    IAmm public ETH_USDC_AMM;
+    IERC20 public USDC;
+    address public lemmaToken;
+&nbsp;
+    //mapping that maps AMMs to an underlying asset
+    //only one collateral for now
+&nbsp;
+    modifier onlyLemmaToken() {
+        require(msg.sender == lemmaToken, 'Lemma: only lemma token allowed');
+        _;
+    }
+&nbsp;
+    // constructor(
+    //     IClearingHouse _clearingHouse,
+    //     IClearingHouseViewer _clearingHouseViewer,
+    //     IAmm _ETH_USDC_AMM,
+    //     IERC20 _USDC
+    // ) {
+    //     clearingHouse = _clearingHouse;
+    //     clearingHouseViewer = _clearingHouseViewer;
+    //     ETH_USDC_AMM = _ETH_USDC_AMM;
+    //     USDC = _USDC;
+    //     _USDC.approve(address(_clearingHouse), type(uint256).max);
+    // }
+&nbsp;
+    /// @notice Initialize proxy
+    /// @param _clearingHouse Perpetual protocol's clearingHouse proxy contract address.
+    /// @param _clearingHouseViewer Perpetual protocol's clearingHouseViewer proxy contract address.
+    /// @param _ETH_USDC_AMM ETH_USDC AMM address.
+    /// @param _USDC USDC address.
+    function initialize(
+        IClearingHouse _clearingHouse,
+        IClearingHouseViewer _clearingHouseViewer,
+        IAmm _ETH_USDC_AMM,
+        IERC20 _USDC
+    ) public initializer {
+        __Ownable_init();
+        clearingHouse = _clearingHouse;
+        clearingHouseViewer = _clearingHouseViewer;
+        ETH_USDC_AMM = _ETH_USDC_AMM;
+        USDC = _USDC;
+        _USDC.safeApprove(address(_clearingHouse), type(uint256).max);
+    }
+&nbsp;
+    /// @notice set lemma token deployed on xdai network.
+    /// @dev Only owner can call this function.
+    /// @param _lemmaToken LemmaToken address of xdai network.
+    function setLemmaToken(address _lemmaToken) external onlyOwner {
+        lemmaToken = _lemmaToken;
+    }
+&nbsp;
+    //open on which side needs to decided by rebalancer logic
+    //underlying asset needs to be given dynamically
+    /// @notice open on which side needs to decided by rebalancer logic
+    /// @dev This function can be called through lemma token contract
+    /// @param _amount The number of USDC to open perpetual protocol.
+    function open(uint256 _amount) external override onlyLemmaToken {
+        // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
+&nbsp;
+        //open postion on perptual protcol
+        Decimal.decimal memory amount =
+            convertCollteralAmountTo18Decimals(address(USDC), _amount);
+&nbsp;
+        Decimal.decimal memory assetAmount =
+            amount.divD(
+                (
+                    Decimal.one().addD(
+                        (
+                            ETH_USDC_AMM.tollRatio().addD(
+                                ETH_USDC_AMM.spreadRatio()
+                            )
+                        )
+                    )
+                )
+            );
+&nbsp;
+        Decimal.decimal memory leverage = Decimal.one();
+        //TODO: add calculation for baseAssetAmountLimit with slippage from user
+        Decimal.decimal memory baseAssetAmount = Decimal.zero();
+&nbsp;
+        // //Will need to take this into account when leverage is &gt; 1
+        // // Decimal.decimal memory positionNotional =
+        // //     quoteAssetAmount.mulD(leverage);
+&nbsp;
+        clearingHouse.openPosition(
+            ETH_USDC_AMM,
+            IClearingHouse.Side.BUY,
+            assetAmount,
+            leverage,
+            baseAssetAmount
+        );
+    }
+&nbsp;
+    //close on which side needs to be decide by rebalacer logic
+    //underlying asset needs to be given dynamically
+    /// @notice close on which side needs to be decide by rebalacer logic
+    /// @dev This function can be called through lemma token contract.
+    /// @param _amount The number of USDC to be closed from perpetual protocol.
+    function close(uint256 _amount)
+        external
+        override
+        onlyLemmaToken
+        returns (uint256)
+    {
+        // console.log('usdcBalance before:', USDC.balanceOf(address(this)));
+&nbsp;
+        Decimal.decimal memory amount =
+            convertCollteralAmountTo18Decimals(address(USDC), _amount);
+        Decimal.decimal memory assetAmount =
+            amount.divD(
+                (
+                    Decimal.one().addD(
+                        (
+                            ETH_USDC_AMM.tollRatio().addD(
+                                ETH_USDC_AMM.spreadRatio()
+                            )
+                        )
+                    )
+                )
+            );
+        Decimal.decimal memory leverage = Decimal.one();
+        //TODO: add calculation for baseAssetAmountLimit with slippage from user
+<span class="cstat-no" title="statement not covered" >        Decimal.decimal memory baseAssetAmount = Decimal.zero();</span>
+&nbsp;
+        // //Will need to take this into account when leverage is &gt; 1
+        // // Decimal.decimal memory positionNotional =
+        // //     quoteAssetAmount.mulD(leverage);
+&nbsp;
+        // console.log('removed margin enought to cover the fees');
+        // console.log('totalCollateral', getTotalCollateral());
+        // console.log('assetAmount', assetAmount.toUint());
+        // console.log('_amount', _amount);
+<span class="cstat-no" title="statement not covered" >        if (getTotalCollateral() == _amount) {</span>
+            clearingHouse.closePosition(ETH_USDC_AMM, Decimal.zero());
+            // console.log('closed postion');
+        } else {
+            clearingHouse.removeMargin(
+                ETH_USDC_AMM,
+                calcFee(ETH_USDC_AMM, assetAmount)
+            );
+            // console.log(
+            //     'usdcBalance after getting fees:',
+            //     USDC.balanceOf(address(this))
+            // );
+            clearingHouse.openPosition(
+                ETH_USDC_AMM,
+                IClearingHouse.Side.SELL,
+                assetAmount,
+                leverage,
+                baseAssetAmount
+            );
+            clearingHouse.removeMargin(ETH_USDC_AMM, assetAmount);
+        }
+&nbsp;
+        // console.log('opened position on other side');
+        //TODO: add require that leverage should not be greater than one
+        uint256 usdcBalance = USDC.balanceOf(address(this));
+        // console.log('usdcBalance', usdcBalance);
+        USDC.safeTransfer(lemmaToken, usdcBalance);
+&nbsp;
+        return usdcBalance;
+        // return amountGotBackAfterClosing;
+    }
+&nbsp;
+    /// @dev Convert collteral amount to 18 decimals
+    /// @param _collateral The address of collateral.
+    /// @param _amount The number of collateral to be converted to 18 decimals.
+    function convertCollteralAmountTo18Decimals(
+        address _collateral,
+        uint256 _amount
+    ) internal view returns (Decimal.decimal memory) {
+        //_amount * 10^18 /10^collateralDecimals
+        return
+            (Decimal.decimal(_amount)).divD(
+                Decimal.decimal(
+                    10**IERC20WithDecimalsMethod(_collateral).decimals()
+                )
+            );
+    }
+&nbsp;
+    /// @dev Convert 18 decimals to amount according to collateral.
+    /// @param _collateral The address of collateral.
+<span class="fstat-no" title="function not covered" >    function convert18DecimalsToCollateralAmount(</span>
+        address _collateral,
+        Decimal.decimal memory _decimalAmount
+    ) internal view returns (uint256) {
+        //18 decimals to collateral decimals
+        // return
+        //     _decimalAmount
+        //         .divScalar(
+        //         10**(18 - IERC20WithDecimalsMethod(_collateral).decimals())
+        //     )
+        //         .toUint();
+        //same as what perpetual protocol calulations\
+        // https://github.com/perpetual-protocol/perpetual-protocol/blob/master/src/utils/DecimalERC20.sol#L103
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        return</span>
+            _decimalAmount.toUint() /
+            (10**(18 - IERC20WithDecimalsMethod(_collateral).decimals()));
+    }
+&nbsp;
+    function convertUint256ToDecimal(uint256 _d)
+        internal
+        pure
+        returns (Decimal.decimal memory)
+    {
+        return Decimal.decimal(_d);
+    }
+&nbsp;
+    /// @dev Return total collateral amount.
+<span class="fstat-no" title="function not covered" >    function getTotalCollateral() public view override returns (uint256) {</span>
+<span class="cstat-no" title="statement not covered" >        return</span>
+            convert18DecimalsToCollateralAmount(
+                address(USDC),
+                clearingHouseViewer
+                    .getPersonalPositionWithFundingPayment(
+                    ETH_USDC_AMM,
+                    address(this)
+                )
+                    .margin
+            );
+    }
+&nbsp;
+    function fees(uint256 _amount) external view override returns (uint256) {
+        //asumes that leverage = 1
+        return
+            convert18DecimalsToCollateralAmount(
+                address(USDC),
+                calcFee(
+                    ETH_USDC_AMM,
+                    convertCollteralAmountTo18Decimals(address(USDC), _amount)
+                )
+            );
+    }
+&nbsp;
+    function calcFee(IAmm _amm, Decimal.decimal memory _positionNotional)
+        public
+        view
+        returns (Decimal.decimal memory)
+    {
+<span class="cstat-no" title="statement not covered" >        (Decimal.decimal memory toll, Decimal.decimal memory spread) =</span>
+            _amm.calcFee(_positionNotional);
+<span class="cstat-no" title="statement not covered" >        return toll.addD(spread);</span>
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Apr 29 2021 08:34:24 GMT-0700 (Pacific Daylight Time)
+</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>

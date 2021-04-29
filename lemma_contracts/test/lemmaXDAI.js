@@ -15,6 +15,7 @@ contract("LemmaToken", accounts => {
     const clearingHouseViewerAddress = "0x2b53BA3d842F76e4D96FecEA77d345d237680E2e";
     const ammAddress = "0xF75C8c9EADBCA5D26dA43466aD5Be511Cb281668";
     const testusdcAddress = "0xe0B887D54e71329318a036CF50f30Dbe4444563c";
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     let ambBridgeContract;
 
@@ -33,11 +34,6 @@ contract("LemmaToken", accounts => {
         // console.log(LemmaTokenContract.address);
         testusdc = new ethers.Contract(testusdcAddress, TEST_USDC_ABI, accounts[0]);
     });
-  
-    it("Set xdai and mainnet contract on AMB", async function() {
-        await ambBridgeContract.setXDAIContract(LemmaTokenContract.address);
-        await ambBridgeContract.setMainnetContract(lemmaMainnet);
-    });
 
     it("Set LemmaMainnet on xdai contract", async function() {
         await LemmaTokenContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
@@ -50,12 +46,41 @@ contract("LemmaToken", accounts => {
         assert.equal(await LemmaPerpetualContract.lemmaToken(), LemmaTokenContract.address);
     });
 
+    it("Only ambBridge contract can call setDepositInfo function", async function() {
+        let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
+        try {
+            await LemmaTokenContract.connect(accounts[0]).setDepositInfo(accounts[0].address, depositUSDCAmountOut);
+        }
+        catch (error) {
+            assert(error.message, "VM Exception while processing transaction: revert not ambBridge");
+        }
+    });
+
+    it("Can not deposit if ambBridge's messageSender() is not the same as lemmaMainnet", async function() {
+        let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
+        await ambBridgeContract.setXDAIContract(LemmaTokenContract.address);
+        try {
+            await ambBridgeContract.setDepositInfo(accounts[0].address, depositUSDCAmountOut);
+        }
+        catch (error) {
+            assert(error.message, "VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaMainnet");
+        }
+    });
+
+    it("Set xdai and mainnet contract on AMB", async function() {
+        await ambBridgeContract.setMainnetContract(lemmaMainnet);
+    });
+
+    it("Set gasLimit", async function() {
+        await LemmaTokenContract.connect(accounts[0]).setGasLimit(1000000);
+    });
+
     it("Set Deposit", async function() {
         let minimumUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
         let test_usdc_balance_1 = await testusdc.balanceOf(accounts[1].address);
         // console.log(test_usdc_balance_1.toString());
         
-        let  amountTransfer = BigNumber.from(3 * 10 ** 6);
+        let  amountTransfer = BigNumber.from(5 * 10 ** 6);
         await testusdc.connect(accounts[1]).approve(LemmaTokenContract.address, amountTransfer);
         await testusdc.connect(accounts[1]).transfer(LemmaTokenContract.address, amountTransfer);
         // let test_usdc_contract_balance_1 = await testusdc.balanceOf(LemmaTokenContract.address);
@@ -69,7 +94,35 @@ contract("LemmaToken", accounts => {
         // console.log(lemmaBalance.toString());
     });
 
+    it("Deposit in the case of existing totalSupply", async function() {
+        let minimumUSDCAmountOut_2 = BigNumber.from(2 * 10 ** 6);
+        await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut_2);
+    }); 
+
+    it("Can not mint more amount than the contract's balance", async function() {
+        let minimumUSDCAmount = BigNumber.from(10 * 10 ** 6);
+        let test_usdc_balance_beforeDeposit = await testusdc.balanceOf(accounts[1].address);
+        await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmount);
+        let test_usdc_balance_afterDeposit = await testusdc.balanceOf(accounts[1].address);
+        assert(test_usdc_balance_beforeDeposit, test_usdc_balance_afterDeposit);
+    });
+
+    it("Can not withdraw LemmaToken before setting lemmaMainnet", async function() {
+        await LemmaTokenContract.connect(accounts[0]).setLemmaMainnet(zeroAddress);
+        let amountWithdraw_1 = BigNumber.from(1e18.toString());
+        let lemmabalanceBeforeWithdraw_1 = await LemmaTokenContract.balanceOf(accounts[1].address);
+
+        let test_usdc_balance_before_withdraw = await testusdc.balanceOf(accounts[1].address);
+        // console.log(test_usdc_balance_before_withdraw.toString());
+        try {
+            await LemmaTokenContract.connect(accounts[1]).withdraw(amountWithdraw_1);
+        } catch (error) {
+            assert(error.message, "VM Exception while processing transaction: revert receiver is empty");
+        };
+    });
+
     it("Withdraw LemmaToken", async function() {
+        await LemmaTokenContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
         let amountWithdraw = BigNumber.from(1e18.toString());
         let lemmabalanceBeforeWithdraw = await LemmaTokenContract.balanceOf(accounts[1].address);
 
