@@ -61,8 +61,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     event WithdrawalInfoAdded(address indexed account, uint256 indexed amount);
 
     /// @notice Initialize proxy.
-    /// @param lemmaXDAI Lemma token deployed on xdai network.
-    /// @param ambBridge Bridge contract address
+    /// @param _lemmaXDAI Lemma token deployed on xdai network.
+    /// @param _ambBridge Bridge contract address
     function initialize(
         IERC20 _USDC,
         IERC20 _WETH,
@@ -142,8 +142,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @param _account is an account for withdrawing.
     /// @param  _amount is the USDC amount converted to Weth.
     function setWithdrawalInfo(address _account, uint256 _amount) external {
-        require(_msgSender() == address(ambBridge));
-        require(ambBridge.messageSender() == address(lemmaXDAI));
+        require(_msgSender() == address(ambBridge), "not ambBridge");
+        require(ambBridge.messageSender() == address(lemmaXDAI), "ambBridge's messageSender is not lemmaXDAI");
         withdrawalInfo[_account] += _amount;
         emit WithdrawalInfoAdded(_account, _amount);
         if (USDC.balanceOf(address(this)) >= withdrawalInfo[_account]) {

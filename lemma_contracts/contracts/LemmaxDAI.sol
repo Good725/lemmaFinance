@@ -64,7 +64,6 @@ contract LemmaToken is
     //mapping of protocol to collateral
     //underlying assets supported
     /// @notice Initialize proxy
-    /// @param _per
     function initialize(
         IERC20 _collateral,
         IPerpetualProtocol _perpetualProtocol,
@@ -124,8 +123,8 @@ contract LemmaToken is
 
     /// @notice Set info for minting lemma token.
     /// @dev This function is called by bridge contract when depositing USDC on mainnet.
-    /// @param account The account lemma token is minted to.
-    /// @param amount The amount of lemma token is minted.
+    /// @param _account The account lemma token is minted to.
+    /// @param _amount The amount of lemma token is minted.
     function setDepositInfo(address _account, uint256 _amount) external {
         require(_msgSender() == address(ambBridge));
         require(ambBridge.messageSender() == address(lemmaMainnet));
@@ -138,7 +137,7 @@ contract LemmaToken is
     }
 
     /// @notice Mint lemma token to _account on xdai network.
-    /// @param account The lemma token is minted to.
+    /// @param _account The lemma token is minted to.
     function mint(address _account) public {
         uint256 amount = depositInfo[_account];
         delete depositInfo[_account];
@@ -166,7 +165,7 @@ contract LemmaToken is
     }
 
     /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
-    /// @param amount The number of lemma tokens to be burned.
+    /// @param _amount The number of lemma tokens to be burned.
     function withdraw(uint256 _amount) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
