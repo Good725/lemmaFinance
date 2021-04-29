@@ -47,9 +47,10 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     IERC20 public USDC;
     IERC20 public WETH;
     IUniswapV2Router02 public uniswapV2Router02;
+    uint256 public totalETHDeposited;
+    uint256 public cap;
 
     mapping(address => uint256) public withdrawalInfo;
-    uint256 public totalUSDCDeposited;
 
     event ETHDeposited(address indexed account, uint256 indexed amount);
     event ETHWithdrawed(address indexed account, uint256 indexed amount);
@@ -62,7 +63,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         IUniswapV2Router02 _uniswapV2Router02,
         IAMB _ambBridge,
         IMultiTokenMediator _multiTokenMediator,
-        address trustedForwarder
+        address trustedForwarder,
+        uint256 _cap
     ) public initializer {
         __Ownable_init();
         __ERC2771Context_init(trustedForwarder);
@@ -73,6 +75,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         ambBridge = _ambBridge;
         multiTokenMediator = _multiTokenMediator;
         gasLimit = 1000000;
+        cap = _cap;
     }
 
     function _msgSender()
@@ -101,7 +104,13 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         gasLimit = _gasLimit;
     }
 
+    function setCap(uint256 _cap) external onlyOwner {
+        cap = _cap;
+    }
+
     function deposit(uint256 _minimumUSDCAmountOut) external payable {
+        totalETHDeposited += msg.value;
+        require(totalETHDeposited >= cap, 'Lemma: cap reached');
         address[] memory path = new address[](2);
         path[0] = address(WETH);
         path[1] = address(USDC);
