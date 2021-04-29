@@ -56,6 +56,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     // }
 
     /// @notice Initialize proxy
+    /// @param _clearingHouse Perpetual protocol's clearingHouse proxy contract address.
+    /// @param _clearingHouseViewer Perpetual protocol's clearingHouseViewer proxy contract address.
+    /// @param _ETH_USDC_AMM ETH_USDC AMM address.
+    /// @param _USDC USDC address.
     function initialize(
         IClearingHouse _clearingHouse,
         IClearingHouseViewer _clearingHouseViewer,
@@ -81,7 +85,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //underlying asset needs to be given dynamically
     /// @notice open on which side needs to decided by rebalancer logic
     /// @dev This function can be called through lemma token contract
-    /// @param amount The number of USDC to open perpetual protocol.
+    /// @param _amount The number of USDC to open perpetual protocol.
     function open(uint256 _amount) external override onlyLemmaToken {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
 
@@ -123,7 +127,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //underlying asset needs to be given dynamically
     /// @notice close on which side needs to be decide by rebalacer logic
     /// @dev This function can be called through lemma token contract.
-    /// @param amount The number of USDC to be closed from perpetual protocol.
+    /// @param _amount The number of USDC to be closed from perpetual protocol.
     function close(uint256 _amount)
         external
         override
@@ -191,8 +195,8 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     }
 
     /// @dev Convert collteral amount to 18 decimals
-    /// @param collateral The address of collateral.
-    /// @param amount The number of collateral to be converted to 18 decimals.
+    /// @param _collateral The address of collateral.
+    /// @param _amount The number of collateral to be converted to 18 decimals.
     function convertCollteralAmountTo18Decimals(
         address _collateral,
         uint256 _amount
@@ -207,7 +211,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     }
 
     /// @dev Convert 18 decimals to amount according to collateral.
-    /// @param collateral The address of collateral.
+    /// @param _collateral The address of collateral.
     function convert18DecimalsToCollateralAmount(
         address _collateral,
         Decimal.decimal memory _decimalAmount
