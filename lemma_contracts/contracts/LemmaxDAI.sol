@@ -31,6 +31,9 @@ interface ILemmaMainnet {
     function setWithdrawalInfo(address account, uint256 amount) external;
 }
 
+/// @title Lemma token Contract for XDai network.
+/// @author yashnaman
+/// @dev All function calls are currently implemented.
 contract LemmaToken is
     ERC20Upgradeable,
     OwnableUpgradeable,
@@ -60,7 +63,7 @@ contract LemmaToken is
     //mappping of protocols to wrappers
     //mapping of protocol to collateral
     //underlying assets supported
-
+    /// @notice Initialize proxy
     function initialize(
         IERC20 _collateral,
         IPerpetualProtocol _perpetualProtocol,
@@ -105,14 +108,23 @@ contract LemmaToken is
         return ERC2771ContextUpgradeable._msgData();
     }
 
+    /// @notice Set lemma contract deployed on Mainnet.
+    /// @dev Only owner can call this function.
+    /// @param _lemmaMainnet is lemma contract address deployed on mainnet.
     function setLemmaMainnet(ILemmaMainnet _lemmaMainnet) external onlyOwner {
         lemmaMainnet = _lemmaMainnet;
     }
 
+    /// @notice Set gas limit that is used to call bridge.
+    /// @dev Only owner can set gas limit.
     function setGasLimit(uint256 _gasLimit) external onlyOwner {
         gasLimit = _gasLimit;
     }
 
+    /// @notice Set info for minting lemma token.
+    /// @dev This function is called by bridge contract when depositing USDC on mainnet.
+    /// @param _account The account lemma token is minted to.
+    /// @param _amount The amount of lemma token is minted.
     function setDepositInfo(address _account, uint256 _amount) external {
         require(_msgSender() == address(ambBridge));
         require(ambBridge.messageSender() == address(lemmaMainnet));
@@ -124,6 +136,8 @@ contract LemmaToken is
         }
     }
 
+    /// @notice Mint lemma token to _account on xdai network.
+    /// @param _account The lemma token is minted to.
     function mint(address _account) public {
         uint256 amount = depositInfo[_account];
         delete depositInfo[_account];
@@ -150,6 +164,8 @@ contract LemmaToken is
         // //require(toMint>=minimumToMint)
     }
 
+    /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
+    /// @param _amount The number of lemma tokens to be burned.
     function withdraw(uint256 _amount) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
@@ -190,6 +206,10 @@ contract LemmaToken is
     //
     // INTERNAL
     //
+    /// @dev This function is used for sending _token as _amount to _receiver via multiTokenMediator
+    /// @param _token Token address to be sent.
+    /// @param _receiver The address _token is sent to via multiTokenTransfer.
+    /// @param _amount The number of _token to be sent.
     function multiTokenTransfer(
         IERC20 _token,
         address _receiver,
@@ -200,7 +220,8 @@ contract LemmaToken is
         _token.safeApprove(address(multiTokenMediator), _amount);
         multiTokenMediator.relayTokens(address(_token), _receiver, _amount);
     }
-
+    /// @param _contractOnOtherSide is lemma toke address deployed on mainnet network
+    /// @param _data is ABI-encodes
     function callBridge(
         address _contractOnOtherSide,
         bytes memory _data,
