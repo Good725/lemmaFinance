@@ -86,7 +86,12 @@ function LandingPage({ classes }) {
     if (!isConnected) {
       return;
     }
-    setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
+    if (value == 100) {
+      //no small errors if 100%
+      setAmount(convertToReadableFormat(withdrawableETH));
+    } else {
+      setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
+    }
   };
 
   const handleDepositSubmit = async () => {
@@ -250,7 +255,7 @@ function LandingPage({ classes }) {
         // Handle error while initializing mexa
         console.log(error);
       });
-    handleConnectWallet();
+
   };
 
   const handleConnectWallet = async () => {
@@ -709,8 +714,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
