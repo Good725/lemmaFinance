@@ -1,6 +1,6 @@
 const { BigNumber } = require("ethers");
-const { ethers, assert } = require("hardhat");
-const providers = require('ethers').providers;
+const { ethers } = require("hardhat");
+const { expect } = require("chai");
 
 contract("LemmaMainnet", accounts => {
     const usdcAddress = "0x40D3B2F06f198D2B789B823CdBEcD1DB78090D74";
@@ -37,7 +37,8 @@ contract("LemmaMainnet", accounts => {
             await test_LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});    
         }
         catch (error) {
-            assert(error.message, "VM Exception while processing transaction: revert receiver is empty");
+            // assert(error.message, "VM Exception while processing transaction: revert receiver is empty");
+            expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
         }
     });
 
@@ -50,18 +51,25 @@ contract("LemmaMainnet", accounts => {
         await usdc.connect(accounts[0]).approve(LemmaMainnetContract.address, amountTransfer);
         await usdc.connect(accounts[0]).transfer(LemmaMainnetContract.address, amountTransfer);
         let usdc_balance_contract_1 = await usdc.balanceOf(LemmaMainnetContract.address);
+        expect(usdc_balance_contract_1).to.equal(amountTransfer);
     });
 
     it("Set gasLimit", async function() {
         await LemmaMainnetContract.connect(accounts[0]).setGasLimit(1000000);
+        expect(await LemmaMainnetContract.gasLimit()).to.equal(1000000);
     });
 
     it("Deposit(EthBalanceBeforeDeposit = EthBalanceAfterDeposit + Fee + payableAmount)", async function() {
         let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
-        let payableValue = BigNumber.from((10**17).toString());
+        let payableValue = BigNumber.from((10**18).toString());
         let balanceBeforeDeposit = await accounts[0].getBalance();
-        const provider = providers.getDefaultProvider('rinkeby');
         const tx = await LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});
+        expect(tx).to.emit(LemmaMainnetContract, "ETHDeposited").withArgs(accounts[0].address, payableValue);
+
+        LemmaMainnetContract.on("ETHDeposited", (account, amount) => {
+            console.log(account);
+            console.log(amount.toString());
+        });
 
         let balance_contract = await usdc.balanceOf(LemmaMainnetContract.address);
         const { gasUsed } = await tx.wait();
@@ -69,6 +77,12 @@ contract("LemmaMainnet", accounts => {
         const feeEth = gasUsed * gasPrice;
         let balanceAfterDeposit = await accounts[0].getBalance();
         let usdcBalanceXDAI = await usdc.balanceOf(multiTokenMediatorOnEth);
+        let aa = BigNumber.from(balanceBeforeDeposit.toString())-BigNumber.from(feeEth.toString())-payableValue;
+        console.log(balanceBeforeDeposit.toString());
+        console.log(balanceAfterDeposit.toString());
+        console.log(feeEth.toString());
+        console.log(aa.toString());
+        // expect(balanceAfterDeposit).to.equal(aa.toString());
     });
 
     it("Only ambBridge contract can call setWithdrawalInfo function", async function() {
@@ -77,7 +91,8 @@ contract("LemmaMainnet", accounts => {
             await LemmaMainnetContract.connect(accounts[0]).setWithdrawalInfo(accounts[0].address, withdrawUSDCAmountOut);
         }
         catch (error) {
-            assert(error.message, "VM Exception while processing transaction: revert not ambBridge");
+            // assert(error.message, "VM Exception while processing transaction: revert not ambBridge");
+            expect(error.message).to.equal("VM Exception while processing transaction: revert not ambBridge");
         }
     });
 
@@ -88,12 +103,14 @@ contract("LemmaMainnet", accounts => {
             await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
         }
         catch (error) {
-            assert(error.message, "VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaXDAI");
+            // assert(error.message, "VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaXDAI");
+            expect(error.message).to.equal("VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaXDAI");
         }
     });
 
     it("Set xdai and mainnet contract on AMB", async function() {
         await ambBridgeContract.setXDAIContract(lemmaxDAIAddress);
+        expect(await ambBridgeContract.xdaiContract()).to.equal(lemmaxDAIAddress);
     });
 
     it("Withdraw", async function() {
@@ -102,11 +119,17 @@ contract("LemmaMainnet", accounts => {
         let balanceBeforeWithdraw = await accounts[0].getBalance();
 
         await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
+        LemmaMainnetContract.on("ETHWithdrawed", (account, amount) => {
+            console.log(account);
+            console.log(amount.toString());
+        });
         let balanceAfterWithdraw = await accounts[0].getBalance();
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
 
-        assert(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
-    
+        console.log(usdcBalanceContractAfterWithdraw.toString());
+        console.log(usdcBalanceContractBeforeWithdraw.toString());
+        // assert(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
+        expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
     });
 
     it("Can not withdraw more amount than the contract's balance", async function() {
@@ -115,9 +138,11 @@ contract("LemmaMainnet", accounts => {
         await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         if (usdcBalanceContractBeforeWithdraw >= withdrawUSDCAmountOut) {
-            assert.equal(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
+            // assert.equal(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
+            expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
         } else {
-            assert.equal(usdcBalanceContractBeforeWithdraw.toString(), usdcBalanceContractAfterWithdraw.toString());
+            // assert.equal(usdcBalanceContractBeforeWithdraw.toString(), usdcBalanceContractAfterWithdraw.toString());
+            expect(usdcBalanceContractBeforeWithdraw).to.equal(usdcBalanceContractAfterWithdraw);
         }
     });
   });
