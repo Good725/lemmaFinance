@@ -24,9 +24,12 @@ import LemmaMainnet from "../../abis/LemmaMainnet.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
 import LemmaPerpetual from "../../abis/LemmaPerpetual.json";
+
 import { useConnectedWeb3Context } from "../../context";
 
 import { styles } from "./styles";
+const ClearingHouse = require("@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json");
+
 
 function LandingPage({ classes }) {
   const {
@@ -155,7 +158,7 @@ function LandingPage({ classes }) {
 
     const ethToWithdraw = convertTo18Decimals(amount);
     console.log("ethToWithdraw", amount);
-    console.log("withdrwableETH", convertToReadableFormat(withdrawableETH));
+    console.log("WithdrawableETH", convertToReadableFormat(withdrawableETH));
     //TODO: This is temperary fix
     //make sure frontend deals with only bignumbers
     let lUSDCAmount;
@@ -261,6 +264,9 @@ function LandingPage({ classes }) {
   const handleConnectWallet = async () => {
     await onConnect();
   };
+  const filterLogsWithTopics = (logs, topic, contractAddress) =>
+    logs.filter((log) => log.topics.includes(topic))
+      .filter((log) => log.address && log.address.toLowerCase() === contractAddress.toLowerCase());
 
   const refreshBalances = async () => {
     // const usdcBalance = await getBalance(addresses.usdc, account);
@@ -270,15 +276,17 @@ function LandingPage({ classes }) {
 
     // await setWeb3(new Web3(window.ethereum));
 
+    const xdaiProvider = ethers.getDefaultProvider(XDAI_URL);
+
     const lemmaToken = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaxDAI,
       LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_URL)
+      xdaiProvider
     );
     const lemmaPerpetual = new ethers.Contract(
       addresses.xDAIRinkeby.lemmaPerpetual,
       LemmaPerpetual.abi,
-      ethers.getDefaultProvider(XDAI_URL)
+      xdaiProvider
     );
 
     const uniswapV2Router02 = new ethers.Contract(
@@ -290,6 +298,11 @@ function LandingPage({ classes }) {
       addresses.rinkeby.lemmaMainnet,
       LemmaMainnet.abi,
       signer
+    );
+    const clearingHouse = new ethers.Contract(
+      addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouse.address,
+      ClearingHouse.abi,
+      xdaiProvider
     );
 
     // const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
@@ -308,7 +321,7 @@ function LandingPage({ classes }) {
       convertToReadableFormat(userBalanceOfLUSDC)
     );
 
-    let maxWithdrwableEth = new BigNumber.from("0");
+    let maxWithdrawableETH = new BigNumber.from("0");
 
     if (userBalanceOfLUSDC.gt(BigNumber.from("0"))) {
       // const totalCollateral = await lemmaPerpetual.getTotalCollateral();
@@ -336,19 +349,20 @@ function LandingPage({ classes }) {
             [addresses.rinkeby.usdc, addresses.rinkeby.weth]
           );
           console.log(convertToReadableFormat(amounts[1]));
-          maxWithdrwableEth = amounts[1];
+          maxWithdrawableETH = amounts[1];
         } catch (e) {
           console.log(e);
         }
       }
 
-      setWithdrawableETH(maxWithdrwableEth);
+      setWithdrawableETH(maxWithdrawableETH);
     }
     //to get the deposited balance
 
     //look for the deposit events on the lemmaMainnet
     //look at the mint and burn events on lemmaToken
 
+    const positionChangedFilter = clearingHouse.filters.PositionChanged();
     const ethDepositedFilter = lemmaMainnet.filters.ETHDeposited(
       /*accounts == */ account
     );
@@ -366,6 +380,24 @@ function LandingPage({ classes }) {
       convertToReadableFormat(totalETHDeposited)
     );
 
+    const ethWithdrawedFilter = lemmaMainnet.filters.ETHWithdrawed(
+      /*accounts == */ account
+    );
+    const ethWithdrawedEvents = await lemmaMainnet.queryFilter(
+      ethWithdrawedFilter
+    );
+    console.log(ethWithdrawedEvents);
+    let totalETHWithdrawed = BigNumber.from("0");
+    ethWithdrawedEvents.forEach((ethWithdrawedEvent) => {
+      const ethWithdrawed = ethWithdrawedEvent.args.amount;
+      totalETHWithdrawed = totalETHWithdrawed.add(ethWithdrawed);
+    });
+    console.log(
+      "totalETHWithdrawed",
+      convertToReadableFormat(totalETHWithdrawed)
+    );
+
+
     const lusdcMintedFilter = lemmaToken.filters.Transfer(
       /**from ==*/ ethers.constants.AddressZero,
       /**to == */ account
@@ -373,10 +405,27 @@ function LandingPage({ classes }) {
     const lusdcMintedEvents = await lemmaToken.queryFilter(lusdcMintedFilter);
     console.log(lusdcMintedEvents);
     let totalLUSDCMinted = BigNumber.from("0");
-    lusdcMintedEvents.forEach((lusdcMintedEvents) => {
-      const lUSDCMinted = lusdcMintedEvents.args.value;
+    let totalETHLonged = ZERO;
+    for (let i = 0; i < lusdcMintedEvents.length; i++) {
+      const lusdcMintedEvent = lusdcMintedEvents[i];
+      const lUSDCMinted = lusdcMintedEvent.args.value;
       totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
-    });
+
+      // const receipt = await xdaiProvider.getTransactionReceipt(lusdcMintedEvent.transactionHash);
+      // // console.log(receipt.logs);
+
+      // const positionChangedFragment = clearingHouse.interface.getEvent("PositionChanged");
+      // const positionChangedTopic = clearingHouse.interface.getEventTopic(positionChangedFragment);
+      // const positionChangedLogs = filterLogsWithTopics(receipt.logs, positionChangedTopic, clearingHouse.address);
+      // const actualArgsPositionChanged = (clearingHouse.interface).parseLog(positionChangedLogs[0]).args;
+      // // console.log("margin: " + actualArgsPositionChanged.margin.toString());
+      // // console.log("positionSizeAfter: " + actualArgsPositionChanged.positionSizeAfter.toString());
+      // // console.log("exchangedPositionSize: " + actualArgsPositionChanged.exchangedPositionSize.toString());
+      // // console.log("fundingPayment: " + actualArgsPositionChanged.fundingPayment.toString());
+      // console.log("realizedPnl", actualArgsPositionChanged.realizedPnl.toString());
+      // totalETHLonged = totalETHLonged.add(actualArgsPositionChanged.exchangedPositionSize);
+    }
+
     console.log("totalLUSDCMinted", convertToReadableFormat(totalLUSDCMinted));
 
     const lusdcBurntFilter = lemmaToken.filters.Transfer(
@@ -386,10 +435,29 @@ function LandingPage({ classes }) {
     const lusdcBurntEvents = await lemmaToken.queryFilter(lusdcBurntFilter);
     console.log(lusdcBurntEvents);
     let totalLUSDCBurnt = BigNumber.from("0");
-    lusdcBurntEvents.forEach((lusdcBurntEvents) => {
-      const lUSDCBurnt = lusdcBurntEvents.args.value;
+    let totalETHShorted = ZERO;
+    for (let i = 0; i < lusdcBurntEvents.length; i++) {
+      const lusdcBurntEvent = lusdcBurntEvents[i];
+      const lUSDCBurnt = lusdcBurntEvent.args.value;
       totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
-    });
+      // const receipt = await xdaiProvider.getTransactionReceipt(lusdcBurntEvent.transactionHash);
+      // // console.log(receipt.logs);
+
+      // const positionChangedFragment = clearingHouse.interface.getEvent("PositionChanged");
+      // const positionChangedTopic = clearingHouse.interface.getEventTopic(positionChangedFragment);
+      // const positionChangedLogs = filterLogsWithTopics(receipt.logs, positionChangedTopic, clearingHouse.address);
+      // const actualArgsPositionChanged = (clearingHouse.interface).parseLog(positionChangedLogs[0]).args;
+      // // console.log("margin: " + actualArgsPositionChanged.margin.toString());
+      // // console.log("positionSizeAfter: " + actualArgsPositionChanged.positionSizeAfter.toString());
+      // // console.log("exchangedPositionSize: " + actualArgsPositionChanged.exchangedPositionSize.toString());
+      // // console.log("fundingPayment: " + actualArgsPositionChanged.fundingPayment.toString());
+      // console.log("realizedPnl", actualArgsPositionChanged.realizedPnl.toString());
+      // totalETHShorted = totalETHShorted.add(actualArgsPositionChanged.exchangedPositionSize);
+    }
+    // console.log("totalETHLonged", totalETHLonged.toString());
+    // console.log("totalETHShorted", totalETHShorted.toString());
+
+    // console.log("difference", (totalETHLonged.add(totalETHShorted)).toString());
     console.log("totalLUSDCBurnt", convertToReadableFormat(totalLUSDCBurnt));
 
     const percentageOfLUSDCWithdrawed = totalLUSDCMinted
@@ -400,11 +468,17 @@ function LandingPage({ classes }) {
       .mul(percentageOfLUSDCWithdrawed)
       .div(ONE);
 
-    console.log("ETHDeposited", convertToReadableFormat(ETHDeposited));
+
+    // const difference = totalETHLonged.add(totalETHShorted);
+    // const percentageOfETHShortedAgainstLonged = (difference.mul(ONE)).div(totalETHLonged);
+    // const ETHDeposited = (totalETHDeposited
+    //   .mul(percentageOfETHShortedAgainstLonged))
+    //   .div(ONE);
+    // console.log("ETHDeposited", convertToReadableFormat(ETHDeposited));
 
     //according to those decide the total deposited balance
     setDeposited(ETHDeposited);
-    const earnings = maxWithdrwableEth.sub(ETHDeposited);
+    const earnings = maxWithdrawableETH.sub(ETHDeposited);
 
     console.log("earings", convertToReadableFormat(earnings));
     setEarings(earnings);
