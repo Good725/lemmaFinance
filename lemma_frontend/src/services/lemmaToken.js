@@ -6,6 +6,7 @@ const lemmaTokenAbi = [
   "function withdraw(uint256 amount) external",
   "function balanceOf(uint256 account) public view returns (uint256)",
   "function totalSupply() public view returns (uint256)",
+  "function depositInfo(address account) public view returns (uint256)",
   "event USDCDeposited(address indexed account, uint256 indexed amount)",
   "event USDCWithdrawed(address indexed account, uint256 indexed amount)",
   "event DepositInfoAdded(address indexed account, uint256 indexed amount)",
@@ -64,6 +65,10 @@ class LemmaTokenService {
 
   totalSupply = async () => {
     return await this.contract.totalSupply();
+  };
+
+  depositInfo = async (account) => {
+    return await this.contract.depositInfo(account);
   };
 }
 
