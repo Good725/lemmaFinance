@@ -1,4 +1,4 @@
-import { ethers, utils } from "ethers";
+import { ethers } from "ethers";
 
 const lemmaPerpetualAbi = [
   "function setDepositInfo(address account, uint256 amount) external",
@@ -17,11 +17,11 @@ class LemmaPerpetualService {
       const signer = provider.getSigner();
       this.contract = new ethers.Contract(
         address,
-        lemmaTokenAbi,
+        lemmaPerpetualAbi,
         provider
       ).connect(signer);
     } else {
-      this.contract = new ethers.Contract(address, lemmaTokenAbi, provider);
+      this.contract = new ethers.Contract(address, lemmaPerpetualAbi, provider);
     }
     this.signerAddress = signerAddress;
     this.provider = provider;
@@ -58,4 +58,4 @@ class LemmaPerpetualService {
   };
 }
 
-export { LemmaTokenService };
+export { LemmaPerpetualService };

@@ -17,26 +17,35 @@ import axios from "axios";
 
 import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
-import erc20 from "../../abis/ERC20.json";
 import addresses from "../../abis/addresses.json";
 import constants from "../../abis/constants.json";
-import LemmaMainnet from "../../abis/LemmaMainnet.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
-import LemmaPerpetual from "../../abis/LemmaPerpetual.json";
 import { useConnectedWeb3Context } from "../../context";
+import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 
 import { styles } from "./styles";
 
 function LandingPage({ classes }) {
+  const XDAI_URL = "https://rpc.xdaichain.com/";
+  const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
   const {
     account,
     signer,
-    provider,
     ethBalance,
     isConnected,
     onConnect,
   } = useConnectedWeb3Context();
+
+  const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
+  const lemmaToken = useLemmaToken(
+    addresses.xDAIRinkeby.lemmaxDAI,
+    ethers.getDefaultProvider(XDAI_WSS_URL)
+  );
+  const lemmaPerpetual = useLemmaPerpetual(
+    addresses.xDAIRinkeby.lemmaPerpetual,
+    ethers.getDefaultProvider(XDAI_URL)
+  );
 
   const [amount, setAmount] = useState("");
   const [tabIndex, setTabIndex] = useState("1");
@@ -51,9 +60,7 @@ function LandingPage({ classes }) {
 
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
   const [deposited, setDeposited] = useState(BigNumber.from(0));
-  const [earnings, setEarings] = useState(BigNumber.from(0));
-  const XDAI_URL = "https://rpc.xdaichain.com/";
-  const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
+  const [earnings, setEarnings] = useState(BigNumber.from(0));
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -94,17 +101,14 @@ function LandingPage({ classes }) {
       handleConnectWallet();
       return;
     }
-    const lemmaMainnet = new ethers.Contract(
-      addresses.rinkeby.lemmaMainnet,
-      LemmaMainnet.abi,
-      signer
-    );
-    const gasFees = convertTo18Decimals("0.001");//TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
-    if ((convertTo18Decimals(amount).add(gasFees)).gte(ethBalance)) {
-      await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount).sub(gasFees) });
-    }
-    else {
-      await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
+
+    const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
+    if (utils.parseEther(Number(amount) + gasFees).gte(ethBalance)) {
+      await lemmaMain.deposit(0, {
+        value: (Number(amount) - gasFees).toString(),
+      });
+    } else {
+      await lemmaMain.deposit(0, { value: amount });
     }
 
     setLoadMessage(
@@ -112,23 +116,23 @@ function LandingPage({ classes }) {
     );
     setLoadOpen(true);
 
-    //set a listener for minting LUSDC on
+    // set a listener for minting LUSDC on
     // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
     // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_WSS_URL)
+
+    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.contract.filters.DepositInfoAdded(
+      account
     );
-    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.filters.DepositInfoAdded(
-      /**account */ account
+    const lusdcMintedFilter = lemmaToken.contract.filters.Transfer(
+      ethers.constants.AddressZero,
+      account
     );
-    const lusdcMintedFilter = lemmaToken.filters.Transfer(
-      /**from ==*/ ethers.constants.AddressZero,
-      /**to == */ account
+
+    lemmaToken.contract.once(lusdcMintedFilter, onSuccessfulDeposit);
+    lemmaToken.contract.once(
+      lemmaXDAIDepositInfoAddedFilter,
+      onDepositInfoAdded
     );
-    lemmaToken.once(lusdcMintedFilter, onSuccesfulDeposit);
-    lemmaToken.once(lemmaXDAIDepositInfoAddedFilter, onDepositInfoAdded);
   };
 
   const handleWithdrawSubmit = async () => {
@@ -137,20 +141,9 @@ function LandingPage({ classes }) {
       return;
     }
 
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
     const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
-    console.log(
-      "useBalanceOFLUSDC",
-      convertToReadableFormat(userBalanceOfLUSDC)
-    );
 
     const ethToWithdraw = convertTo18Decimals(amount);
-    console.log("ethToWithdraw", amount);
-    console.log("withdrwableETH", convertToReadableFormat(withdrawableETH));
     //TODO: This is temperary fix
     //make sure frontend deals with only bignumbers
     let lUSDCAmount;
@@ -159,6 +152,7 @@ function LandingPage({ classes }) {
       .sub(ethToWithdraw)
       .mul(ONE)
       .div(withdrawableETH);
+
     lUSDCAmount = userBalanceOfLUSDC.sub(
       userBalanceOfLUSDC.mul(percentageOfETHToWithdraw).div(ONE)
     );
@@ -166,7 +160,6 @@ function LandingPage({ classes }) {
     if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
       lUSDCAmount = userBalanceOfLUSDC;
     }
-    console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
 
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
@@ -175,8 +168,8 @@ function LandingPage({ classes }) {
       apiId: constants.biconomy.xdai.withdraw.methodAPIKey,
       debug: true,
     });
-    // const web3Biconomy = new Web3(biconomy);
 
+    // const web3Biconomy = new Web3(biconomy);
     // const amountToWithdraw = BigNumber.from(amount);
     // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
@@ -231,17 +224,13 @@ function LandingPage({ classes }) {
           );
           setLoadOpen(true);
 
-          const lemmaMainnet = new ethers.Contract(
-            addresses.rinkeby.lemmaMainnet,
-            LemmaMainnet.abi,
-            new ethers.providers.Web3Provider(window.ethereum)
-          );
-          const lemmaMainnetETHWithdrawedFilter = lemmaMainnet.filters.ETHWithdrawed(
+          const lemmaMainnetETHWithdrawedFilter = lemmaMain.contract.filters.ETHWithdrawed(
             account
           );
-          lemmaMainnet.once(
+
+          lemmaMain.contract.once(
             lemmaMainnetETHWithdrawedFilter,
-            onSuccesfulWithdrawal
+            onSuccessfulWithdrawal
           );
           //do something with transaction hash
         });
@@ -258,36 +247,12 @@ function LandingPage({ classes }) {
   };
 
   const refreshBalances = async () => {
-    // const usdcBalance = await getBalance(addresses.usdc, account);
-    // setBalance(usdcBalance);
-    // const LusdcBalance = await getBalance(addresses.lusdc, account);
-    // setLBalance(LusdcBalance);
-
-    // await setWeb3(new Web3(window.ethereum));
-
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
-    const lemmaPerpetual = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaPerpetual,
-      LemmaPerpetual.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
-
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
       signer
     );
-    const lemmaMainnet = new ethers.Contract(
-      addresses.rinkeby.lemmaMainnet,
-      LemmaMainnet.abi,
-      signer
-    );
 
-    // const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
     const [
       userBalanceOfLUSDC,
       totalCollateral,
@@ -298,39 +263,20 @@ function LandingPage({ classes }) {
       lemmaToken.totalSupply(),
     ]);
 
-    console.log(
-      "userBalanceOfLUSDC",
-      convertToReadableFormat(userBalanceOfLUSDC)
-    );
-
     let maxWithdrwableEth = new BigNumber.from("0");
 
     if (userBalanceOfLUSDC.gt(BigNumber.from("0"))) {
-      // const totalCollateral = await lemmaPerpetual.getTotalCollateral();
-      console.log(
-        "totalCollateral",
-        convertToReadableFormat(totalCollateral, 6)
-      );
-      // const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
-      console.log(
-        "totalSupplyOfLUSDC",
-        convertToReadableFormat(totalSupplyOfLUSDC)
-      );
       //TODO: add 0.1% perp fees that is not considered in following formula
       const usdcDeservedByUser = totalCollateral
         .mul(userBalanceOfLUSDC)
         .div(totalSupplyOfLUSDC);
-      console.log(
-        "usdcDeservedByUser",
-        convertToReadableFormat(usdcDeservedByUser, 6)
-      );
+
       if (!usdcDeservedByUser.isZero()) {
         try {
           const amounts = await uniswapV2Router02.getAmountsOut(
             usdcDeservedByUser,
             [addresses.rinkeby.usdc, addresses.rinkeby.weth]
           );
-          console.log(convertToReadableFormat(amounts[1]));
           maxWithdrwableEth = amounts[1];
         } catch (e) {
           console.log(e);
@@ -339,53 +285,48 @@ function LandingPage({ classes }) {
 
       setWithdrawableETH(maxWithdrwableEth);
     }
-    //to get the deposited balance
 
+    //to get the deposited balance
     //look for the deposit events on the lemmaMainnet
     //look at the mint and burn events on lemmaToken
 
-    const ethDepositedFilter = lemmaMainnet.filters.ETHDeposited(
-      /*accounts == */ account
-    );
-    const ethDepositedEvents = await lemmaMainnet.queryFilter(
+    const ethDepositedFilter = lemmaMain.contract.filters.ETHDeposited(account);
+    const ethDepositedEvents = await lemmaMain.contract.queryFilter(
       ethDepositedFilter
     );
-    console.log(ethDepositedEvents);
+
     let totalETHDeposited = BigNumber.from("0");
     ethDepositedEvents.forEach((ethDepositedEvent) => {
       const ethDeposited = ethDepositedEvent.args.amount;
       totalETHDeposited = totalETHDeposited.add(ethDeposited);
     });
-    console.log(
-      "totalETHDeposited",
-      convertToReadableFormat(totalETHDeposited)
+
+    const lusdcMintedFilter = lemmaToken.contract.filters.Transfer(
+      ethers.constants.AddressZero,
+      account
+    );
+    const lusdcMintedEvents = await lemmaToken.contract.queryFilter(
+      lusdcMintedFilter
     );
 
-    const lusdcMintedFilter = lemmaToken.filters.Transfer(
-      /**from ==*/ ethers.constants.AddressZero,
-      /**to == */ account
-    );
-    const lusdcMintedEvents = await lemmaToken.queryFilter(lusdcMintedFilter);
-    console.log(lusdcMintedEvents);
     let totalLUSDCMinted = BigNumber.from("0");
     lusdcMintedEvents.forEach((lusdcMintedEvents) => {
       const lUSDCMinted = lusdcMintedEvents.args.value;
       totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
     });
-    console.log("totalLUSDCMinted", convertToReadableFormat(totalLUSDCMinted));
 
-    const lusdcBurntFilter = lemmaToken.filters.Transfer(
-      /**from ==*/ account,
-      /**to == */ ethers.constants.AddressZero
+    const lusdcBurntFilter = lemmaToken.contract.filters.Transfer(
+      account,
+      ethers.constants.AddressZero
     );
-    const lusdcBurntEvents = await lemmaToken.queryFilter(lusdcBurntFilter);
-    console.log(lusdcBurntEvents);
+    const lusdcBurntEvents = await lemmaToken.contract.queryFilter(
+      lusdcBurntFilter
+    );
     let totalLUSDCBurnt = BigNumber.from("0");
     lusdcBurntEvents.forEach((lusdcBurntEvents) => {
       const lUSDCBurnt = lusdcBurntEvents.args.value;
       totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
     });
-    console.log("totalLUSDCBurnt", convertToReadableFormat(totalLUSDCBurnt));
 
     const percentageOfLUSDCWithdrawed = totalLUSDCMinted
       .sub(totalLUSDCBurnt)
@@ -395,24 +336,21 @@ function LandingPage({ classes }) {
       .mul(percentageOfLUSDCWithdrawed)
       .div(ONE);
 
-    console.log("ETHDeposited", convertToReadableFormat(ETHDeposited));
-
     //according to those decide the total deposited balance
     setDeposited(ETHDeposited);
     const earnings = maxWithdrwableEth.sub(ETHDeposited);
 
-    console.log("earings", convertToReadableFormat(earnings));
-    setEarings(earnings);
+    setEarnings(earnings);
   };
 
-  const onSuccesfulDeposit = async () => {
+  const onSuccessfulDeposit = async () => {
     refreshBalances();
     setLoadOpen(false);
     setSuccessMessage("Deposit completed successfully");
     setSuccessOpen(true);
   };
 
-  const onSuccesfulWithdrawal = async () => {
+  const onSuccessfulWithdrawal = async () => {
     refreshBalances();
     setLoadOpen(false);
     setSuccessMessage("Withdraw completed successfully");
@@ -420,13 +358,6 @@ function LandingPage({ classes }) {
   };
 
   const onDepositInfoAdded = async () => {
-    console.log("being your own bot");
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_WSS_URL)
-    );
-
     const biconomyApiKey = constants.biconomy.xdai.mint.apiKey;
     const biconomyMethodAPIKey = constants.biconomy.xdai.mint.methodAPIKey;
     const headers = {
@@ -446,10 +377,8 @@ function LandingPage({ classes }) {
       };
 
       apiData.userAddress = ethers.constants.AddressZero;
-      // apiData.from = accounts[0];
       apiData.to = lemmaToken.address;
       apiData.params = [account];
-      // console.log("in");
 
       //tell biconomy to make a mint transaction
       await axios({

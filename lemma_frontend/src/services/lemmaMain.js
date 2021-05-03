@@ -43,7 +43,7 @@ class LemmaMainService {
   };
 
   setWithdrawalInfo = async (account, amount) => {
-    const txObject = await this.contract.setWithdrawalInfo(tokenSaleId, {
+    const txObject = await this.contract.setWithdrawalInfo(account, {
       value: utils.parseEther(amount),
     });
 

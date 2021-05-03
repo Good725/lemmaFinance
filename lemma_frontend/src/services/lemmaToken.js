@@ -1,4 +1,4 @@
-import { ethers, utils } from "ethers";
+import { ethers } from "ethers";
 
 const lemmaTokenAbi = [
   "function setDepositInfo(address account, uint256 amount) external",
