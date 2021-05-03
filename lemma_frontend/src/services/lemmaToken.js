@@ -6,6 +6,10 @@ const lemmaTokenAbi = [
   "function withdraw(uint256 amount) external",
   "function balanceOf(uint256 account) public view returns (uint256)",
   "function totalSupply() public view returns (uint256)",
+  "event USDCDeposited(address indexed account, uint256 indexed amount)",
+  "event USDCWithdrawed(address indexed account, uint256 indexed amount)",
+  "event DepositInfoAdded(address indexed account, uint256 indexed amount)",
+  "event Transfer(address indexed from, address indexed to, uint amount)",
 ];
 
 class LemmaTokenService {
