@@ -37,7 +37,6 @@ contract("LemmaMainnet", accounts => {
             await test_LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});    
         }
         catch (error) {
-            // assert(error.message, "VM Exception while processing transaction: revert receiver is empty");
             expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
         }
     });
@@ -66,22 +65,15 @@ contract("LemmaMainnet", accounts => {
         const tx = await LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});
         expect(tx).to.emit(LemmaMainnetContract, "ETHDeposited").withArgs(accounts[0].address, payableValue);
 
-        LemmaMainnetContract.on("ETHDeposited", (account, amount) => {
-            console.log(account);
-            console.log(amount.toString());
-        });
-
         let balance_contract = await usdc.balanceOf(LemmaMainnetContract.address);
         const { gasUsed } = await tx.wait();
         const gasPrice = tx.gasPrice;
         const feeEth = gasUsed * gasPrice;
         let balanceAfterDeposit = await accounts[0].getBalance();
         let usdcBalanceXDAI = await usdc.balanceOf(multiTokenMediatorOnEth);
-        let aa = BigNumber.from(balanceBeforeDeposit.toString())-BigNumber.from(feeEth.toString())-payableValue;
-        console.log(balanceBeforeDeposit.toString());
-        console.log(balanceAfterDeposit.toString());
-        console.log(feeEth.toString());
-        console.log(aa.toString());
+        // console.log(balanceBeforeDeposit.toString());
+        // console.log(balanceAfterDeposit.toString());
+        // console.log(feeEth.toString());
         // expect(balanceAfterDeposit).to.equal(aa.toString());
     });
 
@@ -91,7 +83,6 @@ contract("LemmaMainnet", accounts => {
             await LemmaMainnetContract.connect(accounts[0]).setWithdrawalInfo(accounts[0].address, withdrawUSDCAmountOut);
         }
         catch (error) {
-            // assert(error.message, "VM Exception while processing transaction: revert not ambBridge");
             expect(error.message).to.equal("VM Exception while processing transaction: revert not ambBridge");
         }
     });
@@ -103,7 +94,6 @@ contract("LemmaMainnet", accounts => {
             await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
         }
         catch (error) {
-            // assert(error.message, "VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaXDAI");
             expect(error.message).to.equal("VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaXDAI");
         }
     });
@@ -117,18 +107,11 @@ contract("LemmaMainnet", accounts => {
         let usdcBalanceContractBeforeWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
         let balanceBeforeWithdraw = await accounts[0].getBalance();
-
-        await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
-        LemmaMainnetContract.on("ETHWithdrawed", (account, amount) => {
-            console.log(account);
-            console.log(amount.toString());
-        });
+        
+        expect(await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut)).to.emit(LemmaMainnetContract, "WithdrawalInfoAdded").withArgs(accounts[0].address, withdrawUSDCAmountOut);
+        
         let balanceAfterWithdraw = await accounts[0].getBalance();
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
-
-        console.log(usdcBalanceContractAfterWithdraw.toString());
-        console.log(usdcBalanceContractBeforeWithdraw.toString());
-        // assert(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
         expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
     });
 
@@ -138,10 +121,8 @@ contract("LemmaMainnet", accounts => {
         await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         if (usdcBalanceContractBeforeWithdraw >= withdrawUSDCAmountOut) {
-            // assert.equal(usdcBalanceContractAfterWithdraw, usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
             expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
         } else {
-            // assert.equal(usdcBalanceContractBeforeWithdraw.toString(), usdcBalanceContractAfterWithdraw.toString());
             expect(usdcBalanceContractBeforeWithdraw).to.equal(usdcBalanceContractAfterWithdraw);
         }
     });
