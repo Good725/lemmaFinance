@@ -103,12 +103,12 @@ function LandingPage({ classes }) {
     }
 
     const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
-    if (utils.parseEther(Number(amount) + gasFees).gte(ethBalance)) {
-      await lemmaMain.deposit(0, {
-        value: (Number(amount) - gasFees).toString(),
-      });
+    if (
+      utils.parseEther((Number(amount) + gasFees).toString()).gte(ethBalance)
+    ) {
+      await lemmaMain.deposit(0, Number(amount) - gasFees);
     } else {
-      await lemmaMain.deposit(0, { value: amount });
+      await lemmaMain.deposit(0, amount);
     }
 
     setLoadMessage(
@@ -120,16 +120,16 @@ function LandingPage({ classes }) {
     // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
     // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
 
-    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.contract.filters.DepositInfoAdded(
+    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.instance.filters.DepositInfoAdded(
       account
     );
-    const lusdcMintedFilter = lemmaToken.contract.filters.Transfer(
+    const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
       ethers.constants.AddressZero,
       account
     );
 
-    lemmaToken.contract.once(lusdcMintedFilter, onSuccessfulDeposit);
-    lemmaToken.contract.once(
+    lemmaToken.instance.once(lusdcMintedFilter, onSuccessfulDeposit);
+    lemmaToken.instance.once(
       lemmaXDAIDepositInfoAddedFilter,
       onDepositInfoAdded
     );
@@ -224,11 +224,11 @@ function LandingPage({ classes }) {
           );
           setLoadOpen(true);
 
-          const lemmaMainnetETHWithdrawedFilter = lemmaMain.contract.filters.ETHWithdrawed(
+          const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
             account
           );
 
-          lemmaMain.contract.once(
+          lemmaMain.instance.once(
             lemmaMainnetETHWithdrawedFilter,
             onSuccessfulWithdrawal
           );
@@ -290,8 +290,8 @@ function LandingPage({ classes }) {
     //look for the deposit events on the lemmaMainnet
     //look at the mint and burn events on lemmaToken
 
-    const ethDepositedFilter = lemmaMain.contract.filters.ETHDeposited(account);
-    const ethDepositedEvents = await lemmaMain.contract.queryFilter(
+    const ethDepositedFilter = lemmaMain.instance.filters.ETHDeposited(account);
+    const ethDepositedEvents = await lemmaMain.instance.queryFilter(
       ethDepositedFilter
     );
 
@@ -301,11 +301,11 @@ function LandingPage({ classes }) {
       totalETHDeposited = totalETHDeposited.add(ethDeposited);
     });
 
-    const lusdcMintedFilter = lemmaToken.contract.filters.Transfer(
+    const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
       ethers.constants.AddressZero,
       account
     );
-    const lusdcMintedEvents = await lemmaToken.contract.queryFilter(
+    const lusdcMintedEvents = await lemmaToken.instance.queryFilter(
       lusdcMintedFilter
     );
 
@@ -315,11 +315,11 @@ function LandingPage({ classes }) {
       totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
     });
 
-    const lusdcBurntFilter = lemmaToken.contract.filters.Transfer(
+    const lusdcBurntFilter = lemmaToken.instance.filters.Transfer(
       account,
       ethers.constants.AddressZero
     );
-    const lusdcBurntEvents = await lemmaToken.contract.queryFilter(
+    const lusdcBurntEvents = await lemmaToken.instance.queryFilter(
       lusdcBurntFilter
     );
     let totalLUSDCBurnt = BigNumber.from("0");

@@ -30,13 +30,15 @@ class LemmaMainService {
     return this.contract.address;
   }
 
-  get contract() {
+  get instance() {
     return this.contract;
   }
 
   deposit = async (minimumUSDCAmountOut, value) => {
     const txObject = await this.contract.deposit(minimumUSDCAmountOut, {
-      value: utils.parseEther(value),
+      value: utils.parseEther(
+        typeof value === "string" ? value : value.toString()
+      ),
     });
 
     return txObject.hash;
@@ -44,7 +46,9 @@ class LemmaMainService {
 
   setWithdrawalInfo = async (account, amount) => {
     const txObject = await this.contract.setWithdrawalInfo(account, {
-      value: utils.parseEther(amount),
+      value: utils.parseEther(
+        typeof amount === "string" ? amount : amount.toString()
+      ),
     });
 
     return txObject.hash;

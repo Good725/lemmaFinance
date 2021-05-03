@@ -32,7 +32,7 @@ class LemmaTokenService {
     return this.contract.address;
   }
 
-  get contract() {
+  get instance() {
     return this.contract;
   }
 
