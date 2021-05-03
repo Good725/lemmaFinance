@@ -33,16 +33,20 @@ export const ConnectedWeb3 = ({ children }) => {
     const signer = ethersProvider.getSigner();
     const account = await signer.getAddress();
     const networkId = await signer.getChainId();
-    const ethBalance = await signer.getBalance();
+    if (networkId == 1) {
+      alert("connect to rinkeby testnet");
+    } else {
+      const ethBalance = await signer.getBalance();
+      setState({
+        account,
+        signer,
+        provider,
+        networkId,
+        ethBalance,
+        isConnected: true
+      });
+    }
 
-    setState({
-      account,
-      signer,
-      provider,
-      networkId,
-      ethBalance,
-      isConnected: true
-    });
   };
 
   const onConnect = async () => {
