@@ -375,16 +375,17 @@ function LandingPage({ classes }) {
     console.log("refresh Balance end");
   };
 
-  const onSuccessfulDeposit = async (e) => {
-    console.log(e);
+  const onSuccessfulDeposit = async (account, LUSDTAmount, event) => {
     refreshBalances();
+    setExplorerLink(getExplorerLink(event.transactionHash), "xdai");
     setLoadOpen(false);
     setSuccessMessage("Deposit completed successfully");
     setSuccessOpen(true);
   };
 
-  const onSuccessfulWithdrawal = async () => {
+  const onSuccessfulWithdrawal = async (account, ETHAmount, event) => {
     refreshBalances();
+    setExplorerLink(getExplorerLink(event.transactionHash));
     setLoadOpen(false);
     setSuccessMessage("Withdraw completed successfully");
     setSuccessOpen(true);
@@ -473,7 +474,9 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="success"
         >
-          {successMessage}
+          <span>{successMessage}<a href={explorerLink}
+            target="_blank"
+            rel="noopener noreferrer">see on explorer</a></span>
         </Alert>
       </Snackbar>
       <Snackbar
@@ -846,7 +849,7 @@ function LandingPage({ classes }) {
           </Grid>
         </Grid>
       </div>
-    </div>
+    </div >
   );
 }
 
