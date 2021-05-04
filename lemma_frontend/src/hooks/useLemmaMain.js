@@ -18,5 +18,5 @@ export const useLemmaMain = (lemmaMainAddress, provider = null) => {
         provider ? null : account
       );
     }
-  }, [account, isConnected, lemmaMainAddress]);
+  }, [account, isConnected, defaultProvider, provider, lemmaMainAddress]);
 };

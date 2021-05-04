@@ -111,7 +111,10 @@ function LandingPage({ classes }) {
   };
 
   const handleDepositSubmit = async () => {
-    handleConnectWallet();
+    if (!amount) {
+      return;
+    }
+
     if (networkId != 4) {
       alert("please connect to rinkeby network");
     } else {
@@ -160,7 +163,10 @@ function LandingPage({ classes }) {
   };
 
   const handleWithdrawSubmit = async () => {
-    handleConnectWallet();
+    if (!amount) {
+      return;
+    }
+
     if (networkId != 4) {
       alert("please connect to rinkeby network");
     } else {
