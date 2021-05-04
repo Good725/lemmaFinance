@@ -256,7 +256,12 @@ function LandingPage({ classes }) {
         setLoadOpen(true);
 
         console.log(signer);
-        const tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
+
+        //if tx == null that means the xdai just does not know about the transaction that was submitted by the biconomy node
+        let tx;
+        while (!tx) {
+          tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
+        }
         await tx.wait();
 
         setLoadOpen(false);
@@ -277,6 +282,9 @@ function LandingPage({ classes }) {
 
   const refreshBalances = async () => {
     console.log("refresh Balance start");
+    //adding onConnect here to refresh the ethBalance after withdrawal is done
+    //@jikun change it if you know a way to do it more cleanly
+    await onConnect();
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
@@ -474,7 +482,7 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="success"
         >
-          <span>{successMessage}<a href={explorerLink}
+          <span>{successMessage}<br /><a href={explorerLink}
             target="_blank"
             rel="noopener noreferrer">see on explorer</a></span>
         </Alert>
@@ -491,7 +499,7 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="info"
         >
-          <span>{loadMessage}<a href={explorerLink}
+          <span>{loadMessage}<br /><a href={explorerLink}
             target="_blank"
             rel="noopener noreferrer">see on explorer</a></span>
         </Alert>
