@@ -125,7 +125,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @param _minimumUSDCAmountOut is the minumum amount to get from Paid Eth.
     function deposit(uint256 _minimumUSDCAmountOut) external payable {
         totalETHDeposited += msg.value;
-        require(totalETHDeposited >= cap, 'Lemma: cap reached');
+        require(totalETHDeposited <= cap, 'Lemma: cap reached');
         address[] memory path = new address[](2);
         path[0] = address(WETH);
         path[1] = address(USDC);

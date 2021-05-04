@@ -9,7 +9,7 @@ import { Alert } from '@material-ui/lab';
 import { styles } from './styles';
 import { axios_request } from '../../utils/rest_request';
 import DiscordIcon from '../../assets/img/discord.svg';
-import { utils } from "ethers";
+import { utils, getDefaultProvider } from "ethers";
 
 
 function LaunchPage({ classes }) {
@@ -62,6 +62,12 @@ function LaunchPage({ classes }) {
       const isAddressValid = utils.isAddress(address);
       //if not valid then 
       console.log(isAddressValid);
+      //for resolving ens names 
+      // const provider = getDefaultProvider();
+      // const actualAddress = await provider.resolveName(address);
+      // setAddress(actualAddress);
+
+
     }
     if (activeStep === steps.length - 1) {
       const userObj = {
