@@ -1,12 +1,7 @@
-import { ethers, utils } from "ethers";
+import { ethers } from "ethers";
+import LemmaPerpetual from "../abis/LemmaPerpetual.json";
 
-const lemmaPerpetualAbi = [
-  "function setDepositInfo(address account, uint256 amount) external",
-  "function mint(address account) public",
-  "function withdraw(uint256 amount) external",
-  "function getTotalCollateral() public view returns (uint256)",
-];
-
+const lemmaPerpetualAbi = LemmaPerpetual.abi;
 class LemmaPerpetualService {
   contract;
   signerAddress;
@@ -17,11 +12,11 @@ class LemmaPerpetualService {
       const signer = provider.getSigner();
       this.contract = new ethers.Contract(
         address,
-        lemmaTokenAbi,
+        lemmaPerpetualAbi,
         provider
       ).connect(signer);
     } else {
-      this.contract = new ethers.Contract(address, lemmaTokenAbi, provider);
+      this.contract = new ethers.Contract(address, lemmaPerpetualAbi, provider);
     }
     this.signerAddress = signerAddress;
     this.provider = provider;
@@ -31,7 +26,7 @@ class LemmaPerpetualService {
     return this.contract.address;
   }
 
-  get contract() {
+  get instance() {
     return this.contract;
   }
 
@@ -58,4 +53,4 @@ class LemmaPerpetualService {
   };
 }
 
-export { LemmaTokenService };
+export { LemmaPerpetualService };

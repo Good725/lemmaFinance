@@ -1,10 +1,7 @@
 import { ethers, utils } from "ethers";
+import LemmaMainnet from "../abis/LemmaMainnet.json";
 
-const lemmaMainAbi = [
-  "function deposit(uint256 minimumUSDCAmountOut) external payable",
-  "function setWithdrawalInfo(address account, uint256 amount) external",
-  "function withdraw(address account) public",
-];
+const lemmaMainAbi = LemmaMainnet.abi;
 
 class LemmaMainService {
   contract;
@@ -30,21 +27,25 @@ class LemmaMainService {
     return this.contract.address;
   }
 
-  get contract() {
+  get instance() {
     return this.contract;
   }
 
   deposit = async (minimumUSDCAmountOut, value) => {
     const txObject = await this.contract.deposit(minimumUSDCAmountOut, {
-      value: utils.parseEther(value),
+      value: utils.parseEther(
+        typeof value === "string" ? value : value.toString()
+      ),
     });
 
     return txObject.hash;
   };
 
   setWithdrawalInfo = async (account, amount) => {
-    const txObject = await this.contract.setWithdrawalInfo(tokenSaleId, {
-      value: utils.parseEther(amount),
+    const txObject = await this.contract.setWithdrawalInfo(account, {
+      value: utils.parseEther(
+        typeof amount === "string" ? amount : amount.toString()
+      ),
     });
 
     return txObject.hash;

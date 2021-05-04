@@ -17,29 +17,41 @@ import axios from "axios";
 
 import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
-import erc20 from "../../abis/ERC20.json";
 import addresses from "../../abis/addresses.json";
 import constants from "../../abis/constants.json";
-import LemmaMainnet from "../../abis/LemmaMainnet.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
-import LemmaPerpetual from "../../abis/LemmaPerpetual.json";
-
 import { useConnectedWeb3Context } from "../../context";
+import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 
 import { styles } from "./styles";
-const ClearingHouse = require("@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json");
-
 
 function LandingPage({ classes }) {
+  const XDAI_URL = "https://rpc.xdaichain.com/";
+  const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
+  const ETHERSCAN_URL = "https://rinkeby.etherscan.io";
+  const BLOCKSCOUT_URL = "https://blockscout.com/xdai/mainnet";
   const {
     account,
     signer,
-    provider,
     ethBalance,
     isConnected,
     onConnect,
   } = useConnectedWeb3Context();
+
+  const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
+  const lemmaToken = useLemmaToken(
+    addresses.xDAIRinkeby.lemmaxDAI,
+    ethers.getDefaultProvider(XDAI_URL)
+  );
+  const lemmaTokenWSS = useLemmaToken(
+    addresses.xDAIRinkeby.lemmaxDAI,
+    ethers.getDefaultProvider(XDAI_WSS_URL)
+  );
+  const lemmaPerpetual = useLemmaPerpetual(
+    addresses.xDAIRinkeby.lemmaPerpetual,
+    ethers.getDefaultProvider(XDAI_URL)
+  );
 
   const [amount, setAmount] = useState("");
   const [tabIndex, setTabIndex] = useState("1");
@@ -50,13 +62,12 @@ function LandingPage({ classes }) {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [loadMessage, setLoadMessage] = useState("");
+  const [explorerLink, setExplorerLink] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
   const [deposited, setDeposited] = useState(BigNumber.from(0));
-  const [earnings, setEarings] = useState(BigNumber.from(0));
-  const XDAI_URL = "https://rpc.xdaichain.com/";
-  const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
+  const [earnings, setEarnings] = useState(BigNumber.from(0));
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -89,12 +100,12 @@ function LandingPage({ classes }) {
     if (!isConnected) {
       return;
     }
-    if (value == 100) {
-      //no small errors if 100%
-      setAmount(convertToReadableFormat(withdrawableETH));
-    } else {
-      setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
-    }
+    setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
+  };
+
+  const getExplorerLink = (transactionHash, networkName) => {
+    const blockExplorerURL = networkName == "xdai" ? BLOCKSCOUT_URL : ETHERSCAN_URL;
+    return blockExplorerURL + "/tx/" + transactionHash;
   };
 
   const handleDepositSubmit = async () => {
@@ -102,41 +113,51 @@ function LandingPage({ classes }) {
       handleConnectWallet();
       return;
     }
-    const lemmaMainnet = new ethers.Contract(
-      addresses.rinkeby.lemmaMainnet,
-      LemmaMainnet.abi,
-      signer
-    );
-    const gasFees = convertTo18Decimals("0.001");//TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
-    if ((convertTo18Decimals(amount).add(gasFees)).gte(ethBalance)) {
-      await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount).sub(gasFees) });
-    }
-    else {
-      await lemmaMainnet.deposit(0, { value: convertTo18Decimals(amount) });
-    }
 
+    const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
+    let txHash;
+    if (
+      utils.parseEther((Number(amount) + gasFees).toString()).gte(ethBalance)
+    ) {
+      txHash = await lemmaMain.deposit(0, Number(amount) - gasFees);
+    } else {
+      txHash = await lemmaMain.deposit(0, amount);
+    }
+    //to test without actually depositting
+    // txHash = "0xfd090be00e063eb8e0a6db9c2c471785d1064958d5ec50b0b4c0ff3c64ca63c7"
+    setExplorerLink(getExplorerLink(txHash));
+    setLoadMessage(
+      "Deposit started"
+    );
+    setLoadOpen(true);
+
+    const tx = await signer.provider.getTransaction(txHash);
+    await tx.wait();
+
+
+    setLoadOpen(false);
     setLoadMessage(
       "Deposit completed successfully, you should receive your LUSDT in ~1 min!"
     );
     setLoadOpen(true);
 
-    //set a listener for minting LUSDC on
+    // set a listener for minting LUSDC on
     // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
     // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_WSS_URL)
+
+    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.instance.filters.DepositInfoAdded(
+      account
     );
-    const lemmaXDAIDepositInfoAddedFilter = lemmaToken.filters.DepositInfoAdded(
-      /**account */ account
+    const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
+      ethers.constants.AddressZero,
+      account
     );
-    const lusdcMintedFilter = lemmaToken.filters.Transfer(
-      /**from ==*/ ethers.constants.AddressZero,
-      /**to == */ account
+
+    lemmaTokenWSS.instance.once(lusdcMintedFilter, onSuccessfulDeposit);
+    lemmaTokenWSS.instance.once(
+      lemmaXDAIDepositInfoAddedFilter,
+      onDepositInfoAdded
     );
-    lemmaToken.once(lusdcMintedFilter, onSuccesfulDeposit);
-    lemmaToken.once(lemmaXDAIDepositInfoAddedFilter, onDepositInfoAdded);
   };
 
   const handleWithdrawSubmit = async () => {
@@ -145,20 +166,9 @@ function LandingPage({ classes }) {
       return;
     }
 
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
     const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
-    console.log(
-      "useBalanceOFLUSDC",
-      convertToReadableFormat(userBalanceOfLUSDC)
-    );
 
     const ethToWithdraw = convertTo18Decimals(amount);
-    console.log("ethToWithdraw", amount);
-    console.log("WithdrawableETH", convertToReadableFormat(withdrawableETH));
     //TODO: This is temperary fix
     //make sure frontend deals with only bignumbers
     let lUSDCAmount;
@@ -167,6 +177,7 @@ function LandingPage({ classes }) {
       .sub(ethToWithdraw)
       .mul(ONE)
       .div(withdrawableETH);
+
     lUSDCAmount = userBalanceOfLUSDC.sub(
       userBalanceOfLUSDC.mul(percentageOfETHToWithdraw).div(ONE)
     );
@@ -174,7 +185,6 @@ function LandingPage({ classes }) {
     if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
       lUSDCAmount = userBalanceOfLUSDC;
     }
-    console.log("lUSDCAmount", convertToReadableFormat(lUSDCAmount));
 
     const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
     const biconomy = new Biconomy(xDAIProvider, {
@@ -183,8 +193,8 @@ function LandingPage({ classes }) {
       apiId: constants.biconomy.xdai.withdraw.methodAPIKey,
       debug: true,
     });
-    // const web3Biconomy = new Web3(biconomy);
 
+    // const web3Biconomy = new Web3(biconomy);
     // const amountToWithdraw = BigNumber.from(amount);
     // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
 
@@ -225,87 +235,53 @@ function LandingPage({ classes }) {
         // as ethers does not allow providing custom options while sending transaction
         // you can also use networkProvider created above
         // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
-        let tx = await provider.send("eth_sendTransaction", [txParams]);
-        console.log("Transaction hash : ", tx);
+        let txHash = await provider.send("eth_sendTransaction", [txParams]);
+        //to test the blockscout link
+        // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
-        //event emitter methods
-        provider.once(tx, (transaction) => {
-          // Emitted when the transaction has been mined
-          //show success successMessage
-          console.log(transaction);
+        const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
+          account
+        );
+        lemmaMain.instance.once(
+          lemmaMainnetETHWithdrawedFilter,
+          onSuccessfulWithdrawal
+        );
 
-          setLoadMessage(
-            "Withdraw started successfully, you will receive your ETH back in ~1 minutes"
-          );
-          setLoadOpen(true);
+        console.log("Transaction hash : ", txHash);
+        setExplorerLink(getExplorerLink(txHash, "xdai"));
+        console.log(getExplorerLink(txHash, "xdai"));
+        setLoadMessage(
+          "Withdraw started"
+        );
+        setLoadOpen(true);
 
-          const lemmaMainnet = new ethers.Contract(
-            addresses.rinkeby.lemmaMainnet,
-            LemmaMainnet.abi,
-            new ethers.providers.Web3Provider(window.ethereum)
-          );
-          const lemmaMainnetETHWithdrawedFilter = lemmaMainnet.filters.ETHWithdrawed(
-            account
-          );
-          lemmaMainnet.once(
-            lemmaMainnetETHWithdrawedFilter,
-            onSuccesfulWithdrawal
-          );
-          //do something with transaction hash
-        });
+        console.log(signer);
+        const tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
+        await tx.wait();
+
+        setLoadOpen(false);
+        setLoadMessage(
+          "Withdraw started successfully, you will receive your ETH back in ~1 minutes"
+        );
+        setLoadOpen(true);
       })
       .onEvent(biconomy.ERROR, (error, message) => {
         // Handle error while initializing mexa
         console.log(error);
       });
-
   };
 
   const handleConnectWallet = async () => {
     await onConnect();
   };
-  const filterLogsWithTopics = (logs, topic, contractAddress) =>
-    logs.filter((log) => log.topics.includes(topic))
-      .filter((log) => log.address && log.address.toLowerCase() === contractAddress.toLowerCase());
 
   const refreshBalances = async () => {
-    // const usdcBalance = await getBalance(addresses.usdc, account);
-    // setBalance(usdcBalance);
-    // const LusdcBalance = await getBalance(addresses.lusdc, account);
-    // setLBalance(LusdcBalance);
-
-    // await setWeb3(new Web3(window.ethereum));
-
-    const xdaiProvider = ethers.getDefaultProvider(XDAI_URL);
-
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      xdaiProvider
-    );
-    const lemmaPerpetual = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaPerpetual,
-      LemmaPerpetual.abi,
-      xdaiProvider
-    );
-
+    console.log("refresh Balance start");
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
       signer
     );
-    const lemmaMainnet = new ethers.Contract(
-      addresses.rinkeby.lemmaMainnet,
-      LemmaMainnet.abi,
-      signer
-    );
-    const clearingHouse = new ethers.Contract(
-      addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouse.address,
-      ClearingHouse.abi,
-      xdaiProvider
-    );
-
-    // const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
     const [
       userBalanceOfLUSDC,
       totalCollateral,
@@ -316,149 +292,72 @@ function LandingPage({ classes }) {
       lemmaToken.totalSupply(),
     ]);
 
-    console.log(
-      "userBalanceOfLUSDC",
-      convertToReadableFormat(userBalanceOfLUSDC)
-    );
 
-    let maxWithdrawableETH = new BigNumber.from("0");
+
+    let maxWithdrwableEth = new BigNumber.from("0");
 
     if (userBalanceOfLUSDC.gt(BigNumber.from("0"))) {
-      // const totalCollateral = await lemmaPerpetual.getTotalCollateral();
-      console.log(
-        "totalCollateral",
-        convertToReadableFormat(totalCollateral, 6)
-      );
-      // const totalSupplyOfLUSDC = await lemmaToken.totalSupply();
-      console.log(
-        "totalSupplyOfLUSDC",
-        convertToReadableFormat(totalSupplyOfLUSDC)
-      );
       //TODO: add 0.1% perp fees that is not considered in following formula
       const usdcDeservedByUser = totalCollateral
         .mul(userBalanceOfLUSDC)
         .div(totalSupplyOfLUSDC);
-      console.log(
-        "usdcDeservedByUser",
-        convertToReadableFormat(usdcDeservedByUser, 6)
-      );
+
       if (!usdcDeservedByUser.isZero()) {
         try {
           const amounts = await uniswapV2Router02.getAmountsOut(
             usdcDeservedByUser,
             [addresses.rinkeby.usdc, addresses.rinkeby.weth]
           );
-          console.log(convertToReadableFormat(amounts[1]));
-          maxWithdrawableETH = amounts[1];
+          maxWithdrwableEth = amounts[1];
         } catch (e) {
           console.log(e);
         }
       }
 
-      setWithdrawableETH(maxWithdrawableETH);
+      setWithdrawableETH(maxWithdrwableEth);
     }
-    //to get the deposited balance
 
+    //to get the deposited balance
     //look for the deposit events on the lemmaMainnet
     //look at the mint and burn events on lemmaToken
 
-    const positionChangedFilter = clearingHouse.filters.PositionChanged();
-    const ethDepositedFilter = lemmaMainnet.filters.ETHDeposited(
-      /*accounts == */ account
-    );
-    const ethDepositedEvents = await lemmaMainnet.queryFilter(
+    const ethDepositedFilter = lemmaMain.instance.filters.ETHDeposited(account);
+    const ethDepositedEvents = await lemmaMain.instance.queryFilter(
       ethDepositedFilter
     );
-    console.log(ethDepositedEvents);
+
     let totalETHDeposited = BigNumber.from("0");
     ethDepositedEvents.forEach((ethDepositedEvent) => {
       const ethDeposited = ethDepositedEvent.args.amount;
       totalETHDeposited = totalETHDeposited.add(ethDeposited);
     });
-    console.log(
-      "totalETHDeposited",
-      convertToReadableFormat(totalETHDeposited)
+
+    const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
+      ethers.constants.AddressZero,
+      account
+    );
+    const lusdcMintedEvents = await lemmaToken.instance.queryFilter(
+      lusdcMintedFilter
     );
 
-    const ethWithdrawedFilter = lemmaMainnet.filters.ETHWithdrawed(
-      /*accounts == */ account
-    );
-    const ethWithdrawedEvents = await lemmaMainnet.queryFilter(
-      ethWithdrawedFilter
-    );
-    console.log(ethWithdrawedEvents);
-    let totalETHWithdrawed = BigNumber.from("0");
-    ethWithdrawedEvents.forEach((ethWithdrawedEvent) => {
-      const ethWithdrawed = ethWithdrawedEvent.args.amount;
-      totalETHWithdrawed = totalETHWithdrawed.add(ethWithdrawed);
-    });
-    console.log(
-      "totalETHWithdrawed",
-      convertToReadableFormat(totalETHWithdrawed)
-    );
-
-
-    const lusdcMintedFilter = lemmaToken.filters.Transfer(
-      /**from ==*/ ethers.constants.AddressZero,
-      /**to == */ account
-    );
-    const lusdcMintedEvents = await lemmaToken.queryFilter(lusdcMintedFilter);
-    console.log(lusdcMintedEvents);
     let totalLUSDCMinted = BigNumber.from("0");
-    let totalETHLonged = ZERO;
-    for (let i = 0; i < lusdcMintedEvents.length; i++) {
-      const lusdcMintedEvent = lusdcMintedEvents[i];
+    lusdcMintedEvents.forEach((lusdcMintedEvent) => {
       const lUSDCMinted = lusdcMintedEvent.args.value;
       totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
+    });
 
-      // const receipt = await xdaiProvider.getTransactionReceipt(lusdcMintedEvent.transactionHash);
-      // // console.log(receipt.logs);
-
-      // const positionChangedFragment = clearingHouse.interface.getEvent("PositionChanged");
-      // const positionChangedTopic = clearingHouse.interface.getEventTopic(positionChangedFragment);
-      // const positionChangedLogs = filterLogsWithTopics(receipt.logs, positionChangedTopic, clearingHouse.address);
-      // const actualArgsPositionChanged = (clearingHouse.interface).parseLog(positionChangedLogs[0]).args;
-      // // console.log("margin: " + actualArgsPositionChanged.margin.toString());
-      // // console.log("positionSizeAfter: " + actualArgsPositionChanged.positionSizeAfter.toString());
-      // // console.log("exchangedPositionSize: " + actualArgsPositionChanged.exchangedPositionSize.toString());
-      // // console.log("fundingPayment: " + actualArgsPositionChanged.fundingPayment.toString());
-      // console.log("realizedPnl", actualArgsPositionChanged.realizedPnl.toString());
-      // totalETHLonged = totalETHLonged.add(actualArgsPositionChanged.exchangedPositionSize);
-    }
-
-    console.log("totalLUSDCMinted", convertToReadableFormat(totalLUSDCMinted));
-
-    const lusdcBurntFilter = lemmaToken.filters.Transfer(
-      /**from ==*/ account,
-      /**to == */ ethers.constants.AddressZero
+    const lusdcBurntFilter = lemmaToken.instance.filters.Transfer(
+      account,
+      ethers.constants.AddressZero
     );
-    const lusdcBurntEvents = await lemmaToken.queryFilter(lusdcBurntFilter);
-    console.log(lusdcBurntEvents);
+    const lusdcBurntEvents = await lemmaToken.instance.queryFilter(
+      lusdcBurntFilter
+    );
     let totalLUSDCBurnt = BigNumber.from("0");
-    let totalETHShorted = ZERO;
-    for (let i = 0; i < lusdcBurntEvents.length; i++) {
-      const lusdcBurntEvent = lusdcBurntEvents[i];
+    lusdcBurntEvents.forEach((lusdcBurntEvent) => {
       const lUSDCBurnt = lusdcBurntEvent.args.value;
       totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
-      // const receipt = await xdaiProvider.getTransactionReceipt(lusdcBurntEvent.transactionHash);
-      // // console.log(receipt.logs);
-
-      // const positionChangedFragment = clearingHouse.interface.getEvent("PositionChanged");
-      // const positionChangedTopic = clearingHouse.interface.getEventTopic(positionChangedFragment);
-      // const positionChangedLogs = filterLogsWithTopics(receipt.logs, positionChangedTopic, clearingHouse.address);
-      // const actualArgsPositionChanged = (clearingHouse.interface).parseLog(positionChangedLogs[0]).args;
-      // // console.log("margin: " + actualArgsPositionChanged.margin.toString());
-      // // console.log("positionSizeAfter: " + actualArgsPositionChanged.positionSizeAfter.toString());
-      // // console.log("exchangedPositionSize: " + actualArgsPositionChanged.exchangedPositionSize.toString());
-      // // console.log("fundingPayment: " + actualArgsPositionChanged.fundingPayment.toString());
-      // console.log("realizedPnl", actualArgsPositionChanged.realizedPnl.toString());
-      // totalETHShorted = totalETHShorted.add(actualArgsPositionChanged.exchangedPositionSize);
-    }
-    // console.log("totalETHLonged", totalETHLonged.toString());
-    // console.log("totalETHShorted", totalETHShorted.toString());
-
-    // console.log("difference", (totalETHLonged.add(totalETHShorted)).toString());
-    console.log("totalLUSDCBurnt", convertToReadableFormat(totalLUSDCBurnt));
+    });
 
     const percentageOfLUSDCWithdrawed = totalLUSDCMinted
       .sub(totalLUSDCBurnt)
@@ -468,30 +367,23 @@ function LandingPage({ classes }) {
       .mul(percentageOfLUSDCWithdrawed)
       .div(ONE);
 
-
-    // const difference = totalETHLonged.add(totalETHShorted);
-    // const percentageOfETHShortedAgainstLonged = (difference.mul(ONE)).div(totalETHLonged);
-    // const ETHDeposited = (totalETHDeposited
-    //   .mul(percentageOfETHShortedAgainstLonged))
-    //   .div(ONE);
-    // console.log("ETHDeposited", convertToReadableFormat(ETHDeposited));
-
     //according to those decide the total deposited balance
     setDeposited(ETHDeposited);
-    const earnings = maxWithdrawableETH.sub(ETHDeposited);
+    const earnings = maxWithdrwableEth.sub(ETHDeposited);
 
-    console.log("earings", convertToReadableFormat(earnings));
-    setEarings(earnings);
+    setEarnings(earnings);
+    console.log("refresh Balance end");
   };
 
-  const onSuccesfulDeposit = async () => {
+  const onSuccessfulDeposit = async (e) => {
+    console.log(e);
     refreshBalances();
     setLoadOpen(false);
     setSuccessMessage("Deposit completed successfully");
     setSuccessOpen(true);
   };
 
-  const onSuccesfulWithdrawal = async () => {
+  const onSuccessfulWithdrawal = async () => {
     refreshBalances();
     setLoadOpen(false);
     setSuccessMessage("Withdraw completed successfully");
@@ -499,13 +391,6 @@ function LandingPage({ classes }) {
   };
 
   const onDepositInfoAdded = async () => {
-    console.log("being your own bot");
-    const lemmaToken = new ethers.Contract(
-      addresses.xDAIRinkeby.lemmaxDAI,
-      LemmaToken.abi,
-      ethers.getDefaultProvider(XDAI_WSS_URL)
-    );
-
     const biconomyApiKey = constants.biconomy.xdai.mint.apiKey;
     const biconomyMethodAPIKey = constants.biconomy.xdai.mint.methodAPIKey;
     const headers = {
@@ -525,10 +410,8 @@ function LandingPage({ classes }) {
       };
 
       apiData.userAddress = ethers.constants.AddressZero;
-      // apiData.from = accounts[0];
       apiData.to = lemmaToken.address;
       apiData.params = [account];
-      // console.log("in");
 
       //tell biconomy to make a mint transaction
       await axios({
@@ -538,7 +421,7 @@ function LandingPage({ classes }) {
         data: apiData,
       });
     } else {
-      console.log("not necessary");
+      console.log("not necessary to mint by user");
     }
   };
 
@@ -605,7 +488,9 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="info"
         >
-          {loadMessage}
+          <span>{loadMessage}<a href={explorerLink}
+            target="_blank"
+            rel="noopener noreferrer">see on explorer</a></span>
         </Alert>
       </Snackbar>
       <Snackbar
