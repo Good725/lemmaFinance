@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { withStyles } from '@material-ui/core/styles';
-import { Grid, Button, TextField, Paper, Snackbar, Typography,
-         Stepper, Step, StepLabel, StepContent, Fab, Link } from '@material-ui/core';
+import {
+  Grid, Button, TextField, Paper, Snackbar, Typography,
+  Stepper, Step, StepLabel, StepContent, Fab, Link
+} from '@material-ui/core';
 import TwitterIcon from '@material-ui/icons/Twitter';
 import { Alert } from '@material-ui/lab';
 import { styles } from './styles';
 import { axios_request } from '../../utils/rest_request';
 import DiscordIcon from '../../assets/img/discord.svg';
+import { utils } from "ethers";
 
 
 function LaunchPage({ classes }) {
@@ -19,34 +22,34 @@ function LaunchPage({ classes }) {
   function getSteps() {
     return ['Enter ETH Wallet Address', 'Tweet about us!', 'Join our community :)'];
   }
-  
+
   function getStepContent(step) {
     switch (step) {
       case 0:
         return (<Grid item xs={12}>
-                  <TextField color="primary" variant="filled" value={address} className={classes.input} label="ETH Wallet Address" onChange={e => handleAddressChange(e)} />
-                </Grid>);
+          <TextField color="primary" variant="filled" value={address} className={classes.input} label="ETH Wallet Address" onChange={e => handleAddressChange(e)} />
+        </Grid>);
       case 1:
         return (<Grid item xs={12}>
-                  <Link 
-                    target="_blank"
-                    href="https://twitter.com/intent/tweet?text=Looking%20forward%20to%20making%20superior,%20sustainable%20yield%20with%20Lemma.Finance.%20Check%20them%20out!"
-                  >
-                  <Button
-                    className={classes.twitterButton}
-                    startIcon={<TwitterIcon />}
-                    variant="contained"
-                    >
-                    Tweet!
+          <Link
+            target="_blank"
+            href="https://twitter.com/intent/tweet?text=Looking%20forward%20to%20making%20superior,%20sustainable%20yield%20with%20Lemma.Finance.%20Check%20them%20out!"
+          >
+            <Button
+              className={classes.twitterButton}
+              startIcon={<TwitterIcon />}
+              variant="contained"
+            >
+              Tweet!
                   </Button>
-                  </Link>
-                  <TextField color="primary" variant="filled" value={twitter} className={classes.input} label="Twitter Post URL" onChange={e => handleTwitterChange(e)} />
-                </Grid>);
+          </Link>
+          <TextField color="primary" variant="filled" value={twitter} className={classes.input} label="Twitter Post URL" onChange={e => handleTwitterChange(e)} />
+        </Grid>);
       case 2:
         return (<Grid item container xs={12} spacing={3}>
-                  <Grid item><Link target="_blank" href="https://twitter.com/LemmaFinance"><Fab className={classes.twitterFab} ><TwitterIcon/></Fab></Link></Grid>
-                  <Grid item><Link target="_blank" href="https://discord.gg/7w9HaVVJ"><Fab className={classes.discordFab}><img src={DiscordIcon} className={classes.discordIcon}/></Fab></Link></Grid>
-                </Grid>);
+          <Grid item><Link target="_blank" href="https://twitter.com/LemmaFinance"><Fab className={classes.twitterFab} ><TwitterIcon /></Fab></Link></Grid>
+          <Grid item><Link target="_blank" href="https://discord.gg/7w9HaVVJ"><Fab className={classes.discordFab}><img src={DiscordIcon} className={classes.discordIcon} /></Fab></Link></Grid>
+        </Grid>);
       default:
         return 'Unknown step';
     }
@@ -55,7 +58,12 @@ function LaunchPage({ classes }) {
   const steps = getSteps();
 
   const handleNext = () => {
-    if(activeStep === steps.length - 1) {
+    if (activeStep === 0) {
+      const isAddressValid = utils.isAddress(address);
+      //if not valid then 
+      console.log(isAddressValid);
+    }
+    if (activeStep === steps.length - 1) {
       const userObj = {
         user: {
           address,
