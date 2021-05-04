@@ -105,7 +105,8 @@ function LandingPage({ classes }) {
   };
 
   const getExplorerLink = (transactionHash, networkName) => {
-    const blockExplorerURL = networkName == "xdai" ? BLOCKSCOUT_URL : ETHERSCAN_URL;
+    const blockExplorerURL =
+      networkName == "xdai" ? BLOCKSCOUT_URL : ETHERSCAN_URL;
     return blockExplorerURL + "/tx/" + transactionHash;
   };
 
@@ -126,14 +127,11 @@ function LandingPage({ classes }) {
       //to test without actually depositting
       // txHash = "0xfd090be00e063eb8e0a6db9c2c471785d1064958d5ec50b0b4c0ff3c64ca63c7"
       setExplorerLink(getExplorerLink(txHash));
-      setLoadMessage(
-        "Deposit started"
-      );
+      setLoadMessage("Deposit started");
       setLoadOpen(true);
 
       const tx = await signer.provider.getTransaction(txHash);
       await tx.wait();
-
 
       setLoadOpen(false);
       setLoadMessage(
@@ -213,7 +211,9 @@ function LandingPage({ classes }) {
           // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
 
           // Create your target method signature.. here we are calling setQuote() method of our contract
-          let { data } = await contract.populateTransaction.withdraw(lUSDCAmount);
+          let { data } = await contract.populateTransaction.withdraw(
+            lUSDCAmount
+          );
           let provider = biconomy.getEthersProvider();
 
           // you can also use networkProvider created above
@@ -250,9 +250,7 @@ function LandingPage({ classes }) {
           console.log("Transaction hash : ", txHash);
           setExplorerLink(getExplorerLink(txHash, "xdai"));
           console.log(getExplorerLink(txHash, "xdai"));
-          setLoadMessage(
-            "Withdraw started"
-          );
+          setLoadMessage("Withdraw started");
           setLoadOpen(true);
 
           console.log(signer);
@@ -260,7 +258,9 @@ function LandingPage({ classes }) {
           //if tx == null that means the xdai just does not know about the transaction that was submitted by the biconomy node
           let tx;
           while (!tx) {
-            tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
+            tx = await ethers
+              .getDefaultProvider(XDAI_URL)
+              .getTransaction(txHash);
           }
           await tx.wait();
 
@@ -283,9 +283,7 @@ function LandingPage({ classes }) {
 
   const refreshBalances = async () => {
     console.log("refresh Balance start");
-    //adding onConnect here to refresh the ethBalance after withdrawal is done
-    //@jikun change it if you know a way to do it more cleanly
-    handleConnectWallet();
+
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
@@ -300,8 +298,6 @@ function LandingPage({ classes }) {
       lemmaPerpetual.getTotalCollateral(),
       lemmaToken.totalSupply(),
     ]);
-
-
 
     let maxWithdrwableEth = new BigNumber.from("0");
 
@@ -464,7 +460,9 @@ function LandingPage({ classes }) {
   };
 
   useEffect(() => {
-    if (isConnected) {
+    if (!isConnected) {
+      handleConnectWallet();
+    } else {
       refreshBalances();
     }
   }, [isConnected]);
@@ -483,9 +481,13 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="success"
         >
-          <span>{successMessage}<br /><a href={explorerLink}
-            target="_blank"
-            rel="noopener noreferrer">see on explorer</a></span>
+          <span>
+            {successMessage}
+            <br />
+            <a href={explorerLink} target="_blank" rel="noopener noreferrer">
+              see on explorer
+            </a>
+          </span>
         </Alert>
       </Snackbar>
       <Snackbar
@@ -500,9 +502,13 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="info"
         >
-          <span>{loadMessage}<br /><a href={explorerLink}
-            target="_blank"
-            rel="noopener noreferrer">see on explorer</a></span>
+          <span>
+            {loadMessage}
+            <br />
+            <a href={explorerLink} target="_blank" rel="noopener noreferrer">
+              see on explorer
+            </a>
+          </span>
         </Alert>
       </Snackbar>
       <Snackbar
@@ -685,8 +691,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
@@ -858,7 +864,7 @@ function LandingPage({ classes }) {
           </Grid>
         </Grid>
       </div>
-    </div >
+    </div>
   );
 }
 
