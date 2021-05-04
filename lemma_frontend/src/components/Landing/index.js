@@ -460,7 +460,7 @@ function LandingPage({ classes }) {
   };
 
   useEffect(() => {
-    if (isConnected) {
+    if (!isConnected) {
       handleConnectWallet();
     } else {
       refreshBalances();
