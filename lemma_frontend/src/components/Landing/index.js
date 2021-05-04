@@ -29,6 +29,8 @@ import { styles } from "./styles";
 function LandingPage({ classes }) {
   const XDAI_URL = "https://rpc.xdaichain.com/";
   const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
+  const ETHERSCAN_URL = "https://rinkeby.etherscan.io";
+  const BLOCKSCOUT_URL = "https://blockscout.com/xdai/mainnet";
   const {
     account,
     signer,
@@ -60,6 +62,7 @@ function LandingPage({ classes }) {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [loadMessage, setLoadMessage] = useState("");
+  const [explorerLink, setExplorerLink] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
@@ -100,6 +103,11 @@ function LandingPage({ classes }) {
     setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
   };
 
+  const getExplorerLink = (transactionHash, networkName) => {
+    const blockExplorerURL = networkName == "xdai" ? BLOCKSCOUT_URL : ETHERSCAN_URL;
+    return blockExplorerURL + "/tx/" + transactionHash;
+  };
+
   const handleDepositSubmit = async () => {
     if (!isConnected) {
       handleConnectWallet();
@@ -107,14 +115,27 @@ function LandingPage({ classes }) {
     }
 
     const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
+    let txHash;
     if (
       utils.parseEther((Number(amount) + gasFees).toString()).gte(ethBalance)
     ) {
-      await lemmaMain.deposit(0, Number(amount) - gasFees);
+      txHash = await lemmaMain.deposit(0, Number(amount) - gasFees);
     } else {
-      await lemmaMain.deposit(0, amount);
+      txHash = await lemmaMain.deposit(0, amount);
     }
+    //to test without actually depositting
+    // txHash = "0xfd090be00e063eb8e0a6db9c2c471785d1064958d5ec50b0b4c0ff3c64ca63c7"
+    setExplorerLink(getExplorerLink(txHash));
+    setLoadMessage(
+      "Deposit started"
+    );
+    setLoadOpen(true);
 
+    const tx = await signer.provider.getTransaction(txHash);
+    await tx.wait();
+
+
+    setLoadOpen(false);
     setLoadMessage(
       "Deposit completed successfully, you should receive your LUSDT in ~1 min!"
     );
@@ -214,36 +235,40 @@ function LandingPage({ classes }) {
         // as ethers does not allow providing custom options while sending transaction
         // you can also use networkProvider created above
         // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
-        let tx = await provider.send("eth_sendTransaction", [txParams]);
-        console.log("Transaction hash : ", tx);
+        let txHash = await provider.send("eth_sendTransaction", [txParams]);
+        //to test the blockscout link
+        // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
-        //event emitter methods
-        provider.once(tx, (transaction) => {
-          // Emitted when the transaction has been mined
-          //show success successMessage
-          console.log(transaction);
+        const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
+          account
+        );
+        lemmaMain.instance.once(
+          lemmaMainnetETHWithdrawedFilter,
+          onSuccessfulWithdrawal
+        );
 
-          setLoadMessage(
-            "Withdraw started successfully, you will receive your ETH back in ~1 minutes"
-          );
-          setLoadOpen(true);
+        console.log("Transaction hash : ", txHash);
+        setExplorerLink(getExplorerLink(txHash, "xdai"));
+        console.log(getExplorerLink(txHash, "xdai"));
+        setLoadMessage(
+          "Withdraw started"
+        );
+        setLoadOpen(true);
 
-          const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
-            account
-          );
+        console.log(signer);
+        const tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
+        await tx.wait();
 
-          lemmaMain.instance.once(
-            lemmaMainnetETHWithdrawedFilter,
-            onSuccessfulWithdrawal
-          );
-          //do something with transaction hash
-        });
+        setLoadOpen(false);
+        setLoadMessage(
+          "Withdraw started successfully, you will receive your ETH back in ~1 minutes"
+        );
+        setLoadOpen(true);
       })
       .onEvent(biconomy.ERROR, (error, message) => {
         // Handle error while initializing mexa
         console.log(error);
       });
-    handleConnectWallet();
   };
 
   const handleConnectWallet = async () => {
@@ -350,7 +375,8 @@ function LandingPage({ classes }) {
     console.log("refresh Balance end");
   };
 
-  const onSuccessfulDeposit = async () => {
+  const onSuccessfulDeposit = async (e) => {
+    console.log(e);
     refreshBalances();
     setLoadOpen(false);
     setSuccessMessage("Deposit completed successfully");
@@ -395,7 +421,7 @@ function LandingPage({ classes }) {
         data: apiData,
       });
     } else {
-      console.log("not necessary");
+      console.log("not necessary to mint by user");
     }
   };
 
@@ -428,9 +454,7 @@ function LandingPage({ classes }) {
   };
 
   useEffect(() => {
-
     if (isConnected) {
-
       refreshBalances();
     }
   }, [isConnected]);
@@ -464,7 +488,9 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="info"
         >
-          {loadMessage}
+          <span>{loadMessage}<a href={explorerLink}
+            target="_blank"
+            rel="noopener noreferrer">see on explorer</a></span>
         </Alert>
       </Snackbar>
       <Snackbar
