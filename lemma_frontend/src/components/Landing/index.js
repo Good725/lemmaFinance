@@ -261,7 +261,7 @@ function LandingPage({ classes }) {
 
         setLoadOpen(false);
         setLoadMessage(
-          "Withdraw started successfully, you will receive your ETH back in ~1 minutes"
+          "Withdraw completed successfully, you will receive your ETH back in ~1 minutes"
         );
         setLoadOpen(true);
       })
