@@ -1,12 +1,7 @@
 import { ethers } from "ethers";
+import LemmaPerpetual from "../abis/LemmaPerpetual.json";
 
-const lemmaPerpetualAbi = [
-  "function setDepositInfo(address account, uint256 amount) external",
-  "function mint(address account) public",
-  "function withdraw(uint256 amount) external",
-  "function getTotalCollateral() public view returns (uint256)",
-];
-
+const lemmaPerpetualAbi = LemmaPerpetual.abi;
 class LemmaPerpetualService {
   contract;
   signerAddress;

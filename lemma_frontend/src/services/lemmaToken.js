@@ -1,17 +1,9 @@
 import { ethers } from "ethers";
+//We need the ABIs to follow the same names as in the contract and typing this maually is not a good idea
+//for example :   "function balanceOf(uint256 account) public view returns (uint256)" was supposed to be "  "function balanceOf(address account) public view returns (uint256)", so it was giving errors
+import LemmaToken from "../abis/LemmaToken.json";
 
-const lemmaTokenAbi = [
-  "function setDepositInfo(address account, uint256 amount) external",
-  "function mint(address account) public",
-  "function withdraw(uint256 amount) external",
-  "function balanceOf(uint256 account) public view returns (uint256)",
-  "function totalSupply() public view returns (uint256)",
-  "function depositInfo(address account) public view returns (uint256)",
-  "event USDCDeposited(address indexed account, uint256 indexed amount)",
-  "event USDCWithdrawed(address indexed account, uint256 indexed amount)",
-  "event DepositInfoAdded(address indexed account, uint256 indexed amount)",
-  "event Transfer(address indexed from, address indexed to, uint amount)",
-];
+const lemmaTokenAbi = LemmaToken.abi;
 
 class LemmaTokenService {
   contract;

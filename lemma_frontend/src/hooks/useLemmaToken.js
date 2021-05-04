@@ -14,7 +14,7 @@ export const useLemmaToken = (lemmaTokenAddress, provider = null) => {
       return new LemmaTokenService(
         lemmaTokenAddress,
         provider ? provider : defaultProvider,
-        account
+        provider ? null : account
       );
     }
   }, [account, isConnected, lemmaTokenAddress]);

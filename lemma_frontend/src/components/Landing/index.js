@@ -40,6 +40,10 @@ function LandingPage({ classes }) {
   const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
   const lemmaToken = useLemmaToken(
     addresses.xDAIRinkeby.lemmaxDAI,
+    ethers.getDefaultProvider(XDAI_URL)
+  );
+  const lemmaTokenWSS = useLemmaToken(
+    addresses.xDAIRinkeby.lemmaxDAI,
     ethers.getDefaultProvider(XDAI_WSS_URL)
   );
   const lemmaPerpetual = useLemmaPerpetual(
@@ -128,8 +132,8 @@ function LandingPage({ classes }) {
       account
     );
 
-    lemmaToken.instance.once(lusdcMintedFilter, onSuccessfulDeposit);
-    lemmaToken.instance.once(
+    lemmaTokenWSS.instance.once(lusdcMintedFilter, onSuccessfulDeposit);
+    lemmaTokenWSS.instance.once(
       lemmaXDAIDepositInfoAddedFilter,
       onDepositInfoAdded
     );
@@ -247,12 +251,12 @@ function LandingPage({ classes }) {
   };
 
   const refreshBalances = async () => {
+    console.log("refresh Balance start");
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
       signer
     );
-
     const [
       userBalanceOfLUSDC,
       totalCollateral,
@@ -262,6 +266,8 @@ function LandingPage({ classes }) {
       lemmaPerpetual.getTotalCollateral(),
       lemmaToken.totalSupply(),
     ]);
+
+
 
     let maxWithdrwableEth = new BigNumber.from("0");
 
@@ -310,8 +316,8 @@ function LandingPage({ classes }) {
     );
 
     let totalLUSDCMinted = BigNumber.from("0");
-    lusdcMintedEvents.forEach((lusdcMintedEvents) => {
-      const lUSDCMinted = lusdcMintedEvents.args.value;
+    lusdcMintedEvents.forEach((lusdcMintedEvent) => {
+      const lUSDCMinted = lusdcMintedEvent.args.value;
       totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
     });
 
@@ -323,8 +329,8 @@ function LandingPage({ classes }) {
       lusdcBurntFilter
     );
     let totalLUSDCBurnt = BigNumber.from("0");
-    lusdcBurntEvents.forEach((lusdcBurntEvents) => {
-      const lUSDCBurnt = lusdcBurntEvents.args.value;
+    lusdcBurntEvents.forEach((lusdcBurntEvent) => {
+      const lUSDCBurnt = lusdcBurntEvent.args.value;
       totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
     });
 
@@ -341,6 +347,7 @@ function LandingPage({ classes }) {
     const earnings = maxWithdrwableEth.sub(ETHDeposited);
 
     setEarnings(earnings);
+    console.log("refresh Balance end");
   };
 
   const onSuccessfulDeposit = async () => {
@@ -421,7 +428,9 @@ function LandingPage({ classes }) {
   };
 
   useEffect(() => {
+
     if (isConnected) {
+
       refreshBalances();
     }
   }, [isConnected]);
@@ -638,8 +647,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}

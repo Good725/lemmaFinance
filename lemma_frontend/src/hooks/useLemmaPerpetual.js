@@ -14,7 +14,7 @@ export const useLemmaPerpetual = (lemmaPerpetualAddress, provider = null) => {
       return new LemmaPerpetualService(
         lemmaPerpetualAddress,
         provider ? provider : defaultProvider,
-        account
+        provider ? null : account
       );
     }
   }, [account, isConnected, lemmaPerpetualAddress]);

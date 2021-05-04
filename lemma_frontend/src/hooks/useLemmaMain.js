@@ -14,7 +14,8 @@ export const useLemmaMain = (lemmaMainAddress, provider = null) => {
       return new LemmaMainService(
         lemmaMainAddress,
         provider ? provider : defaultProvider,
-        account
+        //We need the signerAddress to be null in case of provider is XDAI_URL for this to work
+        provider ? null : account
       );
     }
   }, [account, isConnected, lemmaMainAddress]);

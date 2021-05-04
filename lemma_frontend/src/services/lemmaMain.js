@@ -1,13 +1,7 @@
 import { ethers, utils } from "ethers";
+import LemmaMainnet from "../abis/LemmaMainnet.json";
 
-const lemmaMainAbi = [
-  "function deposit(uint256 minimumUSDCAmountOut) external payable",
-  "function setWithdrawalInfo(address account, uint256 amount) external",
-  "function withdraw(address account) public",
-  "event ETHDeposited(address indexed account, uint256 indexed amount)",
-  "event ETHWithdrawed(address indexed account, uint256 indexed amount)",
-  "event WithdrawalInfoAdded(address indexed account, uint256 indexed amount)"
-];
+const lemmaMainAbi = LemmaMainnet.abi;
 
 class LemmaMainService {
   contract;
