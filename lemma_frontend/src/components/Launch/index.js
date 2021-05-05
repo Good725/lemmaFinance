@@ -57,17 +57,29 @@ function LaunchPage({ classes }) {
 
   const steps = getSteps();
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (activeStep === 0) {
       const isAddressValid = utils.isAddress(address);
+
       //if not valid then 
       console.log(isAddressValid);
       //for resolving ens names 
-      // const provider = getDefaultProvider();
-      // const actualAddress = await provider.resolveName(address);
-      // setAddress(actualAddress);
-
-
+      if (!isAddressValid && (typeof address === 'string' || address instanceof String)) {
+        // if (!isAddressValid) {
+        const provider = getDefaultProvider("homestead", { infura: { projectid: "2a1a54c3aa374385ae4531da66fdf150", projectSecret: "3b3c1b04d6004e8f92e06b43defb056c" } });
+        console.log(provider);
+        const actualAddress = await provider.resolveName(address);
+        console.log(actualAddress);
+        //actual address will be null if there is no ens name exists
+        if (actualAddress) {
+          setAddress(actualAddress);
+        }
+        else {
+          //TODO:show an error here
+          //I do not know what right next step is
+          setActiveStep(-1);//???
+        }
+      }
     }
     if (activeStep === steps.length - 1) {
       const userObj = {
