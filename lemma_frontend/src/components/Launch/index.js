@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { withStyles } from '@material-ui/core/styles';
 import {
   Grid, Button, TextField, Paper, Snackbar, Typography,
-  Stepper, Step, StepLabel, StepContent, Fab, Link
+  Stepper, Step, StepLabel, StepContent, Fab, Link, CircularProgress
 } from '@material-ui/core';
 import TwitterIcon from '@material-ui/icons/Twitter';
 import { Alert } from '@material-ui/lab';
@@ -16,7 +16,9 @@ function LaunchPage({ classes }) {
 
   const [open, setOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [loadOpen, setLoadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loadMessage, setLoadMessage] = useState('');
   const [address, setAddress] = useState('');
   const [twitter, setTwitter] = useState('');
   const [activeStep, setActiveStep] = useState(0);
@@ -78,18 +80,19 @@ function LaunchPage({ classes }) {
       //if not valid then 
       console.log(isAddressValid);
       //for resolving ens names 
-      if (!isAddressValid && (typeof address === 'string' || address instanceof String)) {
-        // if (!isAddressValid) {
+      if (!isAddressValid) {
+        setLoadMessage("resolving ENS name");
+        setLoadOpen(true);
         const provider = getDefaultProvider("https://mainnet.infura.io/v3/2a1a54c3aa374385ae4531da66fdf150");
         console.log(provider);
         const actualAddress = await provider.resolveName(address);
         console.log(actualAddress);
+        setLoadOpen(false);
         //actual address will be null if there is no ens name exists
         if (actualAddress) {
           setAddress(actualAddress);
         }
         else {
-          //TODO:show an error here
           setErrorMessage("Enter a valid ETH wallet Address / ENS name");
           setErrorOpen(true);
           setActiveStep(-1);
@@ -181,6 +184,21 @@ function LaunchPage({ classes }) {
           severity="error"
         >
           {errorMessage}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={loadOpen}
+        onClose={handleClose}
+        anchorOrigin={alertAnchor}
+      >
+        <Alert
+          elevation={6}
+          icon={<CircularProgress color="secondary" size="20px" />}
+          variant="filled"
+          onClose={handleClose}
+          severity="info"
+        >
+          {loadMessage}
         </Alert>
       </Snackbar>
       <div className={classes.body}>
