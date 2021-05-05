@@ -471,7 +471,7 @@ function LandingPage({ classes }) {
     asset: "ETH",
     balance: "0",
     deposit: "0",
-    apy: "90%",
+    apy: "~48%",
     earnings: "0",
     assetNumber: "0",
   };
