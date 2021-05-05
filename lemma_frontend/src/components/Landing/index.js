@@ -774,15 +774,17 @@ function LandingPage({ classes }) {
                                 <Grid item>
                                   {" "}
                                   <Typography variant="body1">
-                                    Deposited
+                                   {ethData.asset} Deposited
                                   </Typography>{" "}
                                 </Grid>
                                 <Grid item>
                                   {" "}
                                   <Typography variant="body1">
-                                    {Number(
-                                      convertToReadableFormat(deposited)
-                                    ).toFixed(6)}
+                                    <b>
+                                      {Number(
+                                        convertToReadableFormat(deposited)
+                                      ).toFixed(6)}
+                                    </b>
                                   </Typography>{" "}
                                 </Grid>
                               </Grid>
@@ -796,15 +798,17 @@ function LandingPage({ classes }) {
                                 <Grid item>
                                   {" "}
                                   <Typography variant="body1">
-                                    Earnings
+                                    {ethData.asset} Earnings
                                   </Typography>{" "}
                                 </Grid>
                                 <Grid item>
                                   {" "}
                                   <Typography variant="body1">
-                                    {Number(
-                                      convertToReadableFormat(earnings)
-                                    ).toFixed(6)}
+                                    <b>
+                                      {Number(
+                                        convertToReadableFormat(earnings)
+                                      ).toFixed(6)}
+                                    </b>
                                   </Typography>{" "}
                                 </Grid>
                               </Grid>
