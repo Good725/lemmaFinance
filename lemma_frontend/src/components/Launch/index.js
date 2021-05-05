@@ -59,9 +59,21 @@ function LaunchPage({ classes }) {
 
   const steps = getSteps();
 
+  const getIsAddressValid = (address) => {
+    return utils.isAddress(address);
+  };
+  const getIsTwitterURLValid = (twitterURL) => {
+    const twitterRegEX = /http(?:s)?:\/\/(?:www\.)?twitter\.com\/([a-zA-Z0-9_]+)/;
+    const match = twitter.match(twitterRegEX);
+    console.log(match);
+    if (!match) {
+      return false;
+    }
+    return true;
+  };
   const handleNext = async () => {
     if (activeStep === 0) {
-      const isAddressValid = utils.isAddress(address);
+      const isAddressValid = getIsAddressValid(address);
 
       //if not valid then 
       console.log(isAddressValid);
@@ -85,27 +97,43 @@ function LaunchPage({ classes }) {
       }
     }
     if (activeStep === 1) {
-      if (!twitter) {
-        setErrorMessage("Enter an URL");
+      const isValidTwitterURL = getIsTwitterURLValid(twitter);
+      if (!isValidTwitterURL) {
+        setErrorMessage("Enter a valid tweet URL");
         setErrorOpen(true);
         setActiveStep(0);
       }
     }
     if (activeStep === steps.length - 1) {
-      const userObj = {
-        user: {
-          address,
-          twitter
-        }
-      };
-      const url = 'https://api.sheety.co/a7212da9bb1fc02c085b10c5607ce541/lemmaEmailList/users';
-      axios_request(url, userObj);
-      setAddress('');
-      setTwitter('');
-      setOpen(true);
+      if (!getIsAddressValid(address)) {
+        setErrorMessage("Enter a valid ETH wallet Address / ENS name");
+        setErrorOpen(true);
+        setActiveStep(-1);
+      }
+      else if (!getIsTwitterURLValid(twitter)) {
+        //when user click on more than one time this could happen
+        setErrorMessage("Enter a valid tweet URL");
+        setErrorOpen(true);
+        setActiveStep(0);
+      } else {
+        const userObj = {
+          user: {
+            address,
+            twitter
+          }
+        };
+        const url = 'https://api.sheety.co/a7212da9bb1fc02c085b10c5607ce541/lemmaEmailList/users';
+        axios_request(url, userObj);
+        setAddress('');
+        setTwitter('');
+        setOpen(true);
+      }
     }
 
+
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
+
+    console.log(activeStep);
   };
 
   const handleBack = () => {
@@ -229,6 +257,6 @@ function LaunchPage({ classes }) {
       </div>
     </div>
   );
-}
+};
 
 export default withStyles(styles)(LaunchPage);
