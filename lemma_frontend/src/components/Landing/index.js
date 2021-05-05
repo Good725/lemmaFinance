@@ -38,6 +38,7 @@ function LandingPage({ classes }) {
     isConnected,
     onConnect,
     networkId,
+    rawProvider
   } = useConnectedWeb3Context();
 
   const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
@@ -200,7 +201,7 @@ function LandingPage({ classes }) {
 
       const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
       const biconomy = new Biconomy(xDAIProvider, {
-        walletProvider: window.ethereum,
+        walletProvider: rawProvider,
         apiKey: constants.biconomy.xdai.withdraw.apiKey,
         apiId: constants.biconomy.xdai.withdraw.methodAPIKey,
         debug: true,
@@ -295,6 +296,7 @@ function LandingPage({ classes }) {
 
   const handleConnectWallet = async () => {
     await onConnect();
+
   };
 
   const refreshBalances = async () => {

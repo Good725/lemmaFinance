@@ -22,7 +22,8 @@ const initialState = {
   provider: null,
   networkId: null,
   ethBalance: BigNumber.from(0),
-  isConnected: false
+  isConnected: false,
+  rawProvider: null
 };
 
 export const ConnectedWeb3 = ({ children }) => {
@@ -41,7 +42,8 @@ export const ConnectedWeb3 = ({ children }) => {
       provider: ethersProvider,
       networkId,
       ethBalance,
-      isConnected: true
+      isConnected: true,
+      rawProvider: provider
     });
   };
 
