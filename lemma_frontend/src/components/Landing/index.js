@@ -481,8 +481,12 @@ function LandingPage({ classes }) {
       handleConnectWallet();
     } else {
       refreshBalances();
+      if (networkId !== 4) {
+        setWrongNetwork(true);
+      }
     }
-  }, [isConnected]);
+
+  }, [isConnected, networkId]);
 
   return (
     <div className={classes.root}>
@@ -719,8 +723,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
@@ -796,7 +800,7 @@ function LandingPage({ classes }) {
                                 <Grid item>
                                   {" "}
                                   <Typography variant="body1">
-                                   {ethData.asset} Deposited
+                                    {ethData.asset} Deposited
                                   </Typography>{" "}
                                 </Grid>
                                 <Grid item>
