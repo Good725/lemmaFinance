@@ -84,6 +84,13 @@ function LaunchPage({ classes }) {
         }
       }
     }
+    if (activeStep === 1) {
+      if (!twitter) {
+        setErrorMessage("Enter an URL");
+        setErrorOpen(true);
+        setActiveStep(0);
+      }
+    }
     if (activeStep === steps.length - 1) {
       const userObj = {
         user: {
