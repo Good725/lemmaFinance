@@ -588,6 +588,7 @@ function LandingPage({ classes }) {
                 <Button
                   className={classes.navButton}
                   href="https://mgava.gitbook.io/lemma/"
+                  target="_blank" rel="noopener noreferrer"
                 >
                   Docs
                 </Button>
