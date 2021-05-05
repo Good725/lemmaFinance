@@ -60,6 +60,7 @@ function LandingPage({ classes }) {
   const [successOpen, setSuccessOpen] = useState(false);
   const [loadOpen, setLoadOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
+  const [wrongNetwork, setWrongNetwork] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState("");
   const [loadMessage, setLoadMessage] = useState("");
@@ -83,7 +84,8 @@ function LandingPage({ classes }) {
 
   const handleAmountChange = (event) => {
     if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
-      alert("Please enter a number!");
+      setErrorMessage("Please enter a number!");
+      setErrorOpen(true);
     } else {
       setAmount(event.target.value);
     }
@@ -112,11 +114,13 @@ function LandingPage({ classes }) {
 
   const handleDepositSubmit = async () => {
     if (!amount) {
+      setErrorMessage("Please enter a number!");
+      setErrorOpen(true);
       return;
     }
 
     if (networkId != 4) {
-      alert("please connect to rinkeby network");
+      setWrongNetwork(true);
     } else {
       const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
       let txHash;
@@ -135,6 +139,8 @@ function LandingPage({ classes }) {
 
       const tx = await signer.provider.getTransaction(txHash);
       await tx.wait();
+
+      setAmount("0");
 
       setLoadOpen(false);
       setLoadMessage(
@@ -164,11 +170,13 @@ function LandingPage({ classes }) {
 
   const handleWithdrawSubmit = async () => {
     if (!amount) {
+      setErrorMessage("Please enter a number!");
+      setErrorOpen(true);
       return;
     }
 
     if (networkId != 4) {
-      alert("please connect to rinkeby network");
+      setWrongNetwork(true);
     } else {
       const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
 
@@ -269,6 +277,8 @@ function LandingPage({ classes }) {
               .getTransaction(txHash);
           }
           await tx.wait();
+
+          setAmount("0");
 
           setLoadOpen(false);
           setLoadMessage(
@@ -448,6 +458,7 @@ function LandingPage({ classes }) {
     setSuccessOpen(false);
     setLoadOpen(false);
     setErrorOpen(false);
+    setWrongNetwork(false);
   };
 
   const alertAnchor = {
@@ -476,8 +487,19 @@ function LandingPage({ classes }) {
   return (
     <div className={classes.root}>
       <Snackbar
+        open={wrongNetwork}
+        autoHideDuration={2000}
+        onClose={handleClose}
+        anchorOrigin={alertAnchor}
+      >
+        <Alert severity="error" onClose={handleClose} variant="filled">
+          Please connect to rinkeby network
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
         open={successOpen}
-        autoHideDuration={6000}
+        autoHideDuration={2000}
         onClose={handleClose}
         anchorOrigin={alertAnchor}
       >
@@ -519,7 +541,7 @@ function LandingPage({ classes }) {
       </Snackbar>
       <Snackbar
         open={errorOpen}
-        autoHideDuration={6000}
+        autoHideDuration={2000}
         onClose={handleClose}
         anchorOrigin={alertAnchor}
       >
