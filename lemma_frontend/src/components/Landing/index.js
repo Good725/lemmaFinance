@@ -71,6 +71,8 @@ function LandingPage({ classes }) {
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
   const [deposited, setDeposited] = useState(BigNumber.from(0));
   const [earnings, setEarnings] = useState(BigNumber.from(0));
+  const [lemmaTokenWithBiconomy, setLemmaTokenWithBiconomy] = useState('');
+  const [biconomy, setBiconomy] = useState('');
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -199,104 +201,107 @@ function LandingPage({ classes }) {
         lUSDCAmount = userBalanceOfLUSDC;
       }
 
-      const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
-      const biconomy = new Biconomy(xDAIProvider, {
-        walletProvider: rawProvider,
-        apiKey: constants.biconomy.xdai.withdraw.apiKey,
-        apiId: constants.biconomy.xdai.withdraw.methodAPIKey,
-        debug: true,
-      });
+      //withdraw lusdc amount using biconomy
 
-      // const web3Biconomy = new Web3(biconomy);
-      // const amountToWithdraw = BigNumber.from(amount);
-      // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
-
+      // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
       let userAddress = account;
-      biconomy
-        .onEvent(biconomy.READY, async () => {
-          // Initialize your dapp here like getting user accounts etc
-          // const lemmaxDAI = new web3Biconomy.eth.Contract(LemmaToken.abi, addresses.xDAIRinkeby.lemmaxDAI);
-          // await lemmaxDAI.methods.withdraw(amountToWithdrawWithDecimals).send({ from: accounts[0], signatureType: biconomy.EIP712_SIGN });
-          // Initialize Constants
-          let contract = new ethers.Contract(
-            addresses.xDAIRinkeby.lemmaxDAI,
-            LemmaToken.abi,
-            biconomy.getSignerByAddress(userAddress)
-          );
-          // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
+      // Create your target method signature.. here we are calling setQuote() method of our contract
+      let { data } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
+        lUSDCAmount
+      );
+      let provider = biconomy.getEthersProvider();
 
-          // Create your target method signature.. here we are calling setQuote() method of our contract
-          let { data } = await contract.populateTransaction.withdraw(
-            lUSDCAmount
-          );
-          let provider = biconomy.getEthersProvider();
+      // you can also use networkProvider created above
+      let gasLimit = await provider.estimateGas({
+        to: addresses.xDAIRinkeby.lemmaxDAI,
+        from: userAddress,
+        data: data,
+      });
+      console.log("Gas limit : ", gasLimit);
 
-          // you can also use networkProvider created above
-          let gasLimit = await provider.estimateGas({
-            to: addresses.xDAIRinkeby.lemmaxDAI,
-            from: userAddress,
-            data: data,
-          });
-          console.log("Gas limit : ", gasLimit);
+      let txParams = {
+        data: data,
+        to: addresses.xDAIRinkeby.lemmaxDAI,
+        from: userAddress,
+        gasLimit: gasLimit, // optional
+        signatureType: "EIP712_SIGN",
+      };
 
-          let txParams = {
-            data: data,
-            to: addresses.xDAIRinkeby.lemmaxDAI,
-            from: userAddress,
-            gasLimit: gasLimit, // optional
-            signatureType: "EIP712_SIGN",
-          };
+      // as ethers does not allow providing custom options while sending transaction
+      // you can also use networkProvider created above
+      // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
+      let txHash = await provider.send("eth_sendTransaction", [txParams]);
+      //to test the blockscout link
+      // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
-          // as ethers does not allow providing custom options while sending transaction
-          // you can also use networkProvider created above
-          // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
-          let txHash = await provider.send("eth_sendTransaction", [txParams]);
-          //to test the blockscout link
-          // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
+      const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
+        account
+      );
+      lemmaMain.instance.once(
+        lemmaMainnetETHWithdrawedFilter,
+        onSuccessfulWithdrawal
+      );
 
-          const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
-            account
-          );
-          lemmaMain.instance.once(
-            lemmaMainnetETHWithdrawedFilter,
-            onSuccessfulWithdrawal
-          );
+      console.log("Transaction hash : ", txHash);
+      setExplorerLink(getExplorerLink(txHash, "xdai"));
+      console.log(getExplorerLink(txHash, "xdai"));
+      setLoadMessage("Withdraw started");
+      setLoadOpen(true);
 
-          console.log("Transaction hash : ", txHash);
-          setExplorerLink(getExplorerLink(txHash, "xdai"));
-          console.log(getExplorerLink(txHash, "xdai"));
-          setLoadMessage("Withdraw started");
-          setLoadOpen(true);
+      console.log(signer);
 
-          console.log(signer);
+      //if tx == null that means the xdai just does not know about the transaction that was submitted by the biconomy node
+      let tx;
+      while (!tx) {
+        tx = await ethers
+          .getDefaultProvider(XDAI_URL)
+          .getTransaction(txHash);
+      }
+      await tx.wait();
 
-          //if tx == null that means the xdai just does not know about the transaction that was submitted by the biconomy node
-          let tx;
-          while (!tx) {
-            tx = await ethers
-              .getDefaultProvider(XDAI_URL)
-              .getTransaction(txHash);
-          }
-          await tx.wait();
+      setAmount("0");
 
-          setAmount("0");
+      setLoadOpen(false);
+      setLoadMessage(
+        "Withdraw completed successfully, you will receive your ETH back in ~1 minutes"
+      );
+      setLoadOpen(true);
 
-          setLoadOpen(false);
-          setLoadMessage(
-            "Withdraw completed successfully, you will receive your ETH back in ~1 minutes"
-          );
-          setLoadOpen(true);
-        })
-        .onEvent(biconomy.ERROR, (error, message) => {
-          // Handle error while initializing mexa
-          console.log(error);
-        });
     }
   };
 
   const handleConnectWallet = async () => {
     await onConnect();
+    //initialize biconomy
+    const xDAIProvider = new Web3.providers.HttpProvider(XDAI_URL);
+    const biconomy = new Biconomy(xDAIProvider, {
+      walletProvider: window.ethereum,
+      apiKey: constants.biconomy.xdai.withdraw.apiKey,
+      apiId: constants.biconomy.xdai.withdraw.methodAPIKey,
+      debug: true,
+    });
 
+    // const web3Biconomy = new Web3(biconomy);
+    // const amountToWithdraw = BigNumber.from(amount);
+    // const amountToWithdrawWithDecimals = amountToWithdraw.mul(BigNumber.from(10).pow(BigNumber.from(18)));
+
+    let userAddress = account;
+    biconomy
+      .onEvent(biconomy.READY, async () => {
+        // Initialize your dapp here like getting user accounts etc
+        // Initialize Constants
+        let lemmaTokenWithBiconomy = new ethers.Contract(
+          addresses.xDAIRinkeby.lemmaxDAI,
+          LemmaToken.abi,
+          biconomy.getSignerByAddress(userAddress)
+        );
+        setLemmaTokenWithBiconomy(lemmaTokenWithBiconomy);
+        setBiconomy(biconomy);
+      })
+      .onEvent(biconomy.ERROR, (error, message) => {
+        // Handle error while initializing mexa
+        console.log(error);
+      });
   };
 
   const refreshBalances = async () => {
