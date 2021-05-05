@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 const TEST_USDC_ABI = require('../abis/TestUsdc_abi.json');
-const { assert, expect } = require("chai");
+const { expect } = require("chai");
 const { EventEmitter } = require("events");
 contract("LemmaToken", accounts => {
     let LemmaPerpetualContract;
@@ -17,7 +17,7 @@ contract("LemmaToken", accounts => {
     const ammAddress = "0xF75C8c9EADBCA5D26dA43466aD5Be511Cb281668";
     const testusdcAddress = "0xe0B887D54e71329318a036CF50f30Dbe4444563c";
     const zeroAddress = "0x0000000000000000000000000000000000000000";
-
+    const myEmitter = new EventEmitter();
     let ambBridgeContract;
 
     before(async function () {
@@ -74,13 +74,13 @@ contract("LemmaToken", accounts => {
     });
 
     it("Set Deposit", async function() {
-        let minimumUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
+        let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
         let test_usdc_balance_1 = await testusdc.balanceOf(accounts[1].address);
-        let  amountTransfer = BigNumber.from(5 * 10 ** 6);
+        let  amountTransfer = BigNumber.from(7 * 10 ** 6);
         await testusdc.connect(accounts[1]).approve(LemmaTokenContract.address, amountTransfer);
         await testusdc.connect(accounts[1]).transfer(LemmaTokenContract.address, amountTransfer);
         expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "DepositInfoAdded").withArgs(accounts[1].address, minimumUSDCAmountOut);
-        // expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "USDCDeposited").withArgs(accounts[1].address, minimumUSDCAmountOut);
+        expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "USDCDeposited").withArgs(accounts[1].address, minimumUSDCAmountOut);
         let test_usdc_balance_2 = await testusdc.balanceOf(accounts[1].address);
         expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
     });
@@ -92,7 +92,7 @@ contract("LemmaToken", accounts => {
         await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut_2);
         let lemmaBalance_2 = await LemmaTokenContract.balanceOf(accounts[1].address);
         let amount_mint = lemmaBalance_1 * minimumUSDCAmountOut_2 / getTotalCollateral;
-        expect(lemmaBalance_2/1000).to.equal(lemmaBalance_1 / 1000 + amount_mint / 1000);
+        expect(lemmaBalance_2 / 10000).to.equal(lemmaBalance_1 / 10000 + amount_mint / 10000);
     }); 
 
     it("Can not mint more amount than the contract's balance", async function() {
@@ -109,7 +109,7 @@ contract("LemmaToken", accounts => {
 
         try {
             await LemmaTokenContract.connect(accounts[1]).withdraw(amountWithdraw_1);
-        } catch (error) {
+        } catch (error) {BigNumber.from(2e18.toString());
             expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
         };
     });
@@ -119,7 +119,8 @@ contract("LemmaToken", accounts => {
         let amountWithdraw = BigNumber.from(1e18.toString());
         let lemmabalanceBeforeWithdraw = await LemmaTokenContract.balanceOf(accounts[1].address);
         await LemmaTokenContract.connect(accounts[1]).withdraw(amountWithdraw);
+       
         let test_usdc_balance_after_withdraw = await testusdc.balanceOf(LemmaTokenContract.address);
-        expect(test_usdc_balance_after_withdraw).to.equal(1000000);
+        expect(test_usdc_balance_after_withdraw).to.equal(3000000);
     });
   });
