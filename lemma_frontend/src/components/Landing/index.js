@@ -27,8 +27,8 @@ import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 import { styles } from "./styles";
 
 function LandingPage({ classes }) {
-  const XDAI_URL = "https://rpc.xdaichain.com/";
-  const XDAI_WSS_URL = "wss://rpc.xdaichain.com/wss";
+  const XDAI_URL = "https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/";
+  const XDAI_WSS_URL = "wss://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/";
   const ETHERSCAN_URL = "https://rinkeby.etherscan.io";
   const BLOCKSCOUT_URL = "https://blockscout.com/xdai/mainnet";
   const {
