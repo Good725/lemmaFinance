@@ -15,19 +15,21 @@ import { utils, getDefaultProvider } from "ethers";
 function LaunchPage({ classes }) {
 
   const [open, setOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [address, setAddress] = useState('');
   const [twitter, setTwitter] = useState('');
   const [activeStep, setActiveStep] = useState(0);
 
   function getSteps() {
-    return ['Enter ETH Wallet Address / ENS name', 'Tweet about us!', 'Join our community :)'];
+    return ['Enter ETH wallet Address / ENS name', 'Tweet about us!', 'Join our community :)'];
   }
 
   function getStepContent(step) {
     switch (step) {
       case 0:
         return (<Grid item xs={12}>
-          <TextField color="primary" variant="filled" value={address} className={classes.input} label="Enter ETH Wallet Address / ENS name" onChange={e => handleAddressChange(e)} />
+          <TextField color="primary" variant="filled" value={address} className={classes.input} label="ETH Wallet Info" onChange={e => handleAddressChange(e)} />
         </Grid>);
       case 1:
         return (<Grid item xs={12}>
@@ -66,7 +68,7 @@ function LaunchPage({ classes }) {
       //for resolving ens names 
       if (!isAddressValid && (typeof address === 'string' || address instanceof String)) {
         // if (!isAddressValid) {
-        const provider = getDefaultProvider("homestead", { infura: { projectid: "2a1a54c3aa374385ae4531da66fdf150", projectSecret: "3b3c1b04d6004e8f92e06b43defb056c" } });
+        const provider = getDefaultProvider("https://mainnet.infura.io/v3/2a1a54c3aa374385ae4531da66fdf150");
         console.log(provider);
         const actualAddress = await provider.resolveName(address);
         console.log(actualAddress);
@@ -76,7 +78,9 @@ function LaunchPage({ classes }) {
         }
         else {
           //TODO:show an error here
-          setActiveStep(-1);//???
+          setErrorMessage("Enter a valid ETH wallet Address / ENS name");
+          setErrorOpen(true);
+          setActiveStep(-1);
         }
       }
     }
@@ -114,6 +118,7 @@ function LaunchPage({ classes }) {
       return;
     }
     setOpen(false);
+    setErrorOpen(false);
   };
 
   const alertAnchor = {
@@ -126,6 +131,21 @@ function LaunchPage({ classes }) {
       <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={alertAnchor}>
         <Alert elevation={6} variant="filled" onClose={handleClose} severity={"success"}>
           Successfully reserved allocation!
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={errorOpen}
+        autoHideDuration={3000}
+        onClose={handleClose}
+        anchorOrigin={alertAnchor}
+      >
+        <Alert
+          elevation={6}
+          variant="filled"
+          onClose={handleClose}
+          severity="error"
+        >
+          {errorMessage}
         </Alert>
       </Snackbar>
       <div className={classes.body}>
