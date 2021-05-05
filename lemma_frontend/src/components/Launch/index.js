@@ -22,6 +22,7 @@ function LaunchPage({ classes }) {
   const [address, setAddress] = useState('');
   const [twitter, setTwitter] = useState('');
   const [activeStep, setActiveStep] = useState(0);
+  const provider = getDefaultProvider("https://mainnet.infura.io/v3/2a1a54c3aa374385ae4531da66fdf150");
 
   function getSteps() {
     return ['Enter ETH wallet Address / ENS name', 'Tweet about us!', 'Join our community :)'];
@@ -78,15 +79,12 @@ function LaunchPage({ classes }) {
       const isAddressValid = getIsAddressValid(address);
 
       //if not valid then 
-      console.log(isAddressValid);
       //for resolving ens names 
       if (!isAddressValid) {
         setLoadMessage("resolving ENS name");
+        setErrorOpen(false);
         setLoadOpen(true);
-        const provider = getDefaultProvider("https://mainnet.infura.io/v3/2a1a54c3aa374385ae4531da66fdf150");
-        console.log(provider);
         const actualAddress = await provider.resolveName(address);
-        console.log(actualAddress);
         setLoadOpen(false);
         //actual address will be null if there is no ens name exists
         if (actualAddress) {
@@ -157,6 +155,7 @@ function LaunchPage({ classes }) {
     }
     setOpen(false);
     setErrorOpen(false);
+    setLoadOpen(false);
   };
 
   const alertAnchor = {
