@@ -20,14 +20,14 @@ function LaunchPage({ classes }) {
   const [activeStep, setActiveStep] = useState(0);
 
   function getSteps() {
-    return ['Enter ETH Wallet Address', 'Tweet about us!', 'Join our community :)'];
+    return ['Enter ETH Wallet Address / ENS name', 'Tweet about us!', 'Join our community :)'];
   }
 
   function getStepContent(step) {
     switch (step) {
       case 0:
         return (<Grid item xs={12}>
-          <TextField color="primary" variant="filled" value={address} className={classes.input} label="ETH Wallet Address" onChange={e => handleAddressChange(e)} />
+          <TextField color="primary" variant="filled" value={address} className={classes.input} label="Enter ETH Wallet Address / ENS name" onChange={e => handleAddressChange(e)} />
         </Grid>);
       case 1:
         return (<Grid item xs={12}>
@@ -76,7 +76,6 @@ function LaunchPage({ classes }) {
         }
         else {
           //TODO:show an error here
-          //I do not know what right next step is
           setActiveStep(-1);//???
         }
       }
