@@ -27,8 +27,10 @@ import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 import { styles } from "./styles";
 
 function LandingPage({ classes }) {
-  const XDAI_URL = "https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/";
-  const XDAI_WSS_URL = "wss://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/";
+  const XDAI_URL =
+    "https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/";
+  const XDAI_WSS_URL =
+    "wss://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/";
   const ETHERSCAN_URL = "https://rinkeby.etherscan.io";
   const BLOCKSCOUT_URL = "https://blockscout.com/xdai/mainnet";
   const {
@@ -38,7 +40,7 @@ function LandingPage({ classes }) {
     isConnected,
     onConnect,
     networkId,
-    rawProvider
+    rawProvider,
   } = useConnectedWeb3Context();
 
   const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
@@ -71,8 +73,10 @@ function LandingPage({ classes }) {
   const [withdrawableETH, setWithdrawableETH] = useState(BigNumber.from(0));
   const [deposited, setDeposited] = useState(BigNumber.from(0));
   const [earnings, setEarnings] = useState(BigNumber.from(0));
-  const [lemmaTokenWithBiconomy, setLemmaTokenWithBiconomy] = useState('');
-  const [biconomy, setBiconomy] = useState('');
+  const [lemmaTokenWithBiconomy, setLemmaTokenWithBiconomy] = useState("");
+  const [biconomy, setBiconomy] = useState("");
+  const [depositLoading, setDepositLoading] = useState(false);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -122,52 +126,64 @@ function LandingPage({ classes }) {
       return;
     }
 
+    if (depositLoading) {
+      return;
+    }
+
     if (networkId != 4) {
       setWrongNetwork(true);
     } else {
-      const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
-      let txHash;
-      if (
-        utils.parseEther((Number(amount) + gasFees).toString()).gte(ethBalance)
-      ) {
-        txHash = await lemmaMain.deposit(0, Number(amount) - gasFees);
-      } else {
-        txHash = await lemmaMain.deposit(0, amount);
+      try {
+        setDepositLoading(true);
+        const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
+        let txHash;
+        if (
+          utils
+            .parseEther((Number(amount) + gasFees).toString())
+            .gte(ethBalance)
+        ) {
+          txHash = await lemmaMain.deposit(0, Number(amount) - gasFees);
+        } else {
+          txHash = await lemmaMain.deposit(0, amount);
+        }
+        //to test without actually depositting
+        // txHash = "0xfd090be00e063eb8e0a6db9c2c471785d1064958d5ec50b0b4c0ff3c64ca63c7"
+        setExplorerLink(getExplorerLink(txHash));
+        setLoadMessage("Deposit started");
+        setLoadOpen(true);
+
+        const tx = await signer.provider.getTransaction(txHash);
+        await tx.wait();
+
+        setAmount("0");
+
+        setLoadOpen(false);
+        setLoadMessage(
+          "Deposit completed successfully, you should receive your LUSDT in ~1 min!"
+        );
+        setLoadOpen(true);
+
+        // set a listener for minting LUSDC on
+        // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
+        // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
+
+        const lemmaXDAIDepositInfoAddedFilter = lemmaToken.instance.filters.DepositInfoAdded(
+          account
+        );
+        const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
+          ethers.constants.AddressZero,
+          account
+        );
+
+        lemmaTokenWSS.instance.once(lusdcMintedFilter, onSuccessfulDeposit);
+        lemmaTokenWSS.instance.once(
+          lemmaXDAIDepositInfoAddedFilter,
+          onDepositInfoAdded
+        );
+        setDepositLoading(false);
+      } catch {
+        setDepositLoading(false);
       }
-      //to test without actually depositting
-      // txHash = "0xfd090be00e063eb8e0a6db9c2c471785d1064958d5ec50b0b4c0ff3c64ca63c7"
-      setExplorerLink(getExplorerLink(txHash));
-      setLoadMessage("Deposit started");
-      setLoadOpen(true);
-
-      const tx = await signer.provider.getTransaction(txHash);
-      await tx.wait();
-
-      setAmount("0");
-
-      setLoadOpen(false);
-      setLoadMessage(
-        "Deposit completed successfully, you should receive your LUSDT in ~1 min!"
-      );
-      setLoadOpen(true);
-
-      // set a listener for minting LUSDC on
-      // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
-      // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
-
-      const lemmaXDAIDepositInfoAddedFilter = lemmaToken.instance.filters.DepositInfoAdded(
-        account
-      );
-      const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
-        ethers.constants.AddressZero,
-        account
-      );
-
-      lemmaTokenWSS.instance.once(lusdcMintedFilter, onSuccessfulDeposit);
-      lemmaTokenWSS.instance.once(
-        lemmaXDAIDepositInfoAddedFilter,
-        onDepositInfoAdded
-      );
     }
   };
 
@@ -178,95 +194,104 @@ function LandingPage({ classes }) {
       return;
     }
 
+    if (withdrawLoading || !biconomy) {
+      return;
+    }
+
     if (networkId != 4) {
       setWrongNetwork(true);
     } else {
-      const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
+      try {
+        setWithdrawLoading(true);
+        const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
 
-      const ethToWithdraw = convertTo18Decimals(amount);
-      //TODO: This is temperary fix
-      //make sure frontend deals with only bignumbers
-      let lUSDCAmount;
+        const ethToWithdraw = convertTo18Decimals(amount);
+        //TODO: This is temperary fix
+        //make sure frontend deals with only bignumbers
+        let lUSDCAmount;
 
-      const percentageOfETHToWithdraw = withdrawableETH
-        .sub(ethToWithdraw)
-        .mul(ONE)
-        .div(withdrawableETH);
+        const percentageOfETHToWithdraw = withdrawableETH
+          .sub(ethToWithdraw)
+          .mul(ONE)
+          .div(withdrawableETH);
 
-      lUSDCAmount = userBalanceOfLUSDC.sub(
-        userBalanceOfLUSDC.mul(percentageOfETHToWithdraw).div(ONE)
-      );
+        lUSDCAmount = userBalanceOfLUSDC.sub(
+          userBalanceOfLUSDC.mul(percentageOfETHToWithdraw).div(ONE)
+        );
 
-      if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
-        lUSDCAmount = userBalanceOfLUSDC;
+        if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
+          lUSDCAmount = userBalanceOfLUSDC;
+        }
+
+        //withdraw lusdc amount using biconomy
+
+        // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
+        let userAddress = account;
+        // Create your target method signature.. here we are calling setQuote() method of our contract
+        let {
+          data,
+        } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
+          lUSDCAmount
+        );
+        let provider = biconomy.getEthersProvider();
+
+        // you can also use networkProvider created above
+        let gasLimit = await provider.estimateGas({
+          to: addresses.xDAIRinkeby.lemmaxDAI,
+          from: userAddress,
+          data: data,
+        });
+        console.log("Gas limit : ", gasLimit);
+
+        let txParams = {
+          data: data,
+          to: addresses.xDAIRinkeby.lemmaxDAI,
+          from: userAddress,
+          gasLimit: gasLimit, // optional
+          signatureType: "EIP712_SIGN",
+        };
+
+        // as ethers does not allow providing custom options while sending transaction
+        // you can also use networkProvider created above
+        // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
+        let txHash = await provider.send("eth_sendTransaction", [txParams]);
+        //to test the blockscout link
+        // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
+
+        const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
+          account
+        );
+        lemmaMain.instance.once(
+          lemmaMainnetETHWithdrawedFilter,
+          onSuccessfulWithdrawal
+        );
+
+        console.log("Transaction hash : ", txHash);
+        setExplorerLink(getExplorerLink(txHash, "xdai"));
+        console.log(getExplorerLink(txHash, "xdai"));
+        setLoadMessage("Withdraw started");
+        setLoadOpen(true);
+
+        console.log(signer);
+
+        //if tx == null that means the xdai just does not know about the transaction that was submitted by the biconomy node
+        let tx;
+        while (!tx) {
+          tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
+        }
+        await tx.wait();
+
+        setAmount("0");
+
+        setLoadOpen(false);
+        setLoadMessage(
+          "Withdraw completed successfully, you will receive your ETH back in ~1 minutes"
+        );
+        setLoadOpen(true);
+        setWithdrawLoading(false);
+      } catch {
+        setWithdrawLoading(false);
       }
-
-      //withdraw lusdc amount using biconomy
-
-      // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
-      let userAddress = account;
-      // Create your target method signature.. here we are calling setQuote() method of our contract
-      let { data } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
-        lUSDCAmount
-      );
-      let provider = biconomy.getEthersProvider();
-
-      // you can also use networkProvider created above
-      let gasLimit = await provider.estimateGas({
-        to: addresses.xDAIRinkeby.lemmaxDAI,
-        from: userAddress,
-        data: data,
-      });
-      console.log("Gas limit : ", gasLimit);
-
-      let txParams = {
-        data: data,
-        to: addresses.xDAIRinkeby.lemmaxDAI,
-        from: userAddress,
-        gasLimit: gasLimit, // optional
-        signatureType: "EIP712_SIGN",
-      };
-
-      // as ethers does not allow providing custom options while sending transaction
-      // you can also use networkProvider created above
-      // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
-      let txHash = await provider.send("eth_sendTransaction", [txParams]);
-      //to test the blockscout link
-      // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
-
-      const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
-        account
-      );
-      lemmaMain.instance.once(
-        lemmaMainnetETHWithdrawedFilter,
-        onSuccessfulWithdrawal
-      );
-
-      console.log("Transaction hash : ", txHash);
-      setExplorerLink(getExplorerLink(txHash, "xdai"));
-      console.log(getExplorerLink(txHash, "xdai"));
-      setLoadMessage("Withdraw started");
-      setLoadOpen(true);
-
-      console.log(signer);
-
-      //if tx == null that means the xdai just does not know about the transaction that was submitted by the biconomy node
-      let tx;
-      while (!tx) {
-        tx = await ethers
-          .getDefaultProvider(XDAI_URL)
-          .getTransaction(txHash);
-      }
-      await tx.wait();
-
-      setAmount("0");
-
-      setLoadOpen(false);
-      setLoadMessage(
-        "Withdraw completed successfully, you will receive your ETH back in ~1 minutes"
-      );
-      setLoadOpen(true);
-
     }
   };
 
@@ -492,7 +517,6 @@ function LandingPage({ classes }) {
         setWrongNetwork(true);
       }
     }
-
   }, [isConnected, networkId]);
 
   return (
@@ -595,7 +619,8 @@ function LandingPage({ classes }) {
                 <Button
                   className={classes.navButton}
                   href="https://mgava.gitbook.io/lemma/"
-                  target="_blank" rel="noopener noreferrer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Docs
                 </Button>
@@ -731,8 +756,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
@@ -782,6 +807,7 @@ function LandingPage({ classes }) {
                                 className={classes.button}
                                 color="primary"
                                 variant="contained"
+                                disabled={depositLoading}
                                 onClick={() => handleDepositSubmit()}
                               >
                                 Deposit
@@ -892,6 +918,7 @@ function LandingPage({ classes }) {
                                 className={classes.button}
                                 color="primary"
                                 variant="contained"
+                                disabled={withdrawLoading || !biconomy}
                                 onClick={() => handleWithdrawSubmit()}
                               >
                                 Withdraw
