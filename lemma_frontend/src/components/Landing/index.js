@@ -40,7 +40,7 @@ function LandingPage({ classes }) {
     isConnected,
     onConnect,
     networkId,
-    rawProvider,
+    onDisconnect,
   } = useConnectedWeb3Context();
 
   const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
@@ -77,6 +77,7 @@ function LandingPage({ classes }) {
   const [biconomy, setBiconomy] = useState("");
   const [depositLoading, setDepositLoading] = useState(false);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [sliderValue, setSliderValue] = useState(0);
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -93,8 +94,17 @@ function LandingPage({ classes }) {
     if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
       setErrorMessage("Please enter a number!");
       setErrorOpen(true);
+      setAmount("0");
     } else {
       setAmount(event.target.value);
+
+      const balance = Number(
+        convertToReadableFormat(tabIndex === "1" ? ethBalance : withdrawableETH)
+      );
+      if (balance === 0) {
+        return;
+      }
+      setSliderValue(Math.floor((Number(event.target.value) * 100) / balance));
     }
   };
 
@@ -104,6 +114,7 @@ function LandingPage({ classes }) {
     }
 
     setAmount((value * convertToReadableFormat(ethBalance)) / 100);
+    setSliderValue(value);
   };
 
   const handleWithdrawSliderChange = (event, value) => {
@@ -111,6 +122,7 @@ function LandingPage({ classes }) {
       return;
     }
     setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
+    setSliderValue(value);
   };
 
   const getExplorerLink = (transactionHash, networkName) => {
@@ -509,15 +521,19 @@ function LandingPage({ classes }) {
   };
 
   useEffect(() => {
-    if (!isConnected) {
-      handleConnectWallet();
-    } else {
+    if (isConnected) {
       refreshBalances();
       if (networkId !== 4) {
         setWrongNetwork(true);
       }
     }
   }, [isConnected, networkId]);
+
+  useEffect(() => {
+    if (!isConnected) {
+      handleConnectWallet();
+    }
+  }, []);
 
   return (
     <div className={classes.root}>
@@ -560,7 +576,15 @@ function LandingPage({ classes }) {
           severity="info"
         >
           <span>
-            {loadMessage}, <a href={explorerLink} className={classes.link} target="_blank" rel="noopener noreferrer">see on explorer</a>
+            {loadMessage},{" "}
+            <a
+              href={explorerLink}
+              className={classes.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              see on explorer
+            </a>
           </span>
         </Alert>
       </Snackbar>
@@ -624,7 +648,9 @@ function LandingPage({ classes }) {
                 <Button
                   className={classes.connectButton}
                   variant="outlined"
-                  onClick={() => handleConnectWallet()}
+                  onClick={() =>
+                    isConnected ? onDisconnect() : handleConnectWallet()
+                  }
                 >
                   {isConnected ? account.slice(0, 8) + "..." : "Connect Wallet"}
                 </Button>
@@ -746,8 +772,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
@@ -774,18 +800,12 @@ function LandingPage({ classes }) {
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
                                 <Slider
+                                  value={sliderValue}
                                   defaultValue={0}
                                   aria-labelledby="discrete-slider"
                                   valueLabelDisplay="off"
                                   onChange={(e, v) => handleSliderChange(e, v)}
-                                  step={25}
-                                  marks={[
-                                    { value: 0, label: "0%" },
-                                    { value: 25, label: "25%" },
-                                    { value: 50, label: "50%" },
-                                    { value: 75, label: "75%" },
-                                    { value: 100, label: "100%" },
-                                  ]}
+                                  step={1}
                                   min={0}
                                   max={100}
                                 />
@@ -883,20 +903,14 @@ function LandingPage({ classes }) {
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
                                 <Slider
+                                  value={sliderValue}
                                   defaultValue={0}
                                   aria-labelledby="discrete-slider"
                                   valueLabelDisplay="off"
                                   onChange={(e, v) =>
                                     handleWithdrawSliderChange(e, v)
                                   }
-                                  step={25}
-                                  marks={[
-                                    { value: 0, label: "0%" },
-                                    { value: 25, label: "25%" },
-                                    { value: 50, label: "50%" },
-                                    { value: 75, label: "75%" },
-                                    { value: 100, label: "100%" },
-                                  ]}
+                                  step={1}
                                   min={0}
                                   max={100}
                                 />

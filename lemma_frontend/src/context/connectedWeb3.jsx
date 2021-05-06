@@ -67,9 +67,16 @@ export const ConnectedWeb3 = ({ children }) => {
     });
   };
 
+  const onDisconnect = async () => {
+    setState(initialState);
+    await web3Modal.clearCachedProvider();
+    
+  }
+
   const value = {
     ...state,
-    onConnect
+    onConnect,
+    onDisconnect
   };
 
   return (
