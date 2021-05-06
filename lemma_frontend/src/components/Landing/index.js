@@ -82,6 +82,7 @@ function LandingPage({ classes }) {
   const [depositLoading, setDepositLoading] = useState(false);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [sliderValue, setSliderValue] = useState(0);
+  const [loadingBalance, setLoadingBalance] = useState(false);
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -350,6 +351,7 @@ function LandingPage({ classes }) {
 
   const refreshBalances = async () => {
     console.log("refresh Balance start");
+    setLoadingBalance(true);
 
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
@@ -445,6 +447,7 @@ function LandingPage({ classes }) {
 
     setEarnings(earnings);
     console.log("refresh Balance end");
+    setLoadingBalance(false);
   };
 
   const onSuccessfulDeposit = async (account, LUSDTAmount, event) => {
@@ -776,16 +779,22 @@ function LandingPage({ classes }) {
                                   </Typography>{" "}
                                 </Grid>
                                 <Grid item>
-                                  {" "}
-                                  <Typography variant="body1">
-                                    <b>
-                                      {isConnected
-                                        ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
-                                        : 0}
-                                    </b>
-                                  </Typography>{" "}
+                                  {loadingBalance ? (
+                                    <CircularProgress
+                                      color="primary"
+                                      size="20px"
+                                    />
+                                  ) : (
+                                    <Typography variant="body1">
+                                      <b>
+                                        {isConnected
+                                          ? Number(
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
+                                          : 0}
+                                      </b>
+                                    </Typography>
+                                  )}
                                 </Grid>
                               </Grid>
                             </Grid>
@@ -858,20 +867,25 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  {" "}
                                   <Typography variant="body1">
                                     {ethData.asset} Deposited
-                                  </Typography>{" "}
+                                  </Typography>
                                 </Grid>
                                 <Grid item>
-                                  {" "}
-                                  <Typography variant="body1">
-                                    <b>
-                                      {Number(
-                                        convertToReadableFormat(deposited)
-                                      ).toFixed(6)}
-                                    </b>
-                                  </Typography>{" "}
+                                  {loadingBalance ? (
+                                    <CircularProgress
+                                      color="primary"
+                                      size="20px"
+                                    />
+                                  ) : (
+                                    <Typography variant="body1">
+                                      <b>
+                                        {Number(
+                                          convertToReadableFormat(deposited)
+                                        ).toFixed(6)}
+                                      </b>
+                                    </Typography>
+                                  )}
                                 </Grid>
                               </Grid>
                               <Grid
@@ -888,14 +902,20 @@ function LandingPage({ classes }) {
                                   </Typography>{" "}
                                 </Grid>
                                 <Grid item>
-                                  {" "}
-                                  <Typography variant="body1">
-                                    <b>
-                                      {Number(
-                                        convertToReadableFormat(earnings)
-                                      ).toFixed(6)}
-                                    </b>
-                                  </Typography>{" "}
+                                  {loadingBalance ? (
+                                    <CircularProgress
+                                      color="primary"
+                                      size="20px"
+                                    />
+                                  ) : (
+                                    <Typography variant="body1">
+                                      <b>
+                                        {Number(
+                                          convertToReadableFormat(earnings)
+                                        ).toFixed(6)}
+                                      </b>
+                                    </Typography>
+                                  )}
                                 </Grid>
                               </Grid>
                             </Grid>
