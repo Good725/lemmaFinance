@@ -25,6 +25,7 @@ import { useConnectedWeb3Context } from "../../context";
 import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 
 import { styles } from "./styles";
+import { parseEther } from "@ethersproject/units";
 
 function LandingPage({ classes }) {
   const XDAI_URL =
@@ -138,6 +139,11 @@ function LandingPage({ classes }) {
       setErrorOpen(true);
       return;
     }
+    if (parseEther(amount).gt(ethBalance)) {
+      setErrorMessage("Insufficient account balance");
+      setErrorOpen(true);
+      return;
+    }
 
     if (depositLoading) {
       return;
@@ -203,6 +209,11 @@ function LandingPage({ classes }) {
   const handleWithdrawSubmit = async () => {
     if (!amount) {
       setErrorMessage("Please enter a number!");
+      setErrorOpen(true);
+      return;
+    }
+    if (parseEther(amount).gt(withdrawableETH)) {
+      setErrorMessage("Insufficient withdraw balance");
       setErrorOpen(true);
       return;
     }
@@ -835,7 +846,7 @@ function LandingPage({ classes }) {
                                 className={classes.button}
                                 color="primary"
                                 variant="contained"
-                                disabled={depositLoading}
+                                disabled={depositLoading || loadingBalance}
                                 onClick={() => handleDepositSubmit()}
                               >
                                 Deposit
@@ -958,7 +969,9 @@ function LandingPage({ classes }) {
                                 className={classes.button}
                                 color="primary"
                                 variant="contained"
-                                disabled={withdrawLoading || !biconomy}
+                                disabled={
+                                  withdrawLoading || !biconomy || loadingBalance
+                                }
                                 onClick={() => handleWithdrawSubmit()}
                               >
                                 Withdraw
