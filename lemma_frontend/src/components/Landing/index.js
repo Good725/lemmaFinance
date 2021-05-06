@@ -719,7 +719,7 @@ function LandingPage({ classes }) {
           >
             <Grid container item direction="column">
               <Grid item className={classes.title}>
-                Superior, low risk, sustainable yield.
+                The Basis Trading Protocol
               </Grid>
               <Grid item className={classes.subtitle}>
                 Deposit ETH and we’ll earn you more ETH via basis trading.
@@ -827,8 +827,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
