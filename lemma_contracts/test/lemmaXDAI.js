@@ -1,4 +1,5 @@
 const { ethers } = require("hardhat");
+const hre = require("hardhat");
 const { BigNumber } = require("ethers");
 const TEST_USDC_ABI = require('../abis/TestUsdc_abi.json');
 const { expect } = require("chai");
@@ -74,12 +75,23 @@ contract("LemmaToken", accounts => {
     });
 
     it("Set Deposit", async function() {
+        await hre.network.provider.request({
+            method: "hardhat_impersonateAccount",
+            params: [accounts[1].address]
+        });
+        const impersonate_account2 = await ethers.provider.getSigner(accounts[1].address);
+
         let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
         let test_usdc_balance_1 = await testusdc.balanceOf(accounts[1].address);
+    
         let  amountTransfer = BigNumber.from(7 * 10 ** 6);
-        await testusdc.connect(accounts[1]).approve(LemmaTokenContract.address, amountTransfer);
-        await testusdc.connect(accounts[1]).transfer(LemmaTokenContract.address, amountTransfer);
+     
+        await testusdc.connect(impersonate_account2).approve(LemmaTokenContract.address, amountTransfer);
+      
+        await testusdc.connect(impersonate_account2).transfer(LemmaTokenContract.address, amountTransfer);
+      
         expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "DepositInfoAdded").withArgs(accounts[1].address, minimumUSDCAmountOut);
+      
         expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "USDCDeposited").withArgs(accounts[1].address, minimumUSDCAmountOut);
         let test_usdc_balance_2 = await testusdc.balanceOf(accounts[1].address);
         expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
