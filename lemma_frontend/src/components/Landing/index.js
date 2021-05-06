@@ -225,6 +225,8 @@ function LandingPage({ classes }) {
           lemmaXDAIDepositInfoAddedFilter,
           onDepositInfoAdded
         );
+        //to update the balance
+        await onConnect();
         // setDepositLoading(false);
       } catch {
         // setDepositLoading(false);
@@ -385,7 +387,6 @@ function LandingPage({ classes }) {
   const refreshBalances = async () => {
     console.log("refresh Balance start");
     setLoadingBalance(true);
-
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
