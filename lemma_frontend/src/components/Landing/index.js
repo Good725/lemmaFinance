@@ -134,7 +134,7 @@ function LandingPage({ classes }) {
       setWrongNetwork(true);
     } else {
       try {
-        setDepositLoading(true);
+        // setDepositLoading(true);
         const gasFees = 0.001; //TODO: use an API to get current gas price and multiply with estimate gas of the deposit method
         let txHash;
         if (
@@ -180,9 +180,9 @@ function LandingPage({ classes }) {
           lemmaXDAIDepositInfoAddedFilter,
           onDepositInfoAdded
         );
-        setDepositLoading(false);
+        // setDepositLoading(false);
       } catch {
-        setDepositLoading(false);
+        // setDepositLoading(false);
       }
     }
   };
@@ -202,7 +202,7 @@ function LandingPage({ classes }) {
       setWrongNetwork(true);
     } else {
       try {
-        setWithdrawLoading(true);
+        // setWithdrawLoading(true);
         const userBalanceOfLUSDC = await lemmaToken.balanceOf(account);
 
         const ethToWithdraw = convertTo18Decimals(amount);
@@ -288,9 +288,9 @@ function LandingPage({ classes }) {
           "Withdraw successful! Your ETH should arrive in ~1 minute"
         );
         setLoadOpen(true);
-        setWithdrawLoading(false);
+        // setWithdrawLoading(false);
       } catch {
-        setWithdrawLoading(false);
+        // setWithdrawLoading(false);
       }
     }
   };
@@ -746,8 +746,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
