@@ -21,8 +21,8 @@ import addresses from "../../abis/addresses.json";
 import constants from "../../abis/constants.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
-import ClearingHouse from "@perp/contract/build/contracts/src/ClearingHouseViewer.sol/ClearingHouseViewer.json";
-import ClearingHouseViewer from "@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json";
+import ClearingHouseViewer from "@perp/contract/build/contracts/src/ClearingHouseViewer.sol/ClearingHouseViewer.json";
+import ClearingHouse from "@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json";
 import Amm from "@perp/contract/build/contracts/src/Amm.sol/Amm.json";
 
 import { useConnectedWeb3Context } from "../../context";
@@ -143,12 +143,31 @@ function LandingPage({ classes }) {
       setErrorOpen(true);
       return;
     }
-    if (parseEther(amount).gt(ethBalance)) {
+    if (parseEther(amount.toString()).gt(ethBalance)) {
       setErrorMessage("Insufficient account balance");
       setErrorOpen(true);
       return;
     }
 
+
+    const ethUSDCAMMAddress = addresses.perpRinkebyXDAI.layers.layer2.contracts.ETHUSDC.address;
+    const clearingHouseAddress = addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouse.address;
+    const clearingHouseViewerAddress = addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouseViewer.address;
+    const lemmaPerpetualAddress = addresses.xDAIRinkeby.lemmaPerpetual;
+
+    const ethUSDCAMM = new ethers.Contract(ethUSDCAMMAddress, Amm.abi, ethers.getDefaultProvider(XDAI_URL));
+    const clearingHouse = new ethers.Contract(clearingHouseAddress, ClearingHouse.abi, ethers.getDefaultProvider(XDAI_URL));
+    const clearingHouseViewer = new ethers.Contract(clearingHouseViewerAddress, ClearingHouseViewer.abi, ethers.getDefaultProvider(XDAI_URL));
+
+
+    const [maxHoldingBaseAsset, openInterestNotionalCap, currentOpenInterest, position] = await Promise.all([ethUSDCAMM.getMaxHoldingBaseAsset(), ethUSDCAMM.getOpenInterestNotionalCap(), clearingHouse.openInterestNotionalMap(ethUSDCAMM.address), clearingHouseViewer.getPersonalPositionWithFundingPayment(ethUSDCAMM.address, lemmaPerpetual.address)]);
+    // console.log([maxHoldingBaseAsset, openInterestNotionalCap, currentOpenInterest, position]);
+
+    if (openInterestNotionalCap.d.lt(currentOpenInterest.add(parseEther(amount.toString()))) || maxHoldingBaseAsset.d.lt(position.size.d.add(parseEther(amount.toString())))) {
+      setErrorMessage("Sorry, Maximum limit reached");
+      setErrorOpen(true);
+      return;
+    }
     if (depositLoading) {
       return;
     }
@@ -216,7 +235,7 @@ function LandingPage({ classes }) {
       setErrorOpen(true);
       return;
     }
-    if (parseEther(amount).gt(withdrawableETH)) {
+    if (parseEther(amount.toString()).gt(withdrawableETH)) {
       setErrorMessage("Insufficient withdraw balance");
       setErrorOpen(true);
       return;
