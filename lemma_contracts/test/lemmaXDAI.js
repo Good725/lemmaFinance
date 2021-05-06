@@ -30,9 +30,9 @@ contract("LemmaToken", accounts => {
 
         await hre.network.provider.request({
             method: "hardhat_impersonateAccount",
-            params: ["0x4E90a36B45879F5baE71B57Ad525e817aFA54890"]
+            params: ["0x4B934508E3c610370E0a822200B357300F0ec608"]
         });
-        impersonate_account = await ethers.provider.getSigner("0x4E90a36B45879F5baE71B57Ad525e817aFA54890");
+        impersonate_account = await ethers.provider.getSigner("0x4B934508E3c610370E0a822200B357300F0ec608");
 
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });        
         LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress], { initializer: 'initialize' });
@@ -83,15 +83,14 @@ contract("LemmaToken", accounts => {
 
     it("Set Deposit", async function() {
         let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
-        let test_usdc_balance_1 = await testusdc.balanceOf(impersonate_account._address);
+        await accounts[0].sendTransaction({to: impersonate_account._address, value: ethers.utils.parseEther("2")});
     
         let  amountTransfer = BigNumber.from(7 * 10 ** 6);
-     
+        let test_usdc_balance_1 = await testusdc.balanceOf(impersonate_account._address);
+        
         await testusdc.connect(impersonate_account).approve(LemmaTokenContract.address, amountTransfer);
         await testusdc.connect(impersonate_account).transfer(LemmaTokenContract.address, amountTransfer);
-        
         expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "DepositInfoAdded").withArgs(impersonate_account._address, minimumUSDCAmountOut);
-      
         expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "USDCDeposited").withArgs(impersonate_account._address, minimumUSDCAmountOut);
         let test_usdc_balance_2 = await testusdc.balanceOf(impersonate_account._address);
         expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
