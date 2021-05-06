@@ -884,7 +884,8 @@ function LandingPage({ classes }) {
                                 className={classes.button}
                                 color="primary"
                                 variant="contained"
-                                disabled={depositLoading || loadingBalance}
+                                // disabled={depositLoading || loadingBalance}
+                                disabled={depositLoading}
                                 onClick={() => handleDepositSubmit()}
                               >
                                 Deposit
