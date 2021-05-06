@@ -21,6 +21,10 @@ import addresses from "../../abis/addresses.json";
 import constants from "../../abis/constants.json";
 import LemmaToken from "../../abis/LemmaToken.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
+import ClearingHouse from "@perp/contract/build/contracts/src/ClearingHouseViewer.sol/ClearingHouseViewer.json";
+import ClearingHouseViewer from "@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json";
+import Amm from "@perp/contract/build/contracts/src/Amm.sol/Amm.json";
+
 import { useConnectedWeb3Context } from "../../context";
 import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 
@@ -234,6 +238,8 @@ function LandingPage({ classes }) {
         if (lUSDCAmount.gt(userBalanceOfLUSDC)) {
           lUSDCAmount = userBalanceOfLUSDC;
         }
+        console.log("userBalanceOfUSDC", userBalanceOfLUSDC.toString());
+        console.log("lUSDCAmount", lUSDCAmount.toString());
 
         //withdraw lusdc amount using biconomy
 
@@ -245,6 +251,7 @@ function LandingPage({ classes }) {
         } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
           lUSDCAmount
         );
+        console.log("data", data);
         let provider = biconomy.getEthersProvider();
 
         // you can also use networkProvider created above
@@ -774,8 +781,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>{" "}
