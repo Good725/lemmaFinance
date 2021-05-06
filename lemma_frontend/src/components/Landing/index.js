@@ -386,7 +386,10 @@ function LandingPage({ classes }) {
 
   const refreshBalances = async () => {
     console.log("refresh Balance start");
+
     setLoadingBalance(true);
+    //to update the balance
+    await onConnect();
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
