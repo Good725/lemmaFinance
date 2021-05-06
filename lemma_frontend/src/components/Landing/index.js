@@ -11,6 +11,7 @@ import {
   Tab,
   Slider,
   CircularProgress,
+  Tooltip,
 } from "@material-ui/core";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
 import Web3 from "web3";
@@ -152,21 +153,55 @@ function LandingPage({ classes }) {
       return;
     }
 
-
-    const ethUSDCAMMAddress = addresses.perpRinkebyXDAI.layers.layer2.contracts.ETHUSDC.address;
-    const clearingHouseAddress = addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouse.address;
-    const clearingHouseViewerAddress = addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouseViewer.address;
+    const ethUSDCAMMAddress =
+      addresses.perpRinkebyXDAI.layers.layer2.contracts.ETHUSDC.address;
+    const clearingHouseAddress =
+      addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouse.address;
+    const clearingHouseViewerAddress =
+      addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouseViewer
+        .address;
     const lemmaPerpetualAddress = addresses.xDAIRinkeby.lemmaPerpetual;
 
-    const ethUSDCAMM = new ethers.Contract(ethUSDCAMMAddress, Amm.abi, ethers.getDefaultProvider(XDAI_URL));
-    const clearingHouse = new ethers.Contract(clearingHouseAddress, ClearingHouse.abi, ethers.getDefaultProvider(XDAI_URL));
-    const clearingHouseViewer = new ethers.Contract(clearingHouseViewerAddress, ClearingHouseViewer.abi, ethers.getDefaultProvider(XDAI_URL));
+    const ethUSDCAMM = new ethers.Contract(
+      ethUSDCAMMAddress,
+      Amm.abi,
+      ethers.getDefaultProvider(XDAI_URL)
+    );
+    const clearingHouse = new ethers.Contract(
+      clearingHouseAddress,
+      ClearingHouse.abi,
+      ethers.getDefaultProvider(XDAI_URL)
+    );
+    const clearingHouseViewer = new ethers.Contract(
+      clearingHouseViewerAddress,
+      ClearingHouseViewer.abi,
+      ethers.getDefaultProvider(XDAI_URL)
+    );
 
-
-    const [maxHoldingBaseAsset, openInterestNotionalCap, currentOpenInterest, position] = await Promise.all([ethUSDCAMM.getMaxHoldingBaseAsset(), ethUSDCAMM.getOpenInterestNotionalCap(), clearingHouse.openInterestNotionalMap(ethUSDCAMM.address), clearingHouseViewer.getPersonalPositionWithFundingPayment(ethUSDCAMM.address, lemmaPerpetual.address)]);
+    const [
+      maxHoldingBaseAsset,
+      openInterestNotionalCap,
+      currentOpenInterest,
+      position,
+    ] = await Promise.all([
+      ethUSDCAMM.getMaxHoldingBaseAsset(),
+      ethUSDCAMM.getOpenInterestNotionalCap(),
+      clearingHouse.openInterestNotionalMap(ethUSDCAMM.address),
+      clearingHouseViewer.getPersonalPositionWithFundingPayment(
+        ethUSDCAMM.address,
+        lemmaPerpetual.address
+      ),
+    ]);
     // console.log([maxHoldingBaseAsset, openInterestNotionalCap, currentOpenInterest, position]);
 
-    if (openInterestNotionalCap.d.lt(currentOpenInterest.add(parseEther(amount.toString()))) || maxHoldingBaseAsset.d.lt(position.size.d.add(parseEther(amount.toString())))) {
+    if (
+      openInterestNotionalCap.d.lt(
+        currentOpenInterest.add(parseEther(amount.toString()))
+      ) ||
+      maxHoldingBaseAsset.d.lt(
+        position.size.d.add(parseEther(amount.toString()))
+      )
+    ) {
       setErrorMessage("Sorry, Maximum limit reached");
       setErrorOpen(true);
       return;
@@ -831,8 +866,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
@@ -910,9 +945,14 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  <Typography variant="body1">
-                                    {ethData.asset} Deposited
-                                  </Typography>
+                                  <Tooltip
+                                    placement="top"
+                                    title="Amount of deposit"
+                                  >
+                                    <Typography variant="body1">
+                                      {ethData.asset} Deposited
+                                    </Typography>
+                                  </Tooltip>
                                 </Grid>
                                 <Grid item>
                                   {loadingBalance ? (
@@ -939,10 +979,14 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  {" "}
-                                  <Typography variant="body1">
-                                    {ethData.asset} Earnings
-                                  </Typography>{" "}
+                                  <Tooltip
+                                    placement="top"
+                                    title="Amount of Earnings"
+                                  >
+                                    <Typography variant="body1">
+                                      {ethData.asset} Earnings
+                                    </Typography>
+                                  </Tooltip>
                                 </Grid>
                                 <Grid item>
                                   {loadingBalance ? (
