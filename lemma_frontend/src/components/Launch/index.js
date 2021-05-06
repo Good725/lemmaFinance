@@ -53,7 +53,7 @@ function LaunchPage({ classes }) {
       case 2:
         return (<Grid item container xs={12} spacing={3}>
           <Grid item><Link target="_blank" href="https://twitter.com/LemmaFinance"><Fab className={classes.twitterFab}><TwitterIcon /></Fab></Link></Grid>
-          <Grid item><Link target="_blank" href="https://discord.gg/7w9HaVVJ"><Fab className={classes.discordFab}><img src={DiscordIcon} className={classes.discordIcon} /></Fab></Link></Grid>
+          <Grid item><Link target="_blank" href="https://discord.com/invite/eZd4vCMZ"><Fab className={classes.discordFab}><img src={DiscordIcon} className={classes.discordIcon} /></Fab></Link></Grid>
         </Grid>);
       default:
         return 'Unknown step';
