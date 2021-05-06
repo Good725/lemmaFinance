@@ -790,22 +790,22 @@ function LandingPage({ classes }) {
                                   </Typography>{" "}
                                 </Grid>
                                 <Grid item>
-                                  {loadingBalance ? (
+                                  {/* {loadingBalance ? (
                                     <CircularProgress
                                       color="primary"
                                       size="20px"
                                     />
-                                  ) : (
-                                    <Typography variant="body1">
-                                      <b>
-                                        {isConnected
-                                          ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
-                                          : 0}
-                                      </b>
-                                    </Typography>
-                                  )}
+                                  ) : ( */}
+                                  <Typography variant="body1">
+                                    <b>
+                                      {isConnected
+                                        ? Number(
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
+                                        : 0}
+                                    </b>
+                                  </Typography>
+                                  {/* )} */}
                                 </Grid>
                               </Grid>
                             </Grid>
