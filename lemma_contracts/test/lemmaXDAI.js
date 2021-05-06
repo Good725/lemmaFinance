@@ -20,12 +20,19 @@ contract("LemmaToken", accounts => {
     const zeroAddress = "0x0000000000000000000000000000000000000000";
     const myEmitter = new EventEmitter();
     let ambBridgeContract;
+    let impersonate_account;
 
     before(async function () {
         accounts = await ethers.getSigners();
         const LemmaToken = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
         const AMBBridge = await ethers.getContractFactory("MockAMB");
+
+        await hre.network.provider.request({
+            method: "hardhat_impersonateAccount",
+            params: ["0x4E90a36B45879F5baE71B57Ad525e817aFA54890"]
+        });
+        impersonate_account = await ethers.provider.getSigner("0x4E90a36B45879F5baE71B57Ad525e817aFA54890");
 
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });        
         LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress], { initializer: 'initialize' });
@@ -75,43 +82,36 @@ contract("LemmaToken", accounts => {
     });
 
     it("Set Deposit", async function() {
-        await hre.network.provider.request({
-            method: "hardhat_impersonateAccount",
-            params: [accounts[1].address]
-        });
-        const impersonate_account2 = await ethers.provider.getSigner(accounts[1].address);
-
         let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
-        let test_usdc_balance_1 = await testusdc.balanceOf(accounts[1].address);
+        let test_usdc_balance_1 = await testusdc.balanceOf(impersonate_account._address);
     
         let  amountTransfer = BigNumber.from(7 * 10 ** 6);
      
-        await testusdc.connect(impersonate_account2).approve(LemmaTokenContract.address, amountTransfer);
+        await testusdc.connect(impersonate_account).approve(LemmaTokenContract.address, amountTransfer);
+        await testusdc.connect(impersonate_account).transfer(LemmaTokenContract.address, amountTransfer);
+        
+        expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "DepositInfoAdded").withArgs(impersonate_account._address, minimumUSDCAmountOut);
       
-        await testusdc.connect(impersonate_account2).transfer(LemmaTokenContract.address, amountTransfer);
-      
-        expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "DepositInfoAdded").withArgs(accounts[1].address, minimumUSDCAmountOut);
-      
-        expect(await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "USDCDeposited").withArgs(accounts[1].address, minimumUSDCAmountOut);
-        let test_usdc_balance_2 = await testusdc.balanceOf(accounts[1].address);
+        expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaTokenContract, "USDCDeposited").withArgs(impersonate_account._address, minimumUSDCAmountOut);
+        let test_usdc_balance_2 = await testusdc.balanceOf(impersonate_account._address);
         expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
     });
 
     it("Deposit in the case of existing totalSupply", async function() {
         let minimumUSDCAmountOut_2 = BigNumber.from(2 * 10 ** 6);
         let getTotalCollateral = await LemmaPerpetualContract.getTotalCollateral();
-        let lemmaBalance_1 = await LemmaTokenContract.balanceOf(accounts[1].address);
-        await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmountOut_2);
-        let lemmaBalance_2 = await LemmaTokenContract.balanceOf(accounts[1].address);
+        let lemmaBalance_1 = await LemmaTokenContract.balanceOf(impersonate_account._address);
+        await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut_2);
+        let lemmaBalance_2 = await LemmaTokenContract.balanceOf(impersonate_account._address);
         let amount_mint = lemmaBalance_1 * minimumUSDCAmountOut_2 / getTotalCollateral;
         expect(lemmaBalance_2 / 10000).to.equal(lemmaBalance_1 / 10000 + amount_mint / 10000);
     }); 
 
     it("Can not mint more amount than the contract's balance", async function() {
         let minimumUSDCAmount = BigNumber.from(10 * 10 ** 6);
-        let test_usdc_balance_beforeDeposit = await testusdc.balanceOf(accounts[1].address);
-        await ambBridgeContract.setDepositInfo(accounts[1].address, minimumUSDCAmount);
-        let test_usdc_balance_afterDeposit = await testusdc.balanceOf(accounts[1].address);
+        let test_usdc_balance_beforeDeposit = await testusdc.balanceOf(impersonate_account._address);
+        await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmount);
+        let test_usdc_balance_afterDeposit = await testusdc.balanceOf(impersonate_account._address);
         expect(test_usdc_balance_beforeDeposit).to.equal(test_usdc_balance_afterDeposit);
     });
 
@@ -120,7 +120,7 @@ contract("LemmaToken", accounts => {
         let amountWithdraw_1 = BigNumber.from(1e18.toString());
 
         try {
-            await LemmaTokenContract.connect(accounts[1]).withdraw(amountWithdraw_1);
+            await LemmaTokenContract.connect(impersonate_account).withdraw(amountWithdraw_1);
         } catch (error) {BigNumber.from(2e18.toString());
             expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
         };
@@ -129,8 +129,8 @@ contract("LemmaToken", accounts => {
     it("Withdraw LemmaToken", async function() {
         await LemmaTokenContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
         let amountWithdraw = BigNumber.from(1e18.toString());
-        let lemmabalanceBeforeWithdraw = await LemmaTokenContract.balanceOf(accounts[1].address);
-        await LemmaTokenContract.connect(accounts[1]).withdraw(amountWithdraw);
+        let lemmabalanceBeforeWithdraw = await LemmaTokenContract.balanceOf(impersonate_account._address);
+        await LemmaTokenContract.connect(impersonate_account).withdraw(amountWithdraw);
        
         let test_usdc_balance_after_withdraw = await testusdc.balanceOf(LemmaTokenContract.address);
         expect(test_usdc_balance_after_withdraw).to.equal(3000000);
