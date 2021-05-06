@@ -493,6 +493,8 @@ function LandingPage({ classes }) {
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
+    setAmount("");
+    setSliderValue(0);
   };
 
   const handleClose = (event, reason) => {
@@ -803,7 +805,14 @@ function LandingPage({ classes }) {
                                   value={sliderValue}
                                   defaultValue={0}
                                   aria-labelledby="discrete-slider"
-                                  valueLabelDisplay="off"
+                                  valueLabelDisplay="auto"
+                                  marks={[
+                                    { value: 0, label: "0%" },
+                                    { value: 25, label: "25%" },
+                                    { value: 50, label: "50%" },
+                                    { value: 75, label: "75%" },
+                                    { value: 100, label: "100%" },
+                                  ]}
                                   onChange={(e, v) => handleSliderChange(e, v)}
                                   step={1}
                                   min={0}
@@ -906,7 +915,14 @@ function LandingPage({ classes }) {
                                   value={sliderValue}
                                   defaultValue={0}
                                   aria-labelledby="discrete-slider"
-                                  valueLabelDisplay="off"
+                                  valueLabelDisplay="auto"
+                                  marks={[
+                                    { value: 0, label: "0%" },
+                                    { value: 25, label: "25%" },
+                                    { value: 50, label: "50%" },
+                                    { value: 75, label: "75%" },
+                                    { value: 100, label: "100%" },
+                                  ]}
                                   onChange={(e, v) =>
                                     handleWithdrawSliderChange(e, v)
                                   }
