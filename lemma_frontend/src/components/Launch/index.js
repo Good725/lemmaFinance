@@ -38,7 +38,7 @@ function LaunchPage({ classes }) {
         return (<Grid item xs={12}>
           <Link
             target="_blank"
-            href="https://twitter.com/intent/tweet?text=Looking%20forward%20to%20making%20superior,%20sustainable%20yield%20with%20Lemma.Finance.%20Check%20them%20out!"
+            href="https://twitter.com/intent/tweet?text=Looking%20forward%20to%20making%20superior%20%26%20sustainable%20yield%20on%20my%20ETH%20thanks%20to%20@lemmafinance's%20basis%20trading%20protocol%20%23yield%20%23defi"
           >
             <Button
               className={classes.twitterButton}
@@ -219,8 +219,8 @@ function LaunchPage({ classes }) {
           <Grid container item xs={10} xl={8} className={classes.mainContainer} justify="center">
 
             <Grid container item direction="column">
-              <Grid item className={classes.title}>Reserve allocation for our Mainnet Release</Grid>
-              <Grid item className={classes.subtitle}>We'll initially have a 500 ETH Hard Cap</Grid>
+              <Grid item className={classes.title}>Reserve allocation for our Mainnet release</Grid>
+              <Grid item className={classes.subtitle}>Initial hard cap will be 500 ETH</Grid>
             </Grid>
 
             <Grid container item className={classes.contentContainer} justify="center">
