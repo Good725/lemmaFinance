@@ -22,7 +22,7 @@ contract("LemmaMainnet", accounts => {
     before(async function () {
         accounts = await ethers.getSigners();
         const LemmaMainnet = await ethers.getContractFactory("LemmaMainnet");
-        const AMBBridge = await ethers.getContractFactory("MockAMB");
+        const AMBBridge = await ethers.getContractFactory("MockLemmaMainnetAMB");
         uniswap = new ethers.Contract(uniswapV2Router02Address, UNISWAP_ABI, accounts[0]);
         usdc = new ethers.Contract(usdcAddress, USDC_ABI, accounts[0]);
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });

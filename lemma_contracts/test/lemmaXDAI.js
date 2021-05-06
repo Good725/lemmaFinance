@@ -26,7 +26,7 @@ contract("LemmaToken", accounts => {
         accounts = await ethers.getSigners();
         const LemmaToken = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
-        const AMBBridge = await ethers.getContractFactory("MockAMB");
+        const AMBBridge = await ethers.getContractFactory("MockLemmaXdaiAMB");
 
         await hre.network.provider.request({
             method: "hardhat_impersonateAccount",
