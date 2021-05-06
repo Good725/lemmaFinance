@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { withStyles } from "@material-ui/core/styles";
+import { useHistory } from "react-router-dom";
 import {
   Grid,
   Button,
@@ -84,6 +85,8 @@ function LandingPage({ classes }) {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [sliderValue, setSliderValue] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(false);
+
+  const history = useHistory();
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -661,11 +664,16 @@ function LandingPage({ classes }) {
                 <img
                   className={classes.logoImg}
                   src={require("../../assets/img/logo.png")}
+                  onClick={() => history.push("/")}
                   alt=""
                 />
               </Grid>
               <Grid item>
-                <Typography className={classes.logo} variant="body2">
+                <Typography
+                  className={classes.logo}
+                  variant="body2"
+                  onClick={() => history.push("/")}
+                >
                   <b>LEMMA</b>
                 </Typography>
               </Grid>
@@ -819,8 +827,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
