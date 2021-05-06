@@ -41,6 +41,9 @@ export const styles = (theme) => ({
     display: "inline-block",
     height: 40,
   },
+  link: {
+    color: 'white'
+  },
   connectButton: {
     textTransform: "none",
     [theme.breakpoints.down("sm")]: {

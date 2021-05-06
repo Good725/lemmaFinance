@@ -159,7 +159,7 @@ function LandingPage({ classes }) {
 
         setLoadOpen(false);
         setLoadMessage(
-          "Deposit completed successfully, you should receive your LUSDT in ~1 min!"
+          "Deposit successful! Your LUSDT should arrive in ~1 min"
         );
         setLoadOpen(true);
 
@@ -285,7 +285,7 @@ function LandingPage({ classes }) {
 
         setLoadOpen(false);
         setLoadMessage(
-          "Withdraw completed successfully, you will receive your ETH back in ~1 minutes"
+          "Withdraw successful! Your ETH should arrive in ~1 minute"
         );
         setLoadOpen(true);
         setWithdrawLoading(false);
@@ -440,7 +440,7 @@ function LandingPage({ classes }) {
     refreshBalances();
     setExplorerLink(getExplorerLink(event.transactionHash));
     setLoadOpen(false);
-    setSuccessMessage("Withdraw completed successfully");
+    setSuccessMessage("Withdrawal completed successfully");
     setSuccessOpen(true);
   };
 
@@ -528,7 +528,7 @@ function LandingPage({ classes }) {
         anchorOrigin={alertAnchor}
       >
         <Alert severity="error" onClose={handleClose} variant="filled">
-          Please connect to rinkeby network
+          Please connect to the Rinkeby Network
         </Alert>
       </Snackbar>
 
@@ -544,13 +544,7 @@ function LandingPage({ classes }) {
           onClose={handleClose}
           severity="success"
         >
-          <span>
-            {successMessage}
-            <br />
-            <a href={explorerLink} target="_blank" rel="noopener noreferrer">
-              see on explorer
-            </a>
-          </span>
+          {successMessage}
         </Alert>
       </Snackbar>
       <Snackbar
@@ -566,11 +560,7 @@ function LandingPage({ classes }) {
           severity="info"
         >
           <span>
-            {loadMessage}
-            <br />
-            <a href={explorerLink} target="_blank" rel="noopener noreferrer">
-              see on explorer
-            </a>
+            {loadMessage}, <a href={explorerLink} className={classes.link} target="_blank" rel="noopener noreferrer">see on explorer</a>
           </span>
         </Alert>
       </Snackbar>
@@ -618,7 +608,7 @@ function LandingPage({ classes }) {
               <Grid item>
                 <Button
                   className={classes.navButton}
-                  href="https://mgava.gitbook.io/lemma/"
+                  href="https://docs.lemma.finance"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

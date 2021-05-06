@@ -25,7 +25,7 @@ function LaunchPage({ classes }) {
   const provider = getDefaultProvider("https://mainnet.infura.io/v3/2a1a54c3aa374385ae4531da66fdf150");
 
   function getSteps() {
-    return ['Enter ETH wallet Address / ENS name', 'Tweet about us!', 'Join our community :)'];
+    return ['Enter ETH wallet address or ENS name', 'Tweet about us!', 'Join our community :)'];
   }
 
   function getStepContent(step) {
@@ -46,13 +46,13 @@ function LaunchPage({ classes }) {
               variant="contained"
             >
               Tweet!
-                  </Button>
+            </Button>
           </Link>
           <TextField color="primary" variant="filled" value={twitter} className={classes.input} label="Twitter Post URL" onChange={e => handleTwitterChange(e)} />
         </Grid>);
       case 2:
         return (<Grid item container xs={12} spacing={3}>
-          <Grid item><Link target="_blank" href="https://twitter.com/LemmaFinance"><Fab className={classes.twitterFab} ><TwitterIcon /></Fab></Link></Grid>
+          <Grid item><Link target="_blank" href="https://twitter.com/LemmaFinance"><Fab className={classes.twitterFab}><TwitterIcon /></Fab></Link></Grid>
           <Grid item><Link target="_blank" href="https://discord.gg/7w9HaVVJ"><Fab className={classes.discordFab}><img src={DiscordIcon} className={classes.discordIcon} /></Fab></Link></Grid>
         </Grid>);
       default:
@@ -81,7 +81,7 @@ function LaunchPage({ classes }) {
       //if not valid then 
       //for resolving ens names 
       if (!isAddressValid) {
-        setLoadMessage("resolving ENS name");
+        setLoadMessage("Resolving ENS name");
         setErrorOpen(false);
         setLoadOpen(true);
         const actualAddress = await provider.resolveName(address);
@@ -91,7 +91,7 @@ function LaunchPage({ classes }) {
           setAddress(actualAddress);
         }
         else {
-          setErrorMessage("Enter a valid ETH wallet Address / ENS name");
+          setErrorMessage("Enter a valid ETH wallet address or ENS name");
           setErrorOpen(true);
           setActiveStep(-1);
         }
@@ -107,7 +107,7 @@ function LaunchPage({ classes }) {
     }
     if (activeStep === steps.length - 1) {
       if (!getIsAddressValid(address)) {
-        setErrorMessage("Enter a valid ETH wallet Address / ENS name");
+        setErrorMessage("Enter a valid ETH wallet address or ENS name");
         setErrorOpen(true);
         setActiveStep(-1);
       }
@@ -220,7 +220,7 @@ function LaunchPage({ classes }) {
 
             <Grid container item direction="column">
               <Grid item className={classes.title}>Reserve allocation for our Mainnet Release</Grid>
-              <Grid item className={classes.subtitle}>We'll initially have a 1000 ETH Hard Cap (~2.3 Million USD)</Grid>
+              <Grid item className={classes.subtitle}>We'll initially have a 500 ETH Hard Cap</Grid>
             </Grid>
 
             <Grid container item className={classes.contentContainer} justify="center">
