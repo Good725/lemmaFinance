@@ -7,3 +7,5 @@ artifacts
 .env
 .package-lock.json
 .openzeppelin
+
+coverage
