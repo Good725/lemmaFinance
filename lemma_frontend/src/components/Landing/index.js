@@ -761,7 +761,7 @@ function LandingPage({ classes }) {
                 The Basis Trading Protocol
               </Grid>
               <Grid item className={classes.subtitle}>
-                Deposit ETH and we’ll earn you more ETH via basis trading.
+                Superior, low risk, sustainable yield on your ETH.
               </Grid>
             </Grid>
 
