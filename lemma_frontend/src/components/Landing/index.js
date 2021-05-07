@@ -491,27 +491,30 @@ function LandingPage({ classes }) {
       const lUSDCMinted = lusdcMintedEvent.args.value;
       totalLUSDCMinted = totalLUSDCMinted.add(lUSDCMinted);
     });
+    let ETHDeposited = ZERO;
 
-    const lusdcBurntFilter = lemmaToken.instance.filters.Transfer(
-      account,
-      ethers.constants.AddressZero
-    );
-    const lusdcBurntEvents = await lemmaToken.instance.queryFilter(
-      lusdcBurntFilter
-    );
-    let totalLUSDCBurnt = BigNumber.from("0");
-    lusdcBurntEvents.forEach((lusdcBurntEvent) => {
-      const lUSDCBurnt = lusdcBurntEvent.args.value;
-      totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
-    });
+    if (!totalLUSDCMinted.isZero()) {
+      const lusdcBurntFilter = lemmaToken.instance.filters.Transfer(
+        account,
+        ethers.constants.AddressZero
+      );
+      const lusdcBurntEvents = await lemmaToken.instance.queryFilter(
+        lusdcBurntFilter
+      );
+      let totalLUSDCBurnt = BigNumber.from("0");
+      lusdcBurntEvents.forEach((lusdcBurntEvent) => {
+        const lUSDCBurnt = lusdcBurntEvent.args.value;
+        totalLUSDCBurnt = totalLUSDCBurnt.add(lUSDCBurnt);
+      });
 
-    const percentageOfLUSDCWithdrawed = totalLUSDCMinted
-      .sub(totalLUSDCBurnt)
-      .mul(ONE)
-      .div(totalLUSDCMinted);
-    const ETHDeposited = totalETHDeposited
-      .mul(percentageOfLUSDCWithdrawed)
-      .div(ONE);
+      const percentageOfLUSDCWithdrawed = totalLUSDCMinted
+        .sub(totalLUSDCBurnt)
+        .mul(ONE)
+        .div(totalLUSDCMinted);
+      ETHDeposited = totalETHDeposited
+        .mul(percentageOfLUSDCWithdrawed)
+        .div(ONE);
+    }
 
     //according to those decide the total deposited balance
     setDeposited(ETHDeposited);
@@ -830,11 +833,11 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  <Tooltip placement="top" title="Max APY">
+                                  {/* <Tooltip placement="top" title="Max APY">
                                     <Typography variant="body1">
                                       Earn APY
                                     </Typography>
-                                  </Tooltip>
+                                  </Tooltip> */}
                                 </Grid>
                                 <Grid item>
                                   {" "}
@@ -867,8 +870,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
@@ -883,20 +886,20 @@ function LandingPage({ classes }) {
                               direction="row"
                               justify="space-between"
                             >
-                              <Tooltip
+                              {/* <Tooltip
                                 placement="top-start"
                                 title="Amount to deposit"
-                              >
-                                <TextField
-                                  color="primary"
-                                  variant="filled"
-                                  value={amount}
-                                  autoFocus={true}
-                                  className={classes.input}
-                                  label={`${ethData.asset} Amount`}
-                                  onChange={(e) => handleAmountChange(e)}
-                                />
-                              </Tooltip>
+                              > */}
+                              <TextField
+                                color="primary"
+                                variant="filled"
+                                value={amount}
+                                autoFocus={true}
+                                className={classes.input}
+                                label={`${ethData.asset} Amount`}
+                                onChange={(e) => handleAmountChange(e)}
+                              />
+                              {/* </Tooltip> */}
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
@@ -951,14 +954,14 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  <Tooltip
+                                  {/* <Tooltip
                                     placement="top"
                                     title="Amount of deposit"
-                                  >
-                                    <Typography variant="body1">
-                                      {ethData.asset} Deposited
+                                  > */}
+                                  <Typography variant="body1">
+                                    {ethData.asset} Deposited
                                     </Typography>
-                                  </Tooltip>
+                                  {/* </Tooltip> */}
                                 </Grid>
                                 <Grid item>
                                   {loadingBalance ? (
@@ -985,14 +988,14 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  <Tooltip
+                                  {/* <Tooltip
                                     placement="top"
                                     title="Amount of Earnings"
-                                  >
-                                    <Typography variant="body1">
-                                      {ethData.asset} Earnings
+                                  > */}
+                                  <Typography variant="body1">
+                                    {ethData.asset} Earnings
                                     </Typography>
-                                  </Tooltip>
+                                  {/* </Tooltip> */}
                                 </Grid>
                                 <Grid item>
                                   {loadingBalance ? (
@@ -1019,6 +1022,10 @@ function LandingPage({ classes }) {
                               direction="row"
                               justify="space-between"
                             >
+                              {/* <Tooltip
+                                placement="top-start"
+                                title="ETH amount to be withdrawn"
+                              > */}
                               <TextField
                                 color="primary"
                                 variant="filled"
@@ -1028,6 +1035,7 @@ function LandingPage({ classes }) {
                                 label={`${ethData.asset} Amount`}
                                 onChange={(e) => handleAmountChange(e)}
                               />
+                              {/* </Tooltip> */}
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
