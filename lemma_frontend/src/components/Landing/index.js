@@ -830,10 +830,11 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  {" "}
-                                  <Typography variant="body1">
-                                    Earn APY
-                                  </Typography>{" "}
+                                  <Tooltip placement="top" title="Max APY">
+                                    <Typography variant="body1">
+                                      Earn APY
+                                    </Typography>
+                                  </Tooltip>
                                 </Grid>
                                 <Grid item>
                                   {" "}
@@ -882,15 +883,20 @@ function LandingPage({ classes }) {
                               direction="row"
                               justify="space-between"
                             >
-                              <TextField
-                                color="primary"
-                                variant="filled"
-                                value={amount}
-                                autoFocus={true}
-                                className={classes.input}
-                                label={`${ethData.asset} Amount`}
-                                onChange={(e) => handleAmountChange(e)}
-                              />
+                              <Tooltip
+                                placement="top-start"
+                                title="Amount to deposit"
+                              >
+                                <TextField
+                                  color="primary"
+                                  variant="filled"
+                                  value={amount}
+                                  autoFocus={true}
+                                  className={classes.input}
+                                  label={`${ethData.asset} Amount`}
+                                  onChange={(e) => handleAmountChange(e)}
+                                />
+                              </Tooltip>
                             </Grid>
                             <Grid item container xs={12} justify="center">
                               <Grid item xs={11}>
