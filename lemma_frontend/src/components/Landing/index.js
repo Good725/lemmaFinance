@@ -833,11 +833,11 @@ function LandingPage({ classes }) {
                                 alignItems="center"
                               >
                                 <Grid item>
-                                  {/* <Tooltip placement="top" title="Max APY">
-                                    <Typography variant="body1">
-                                      Earn APY
+                                  {/* <Tooltip placement="top" title="Max APY"> */}
+                                  <Typography variant="body1">
+                                    Earn APY
                                     </Typography>
-                                  </Tooltip> */}
+                                  {/* </Tooltip> */}
                                 </Grid>
                                 <Grid item>
                                   {" "}
