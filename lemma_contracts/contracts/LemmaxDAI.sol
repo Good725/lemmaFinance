@@ -28,7 +28,11 @@ import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol
 // import 'hardhat/console.sol';
 
 interface ILemmaMainnet {
-    function setWithdrawalInfo(address account, uint256 amount) external;
+    function setWithdrawalInfo(
+        address account,
+        uint256 amount,
+        uint256 minETHOut
+    ) external;
 }
 
 /// @title Lemma token Contract for XDai network.
@@ -126,8 +130,11 @@ contract LemmaToken is
     /// @param _account The account lemma token is minted to.
     /// @param _amount The amount of lemma token is minted.
     function setDepositInfo(address _account, uint256 _amount) external {
-        require(_msgSender() == address(ambBridge), "not ambBridge");
-        require(ambBridge.messageSender() == address(lemmaMainnet), "ambBridge's messageSender is not lemmaMainnet");
+        require(_msgSender() == address(ambBridge), 'not ambBridge');
+        require(
+            ambBridge.messageSender() == address(lemmaMainnet),
+            "ambBridge's messageSender is not lemmaMainnet"
+        );
         depositInfo[_account] += _amount;
         emit DepositInfoAdded(_account, _amount);
         //if AMB call is done after relaying of tokens
@@ -166,7 +173,7 @@ contract LemmaToken is
 
     /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
     /// @param _amount The number of lemma tokens to be burned.
-    function withdraw(uint256 _amount) external {
+    function withdraw(uint256 _amount, uint256 _minETHOut) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
         _burn(_msgSender(), _amount);
@@ -189,7 +196,8 @@ contract LemmaToken is
             abi.encodeWithSelector(
                 functionSelector,
                 _msgSender(),
-                amountGotBackAfterClosing
+                amountGotBackAfterClosing,
+                _minETHOut
             );
         callBridge(address(lemmaMainnet), data, gasLimit);
 
@@ -220,6 +228,7 @@ contract LemmaToken is
         _token.safeApprove(address(multiTokenMediator), _amount);
         multiTokenMediator.relayTokens(address(_token), _receiver, _amount);
     }
+
     /// @param _contractOnOtherSide is lemma toke address deployed on mainnet network
     /// @param _data is ABI-encodes
     function callBridge(

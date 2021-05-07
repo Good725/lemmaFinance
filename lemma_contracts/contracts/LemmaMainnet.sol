@@ -56,6 +56,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     uint256 public cap;
 
     mapping(address => uint256) public withdrawalInfo;
+    mapping(address => uint256) public minimumETHToBeWithdrawn;
 
     event ETHDeposited(address indexed account, uint256 indexed amount);
     event ETHWithdrawed(address indexed account, uint256 indexed amount);
@@ -152,17 +153,26 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @dev This function can be called by only lemmaXDAI contract via ambBridge contract.
     /// @param _account is an account for withdrawing.
     /// @param  _amount is the USDC amount converted to Weth.
-    function setWithdrawalInfo(address _account, uint256 _amount) external {
+    function setWithdrawalInfo(
+        address _account,
+        uint256 _amount,
+        uint256 _minETHOut
+    ) external {
         require(_msgSender() == address(ambBridge), 'not ambBridge');
         require(
             ambBridge.messageSender() == address(lemmaXDAI),
             "ambBridge's messageSender is not lemmaXDAI"
         );
         withdrawalInfo[_account] += _amount;
+        minimumETHToBeWithdrawn[_account] = _minETHOut;
         emit WithdrawalInfoAdded(_account, _amount);
         if (USDC.balanceOf(address(this)) >= withdrawalInfo[_account]) {
             withdraw(_account);
         }
+    }
+
+    function setMinimuETHToBeWithdrawn(uint256 _minETHOut) external {
+        minimumETHToBeWithdrawn[_msgSender()] = _minETHOut;
     }
 
     /// @notice Withdraw eth based on the USDC amount set by WithdrawInfo.
@@ -170,6 +180,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @param _account is an account withdrawn to.
     function withdraw(address _account) public {
         uint256 amount = withdrawalInfo[_account];
+        uint256 minETHOut = minimumETHToBeWithdrawn[_account];
         delete withdrawalInfo[_account];
         address[] memory path = new address[](2);
         path[0] = address(USDC);
@@ -179,7 +190,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         uint256[] memory amounts =
             uniswapV2Router02.swapExactTokensForETH(
                 amount,
-                0, //TODO: figure out a way to get this from user
+                minETHOut,
                 path,
                 _account,
                 type(uint256).max

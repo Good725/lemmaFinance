@@ -43,8 +43,8 @@ describe("LemmaPerpetual", () => {
     expect(await this.lemmaPerpetual.owner()).to.equal(owner.address);
     expect(await this.lemmaPerpetual.clearingHouse()).to.equal(clearingHouseAddress);
     expect(await this.lemmaPerpetual.clearingHouseViewer()).to.equal(clearingHouseViewerAddress);
-    expect(await this.lemmaPerpetual.ETH_USDC_AMM()).to.equal(ammAddress);
-    expect(await this.lemmaPerpetual.USDC()).to.equal(usdcAddress);
+    expect(await this.lemmaPerpetual.amm()).to.equal(ammAddress);
+    expect(await this.lemmaPerpetual.collateral()).to.equal(usdcAddress);
     expect(await this.lemmaPerpetual.lemmaToken()).to.equal(lemmaToken.address);
     expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
   });
@@ -158,44 +158,7 @@ describe("LemmaPerpetual", () => {
   });
 
 
-  // it("should open position correctly", async function () {
-  //   //transfer USDC to lemmaPerpetual first
 
-  //   const amount = ethers.utils.parseUnits("1000", "6");
-  //   console.log(amount.toString());
-  //   console.log((await this.usdc.balanceOf(hasUSDC._address)).toString());
-  //   await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
-
-  //   //should revert if open position is called by an address other than lemmaToken
-  //   await expect(this.lemmaPerpetual.connect(someAccount).open(amount)).to.be.revertedWith("Lemma: only lemma token allowed");
-
-  //   await this.lemmaPerpetual.connect(lemmaToken).open(amount);
-  //   const totalCollateral = await this.lemmaPerpetual.getTotalCollateral();
-  //   console.log("totalCollateral", totalCollateral.toString());
-
-  //   //close position when totalCollateral is given as input
-  //   await this.lemmaPerpetual.connect(lemmaToken).close(ethers.utils.parseUnits("321", "6"));
-
-  //   const position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
-  //     ammAddress,
-  //     this.lemmaPerpetual.address,
-  //   );
-  //   //since leverage == 1
-  //   // expect(position.openNotional.d).to.equal(ZERO);
-  //   // expect(position.margin.d).to.equal(ZERO);
-  //   // expect(position.size.d).to.equal(ZERO);
-  //   expect((await this.usdc.balanceOf(this.lemmaPerpetual.address))).to.equal(ZERO);
-  //   //check the balance of lemmaTOken
-  //   //should be amountInwei - fees1 -fees2
-
-
-  //   console.log("position of lemmaPerpetual: size", position.size.d.toString());
-  //   console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
-  //   console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
-  //   console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
-  //   console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
-  //   console.log((await this.usdc.balanceOf(this.lemmaPerpetual.address)).toString());
-  // });
 
 
 });

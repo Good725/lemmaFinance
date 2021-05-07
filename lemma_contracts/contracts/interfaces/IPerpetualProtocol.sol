@@ -7,6 +7,4 @@ interface IPerpetualProtocol {
     function close(uint256 amount) external returns (uint256);
 
     function getTotalCollateral() external view returns (uint256);
-
-    function fees(uint256 amount) external view returns (uint256);
 }

@@ -206,18 +206,6 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             );
     }
 
-    function fees(uint256 _amount) external view override returns (uint256) {
-        //asumes that leverage = 1
-        return
-            convert18DecimalsToCollateralAmount(
-                address(USDC),
-                calcFee(
-                    ETH_USDC_AMM,
-                    convertCollteralAmountTo18Decimals(address(USDC), _amount)
-                )
-            );
-    }
-
     function calcFee(IAmm _amm, Decimal.decimal memory _positionNotional)
         public
         view
