@@ -122,8 +122,11 @@ function LandingPage({ classes }) {
     if (!isConnected) {
       return;
     }
-
-    setAmount((value * convertToReadableFormat(ethBalance)) / 100);
+    value = BigNumber.from(value);
+    const hundreadBN = BigNumber.from("100");
+    //below to make sure that every operation happens in the BigNumber 
+    //otherwise it can open us upto unexpectedErrors
+    setAmount((convertToReadableFormat(value.mul(ethBalance).div(hundreadBN))));
     setSliderValue(value);
   };
 
@@ -131,7 +134,11 @@ function LandingPage({ classes }) {
     if (!isConnected) {
       return;
     }
-    setAmount((value * convertToReadableFormat(withdrawableETH)) / 100);
+    value = BigNumber.from(value);
+    const hundreadBN = BigNumber.from("100");
+    //below to make sure that every operation happens in the BigNumber 
+    //otherwise it can open us upto unexpectedErrors
+    setAmount((convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))));
     setSliderValue(value);
   };
 

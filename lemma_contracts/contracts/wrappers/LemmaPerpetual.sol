@@ -17,7 +17,7 @@ import {
 import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
 import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
-import 'hardhat/console.sol';
+// import 'hardhat/console.sol';
 
 /// @title Lemma Perpetual contract for interacting with perpetual protocol.
 /// @author yashnaman
@@ -111,19 +111,19 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
 
-        console.log('removed margin enought to cover the fees');
-        console.log('totalCollateral', getTotalCollateral());
-        console.log('assetAmount', assetAmount.toUint());
-        console.log('_amount', _amount);
+        // console.log('removed margin enought to cover the fees');
+        // console.log('totalCollateral', getTotalCollateral());
+        // console.log('assetAmount', assetAmount.toUint());
+        // console.log('_amount', _amount);
         if (getTotalCollateral() == _amount) {
             clearingHouse.closePosition(amm, Decimal.zero());
             // console.log('closed postion');
         } else {
             clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
-            console.log(
-                'collateralBalance after getting fees:',
-                collateral.balanceOf(address(this))
-            );
+            // console.log(
+            //     'collateralBalance after getting fees:',
+            //     collateral.balanceOf(address(this))
+            // );
             clearingHouse.openPosition(
                 amm,
                 IClearingHouse.Side.SELL,
@@ -137,7 +137,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         // console.log('opened position on other side');
         //TODO: add require that leverage should not be greater than one
         uint256 collateralBalance = collateral.balanceOf(address(this));
-        console.log('collateralBalance', collateralBalance);
+        // console.log('collateralBalance', collateralBalance);
         collateral.safeTransfer(lemmaToken, collateralBalance);
 
         return collateralBalance;
