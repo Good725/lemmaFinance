@@ -44,10 +44,7 @@ contract LemmaToken is
     ERC2771ContextUpgradeable
 {
     using SafeERC20 for IERC20;
-    // IERC20Upgradeable public collateral =
-    //     IERC20Upgradeable(0xe0B887D54e71329318a036CF50f30Dbe4444563c);
-    // IERC20Upgradeable public underlyingAsset =
-    //     IERC20Upgradeable(0x359eaF429cd6114c6fcb263dB04586Ad59177CAc); //WETH for testing //has faucet(uint256) method
+
     IERC20 public collateral;
     IPerpetualProtocol public perpetualProtocol; //at first it would be perpetual wrapper
 
@@ -97,8 +94,8 @@ contract LemmaToken is
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (address sender)
     {
-        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
-        return ERC2771ContextUpgradeable._msgSender();
+        //ERC2771ContextUpgradeable._msgSender();
+        return super._msgSender();
     }
 
     function _msgData()
@@ -108,8 +105,8 @@ contract LemmaToken is
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (bytes calldata)
     {
-        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
-        return ERC2771ContextUpgradeable._msgData();
+        //ERC2771ContextUpgradeable._msgData();
+        return super._msgData();
     }
 
     /// @notice Set lemma contract deployed on Mainnet.
@@ -150,23 +147,23 @@ contract LemmaToken is
         delete depositInfo[_account];
         //totalSupply is equal to the total USDC deposited
 
+        collateral.safeTransfer(address(perpetualProtocol), amount);
+        //open position on perpetual
+        uint256 amountAfterOpeningPosition = perpetualProtocol.open(amount);
+
         uint256 toMint;
         if (totalSupply() != 0) {
             toMint =
-                (totalSupply() * amount) /
+                (totalSupply() * amountAfterOpeningPosition) /
                 perpetualProtocol.getTotalCollateral();
         } else {
             //  just so that lUSDC minted is ~USDC deposited
-            toMint = amount * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
+            toMint = amountAfterOpeningPosition * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
 
         _mint(_account, toMint);
 
-        collateral.safeTransfer(address(perpetualProtocol), amount);
-        //open position on perpetual
-        perpetualProtocol.open(amount);
-
-        emit USDCDeposited(_account, amount);
+        emit USDCDeposited(_account, amountAfterOpeningPosition);
 
         // //require(toMint>=minimumToMint)
     }

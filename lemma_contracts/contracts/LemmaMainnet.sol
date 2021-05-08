@@ -94,8 +94,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (address sender)
     {
-        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
-        return ERC2771ContextUpgradeable._msgSender();
+        //ERC2771ContextUpgradeable._msgSender();
+        return super._msgSender();
     }
 
     function _msgData()
@@ -105,8 +105,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (bytes calldata)
     {
-        //replace it with super._msgSender() after making sure that ERC2771ContextUpgradeable is the immediate parent
-        return ERC2771ContextUpgradeable._msgData();
+        //ERC2771ContextUpgradeable._msgData();
+        return super._msgData();
     }
 
     /// @notice Set gas limit that is used to call bridge.

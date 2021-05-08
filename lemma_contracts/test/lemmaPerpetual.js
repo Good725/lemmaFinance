@@ -123,7 +123,7 @@ describe("LemmaPerpetual", () => {
   });
 
 
-  it("should close position correctly", async function () {
+  it("should close the entire position correctly", async function () {
     //transfer USDC to lemmaPerpetual first
 
     const amount = ethers.utils.parseUnits("1000", "6");
@@ -157,8 +157,7 @@ describe("LemmaPerpetual", () => {
 
   });
 
-
-
+  //TODO: add tests for partial close
 
 
 });

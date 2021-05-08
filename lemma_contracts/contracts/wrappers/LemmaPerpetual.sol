@@ -70,7 +70,12 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     /// @notice open on which side needs to decided by rebalancer logic
     /// @dev This function can be called through lemma token contract
     /// @param _amount The number of collateral to open perpetual protocol.
-    function open(uint256 _amount) external override onlyLemmaToken {
+    function open(uint256 _amount)
+        external
+        override
+        onlyLemmaToken
+        returns (uint256)
+    {
         (
             Decimal.decimal memory assetAmount,
             Decimal.decimal memory leverage,
@@ -84,6 +89,11 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             leverage,
             baseAssetAmountLimit
         );
+        return
+            convert18DecimalsToCollateralAmount(
+                address(collateral),
+                assetAmount
+            );
     }
 
     //close on which side needs to be decide by rebalacer logic

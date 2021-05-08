@@ -74,7 +74,12 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     //open on which side needs to decided by rebalancer logic
     //underlying asset needs to be given dynamically
-    function open(uint256 _amount) external override onlyLemmaToken {
+    function open(uint256 _amount)
+        external
+        override
+        onlyLemmaToken
+        returns (uint256 temp)
+    {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
         //open postion on perptual protcol
         Decimal.decimal memory assetAmount =
