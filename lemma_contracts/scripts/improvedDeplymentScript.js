@@ -40,13 +40,13 @@ async function main() {
     const perpMetadataUrl = "https://metadata.perp.exchange/" + (network == "mainnet" ? "production" : "staging") + ".json";
     const perpMetadata = await fetch(perpMetadataUrl).then(res => res.json());
 
-    const xDAIProvider = new ethers.getDefaultProvider("https://rpc.xdaichain.com/");
-    const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
-    const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
+    // const xDAIProvider = new ethers.getDefaultProvider("https://rpc.xdaichain.com/");
+    // const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
+    // const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
 
 
-    // const xDAIProvider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
-    // const mainnetProvider = new ethers.getDefaultProvider("http://127.0.0.1:7545");
+    const xDAIProvider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
+    const mainnetProvider = new ethers.getDefaultProvider("http://127.0.0.1:7545");
 
     const xDAIWallet = new ethers.Wallet(process.env.PRIVATE_KEY, xDAIProvider);
     const mainnetWallet = xDAIWallet.connect(mainnetProvider);
@@ -67,6 +67,9 @@ async function main() {
     const ambBridgeOnEth = perpMetadata.layers.layer1.externalContracts.ambBridgeOnEth;
     const multiTokenMediatorOnEth = perpMetadata.layers.layer1.externalContracts.multiTokenMediatorOnEth;
 
+    const maximumETHCap = ethers.utils.parseEther("500");
+    // console.log(maximumETHCap.toString());
+
 
 
     // const LemmaPerpetual = (await hre.ethers.getContractFactory("LemmaPerpetual")).connect(xDAIWallet);
@@ -85,33 +88,24 @@ async function main() {
 
     //set lemmaToken on lemmaPerpetual
     tx = await lemmaPerpetual.setLemmaToken(lemmaToken.address);
-    tx.wait();
+    await tx.wait();
     console.log("lemmaToken", await lemmaPerpetual.lemmaToken());
 
     //deploy LemmaMainnet
     const LemmaMainnet = (await hre.ethers.getContractFactory("LemmaMainnet")).connect(mainnetWallet);
-    const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcMainnet, wethMainnet, lemmaToken.address, uniswapV2Router02Mainnet, ambBridgeOnEth, multiTokenMediatorOnEth, trustedForwaderMainnet], { initializer: 'initialize' });
+    const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcMainnet, wethMainnet, lemmaToken.address, uniswapV2Router02Mainnet, ambBridgeOnEth, multiTokenMediatorOnEth, trustedForwaderMainnet, maximumETHCap], { initializer: 'initialize' });
     await lemmaMainnet.deployed();
     console.log("lemmaMainnet", lemmaMainnet.address);
 
     //set lemmaMainnet address in Lemmaxdai
     tx = await lemmaToken.setLemmaMainnet(lemmaMainnet.address);
-    tx.wait();
+    await tx.wait();
     console.log("lemmaMainnet", await lemmaToken.lemmaMainnet());
 
     tx = await lemmaMainnet.deposit(0, { value: ethers.utils.parseUnits("0.1", "ether") });
-    tx.wait();
+    await tx.wait();
+
     console.log(tx.hash);
-
-
-
-
-
-
-    // console.log(xDAIWallet);
-    // console.log(mainnetWallet);
-    // console.log(mainnetProvider);
-    // console.log(xDAIProvider);
 }
 
 main()

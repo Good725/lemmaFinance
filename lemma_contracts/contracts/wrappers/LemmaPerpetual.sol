@@ -65,8 +65,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         lemmaToken = _lemmaToken;
     }
 
-    //open on which side needs to decided by rebalancer logic
-    //underlying asset needs to be given dynamically
     /// @notice open on which side needs to decided by rebalancer logic
     /// @dev This function can be called through lemma token contract
     /// @param _amount The number of collateral to open perpetual protocol.
@@ -96,8 +94,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             );
     }
 
-    //close on which side needs to be decide by rebalacer logic
-    //underlying asset needs to be given dynamically
     /// @notice close on which side needs to be decide by rebalacer logic
     /// @dev This function can be called through lemma token contract.
     /// @param _amount The number of collateral to be closed from perpetual protocol.
