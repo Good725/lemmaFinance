@@ -47,6 +47,7 @@ function LandingPage({ classes }) {
     isConnected,
     onConnect,
     networkId,
+    rawProvider,
     onDisconnect,
   } = useConnectedWeb3Context();
 
@@ -124,9 +125,9 @@ function LandingPage({ classes }) {
     }
     value = BigNumber.from(value);
     const hundreadBN = BigNumber.from("100");
-    //below to make sure that every operation happens in the BigNumber 
+    //below to make sure that every operation happens in the BigNumber
     //otherwise it can open us upto unexpectedErrors
-    setAmount((convertToReadableFormat(value.mul(ethBalance).div(hundreadBN))));
+    setAmount(convertToReadableFormat(value.mul(ethBalance).div(hundreadBN)));
     setSliderValue(value);
   };
 
@@ -136,9 +137,11 @@ function LandingPage({ classes }) {
     }
     value = BigNumber.from(value);
     const hundreadBN = BigNumber.from("100");
-    //below to make sure that every operation happens in the BigNumber 
+    //below to make sure that every operation happens in the BigNumber
     //otherwise it can open us upto unexpectedErrors
-    setAmount((convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))));
+    setAmount(
+      convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))
+    );
     setSliderValue(value);
   };
 
@@ -599,6 +602,36 @@ function LandingPage({ classes }) {
     setWrongNetwork(false);
   };
 
+  const onConnectXDai = async () => {
+    try {
+      if (!rawProvider) {
+        return;
+      }
+
+      await rawProvider.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: "0x64",
+            chainName: "xDAI Chain",
+            rpcUrls: ["https://dai.poa.network"],
+            iconUrls: [
+              "https://xdaichain.com/fake/example/url/xdai.svg",
+              "https://xdaichain.com/fake/example/url/xdai.png",
+            ],
+            nativeCurrency: {
+              name: "xDAI",
+              symbol: "xDAI",
+              decimals: 18,
+            },
+          },
+        ],
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const alertAnchor = {
     vertical: "top",
     horizontal: "center",
@@ -743,6 +776,13 @@ function LandingPage({ classes }) {
                   Early Access
                 </Button>
               </Grid>
+              {isConnected && networkId !== 100 && (
+                <Grid item>
+                  <Button className={classes.navButton} onClick={onConnectXDai}>
+                    Connect to xDAI
+                  </Button>
+                </Grid>
+              )}
               <Grid item>
                 <Button
                   className={classes.connectButton}
@@ -843,7 +883,7 @@ function LandingPage({ classes }) {
                                   {/* <Tooltip placement="top" title="Max APY"> */}
                                   <Typography variant="body1">
                                     Earn APY
-                                    </Typography>
+                                  </Typography>
                                   {/* </Tooltip> */}
                                 </Grid>
                                 <Grid item>
@@ -877,8 +917,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
@@ -967,7 +1007,7 @@ function LandingPage({ classes }) {
                                   > */}
                                   <Typography variant="body1">
                                     {ethData.asset} Deposited
-                                    </Typography>
+                                  </Typography>
                                   {/* </Tooltip> */}
                                 </Grid>
                                 <Grid item>
@@ -1001,7 +1041,7 @@ function LandingPage({ classes }) {
                                   > */}
                                   <Typography variant="body1">
                                     {ethData.asset} Earnings
-                                    </Typography>
+                                  </Typography>
                                   {/* </Tooltip> */}
                                 </Grid>
                                 <Grid item>
