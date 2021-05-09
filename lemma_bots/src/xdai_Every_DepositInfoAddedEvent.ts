@@ -22,22 +22,41 @@ const headers = {
 };
 
 
-// Entrypoint for the Autotask
+// // Entrypoint for the Autotask
+// export async function handler(params: any) {
+//   // const provider = new DefenderRelayProvider(credentials);
+//   const payload = params.request.body;
+//   const transaction = payload.transaction;
+//   const matchReasons = payload.matchReasons;
+//   const sentinel = payload.sentinel;
+//   const abi = sentinel.abi;
+
+//   const provider = ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/")
+
+
 export async function handler(credentials: RelayerParams) {
   const provider = new DefenderRelayProvider(credentials);
   const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, LemmaToken.abi, provider);
 
-  const latestBlockNumber: number = await provider.getBlockNumber();
   const eventFilter: ethers.EventFilter = lemmaToken.filters.DepositInfoAdded();
   //if the last 30 blocks (5 sec block time)  had the depositInfoAdded 
-  const events: ethers.Event[] = await lemmaToken.queryFilter(eventFilter, -12);
-  console.log(events)
+  // const events: ethers.Event[] = await lemmaToken.queryFilter(eventFilter);
+  // console.log(events.length, "events found");
+
+  const events = [1]
   for (let i = 0; i < events.length; i++) {
-    const account = events[i].args.account;
-    const amount: BigNumber = events[i].args.amount;
+    console.log("evaluating for", i);
+    // const account = events[i].args.account;
+    const account = "0x55f5E03fcbE088EDdba68B4657ade3243AC45009";
+    // const amount: BigNumber = events[i].args.amount;
     const amountOnLemma: BigNumber = await lemmaToken.depositInfo(account);
+    console.log("amountOnLemmaPending", amountOnLemma.toString())
     if (!amountOnLemma.isZero()) {
-      console.log("in")
+      console.log("minting for: " + account);
+
+      //lets estimateGas before
+      let tx = await lemmaToken.populateTransaction.mint(account);
+      let estimatedGas = await provider.estimateGas(tx);
       const apiData = {
         'userAddress': '',
         // 'from': '',
@@ -51,14 +70,19 @@ export async function handler(credentials: RelayerParams) {
       // apiData.from = accounts[0];
       apiData.to = lemmaToken.address;
       apiData.params = [account];
-      // console.log("in");
-      // try {
-      await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
-      // }
-      // catch (e) {
-      //   console.log(e);
-      // }
+
+      console.log("trying to send transaction via biconomy");
+      try {
+        let txHash = await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+        console.log("transaction sent with txHash", txHash)
+      }
+      catch (e) {
+        console.log("transction failed");
+        console.log(e);
+      }
       //tell biconomy to make a mint transaction
+    } else {
+      console.log("not necessary")
     }
 
   }

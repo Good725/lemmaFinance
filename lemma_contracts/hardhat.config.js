@@ -1,3 +1,5 @@
+const { ethers } = require("ethers");
+
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
 require("@openzeppelin/hardhat-upgrades");
@@ -59,7 +61,7 @@ module.exports = {
       accounts: {
         mnemonic: process.env.MNEMONIC,
       },
-      gasPrice: 10 ** 9,//1 gwei
+      gasPrice: (ethers.utils.parseUnits("1", "gwei")).toNumber()
     }
   },
   solidity: {

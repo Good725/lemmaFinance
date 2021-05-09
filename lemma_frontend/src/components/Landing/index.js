@@ -436,6 +436,7 @@ function LandingPage({ classes }) {
 
   const refreshBalances = async () => {
     console.log("refresh Balance start");
+    onWithdrawInfoAdded();
     setLoadingBalance(true);
     //to update the balance
     await onConnect();

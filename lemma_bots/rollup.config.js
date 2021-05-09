@@ -25,9 +25,9 @@ export default [{
   ],
 },
 {
-  input: 'src/xdai.ts',
+  input: 'src/xdai_Every_DepositInfoAddedEvent.ts',
   output: {
-    file: 'dist/xdai.js',
+    file: 'dist/xdai_Every_DepositInfoAddedEvent.js',
     format: 'cjs',
   },
   plugins: [
