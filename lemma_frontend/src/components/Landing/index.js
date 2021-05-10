@@ -202,15 +202,15 @@ function LandingPage({ classes }) {
         lemmaPerpetual.address
       ),
     ]);
-    // console.log([maxHoldingBaseAsset, openInterestNotionalCap, currentOpenInterest, position]);
+    console.log([maxHoldingBaseAsset.d.toString(), openInterestNotionalCap.d.toString(), currentOpenInterest.toString(), position.size.d.toString()]);
 
     if (
       openInterestNotionalCap.d.lt(
-        currentOpenInterest.add(parseEther(amount.toString()))
-      ) ||
-      maxHoldingBaseAsset.d.lt(
-        position.size.d.add(parseEther(amount.toString()))
-      )
+        currentOpenInterest.add(parseEther(amount.toString())))
+      // ) ||
+      // maxHoldingBaseAsset.d.lt(
+      //   position.size.d.add(parseEther(amount.toString()))
+      // )
     ) {
       setErrorMessage("Sorry, Maximum limit reached");
       setErrorOpen(true);
@@ -776,13 +776,13 @@ function LandingPage({ classes }) {
                   Early Access
                 </Button>
               </Grid>
-              {isConnected && networkId !== 100 && (
+              {/* {isConnected && networkId !== 100 && (
                 <Grid item>
                   <Button className={classes.navButton} onClick={onConnectXDai}>
                     Connect to xDAI
                   </Button>
                 </Grid>
-              )}
+              )} */}
               <Grid item>
                 <Button
                   className={classes.connectButton}
@@ -917,8 +917,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
