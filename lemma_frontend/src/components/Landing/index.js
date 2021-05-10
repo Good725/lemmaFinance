@@ -205,12 +205,12 @@ function LandingPage({ classes }) {
     console.log([maxHoldingBaseAsset.d.toString(), openInterestNotionalCap.d.toString(), currentOpenInterest.toString(), position.size.d.toString()]);
 
     if (
-      openInterestNotionalCap.d.lt(
-        currentOpenInterest.add(parseEther(amount.toString())))
-      // ) ||
-      // maxHoldingBaseAsset.d.lt(
-      //   position.size.d.add(parseEther(amount.toString()))
-      // )
+      // openInterestNotionalCap.d.lt(
+      //   currentOpenInterest.add(parseEther(amount.toString()))     ) ||
+
+      maxHoldingBaseAsset.d.lt(
+        position.size.d.add(parseEther(amount.toString()))
+      )
     ) {
       setErrorMessage("Sorry, Maximum limit reached");
       setErrorOpen(true);
