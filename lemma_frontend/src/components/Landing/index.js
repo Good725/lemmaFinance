@@ -162,6 +162,11 @@ function LandingPage({ classes }) {
       setErrorOpen(true);
       return;
     }
+    if (parseEther(amount.toString()).add(deposited).gt(ethBalance)) {
+      setErrorMessage("Individual ETH deposit is capped at 10 ETH");
+      setErrorOpen(true);
+      return;
+    }
 
     const ethUSDCAMMAddress =
       addresses.perpRinkebyXDAI.layers.layer2.contracts.ETHUSDC.address;
@@ -257,9 +262,8 @@ function LandingPage({ classes }) {
         // const lemmaMainnetEthers = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, signer);
         // const DepositFilter = lemmaMainnetEthers.filters.ETHDeposited(accounts[0]);
 
-        const lemmaXDAIDepositInfoAddedFilter = lemmaToken.instance.filters.DepositInfoAdded(
-          account
-        );
+        const lemmaXDAIDepositInfoAddedFilter =
+          lemmaToken.instance.filters.DepositInfoAdded(account);
         const lusdcMintedFilter = lemmaToken.instance.filters.Transfer(
           ethers.constants.AddressZero,
           account
@@ -327,11 +331,10 @@ function LandingPage({ classes }) {
         // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
         let userAddress = account;
         // Create your target method signature.. here we are calling setQuote() method of our contract
-        let {
-          data,
-        } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
-          lUSDCAmount
-        );
+        let { data } =
+          await lemmaTokenWithBiconomy.populateTransaction.withdraw(
+            lUSDCAmount
+          );
         console.log("data", data);
         let provider = biconomy.getEthersProvider();
 
@@ -358,9 +361,8 @@ function LandingPage({ classes }) {
         //to test the blockscout link
         // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
-        const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
-          account
-        );
+        const lemmaMainnetETHWithdrawedFilter =
+          lemmaMain.instance.filters.ETHWithdrawed(account);
         lemmaMain.instance.once(
           lemmaMainnetETHWithdrawedFilter,
           onSuccessfulWithdrawal
@@ -440,15 +442,12 @@ function LandingPage({ classes }) {
       IUniswapV2Router02.abi,
       signer
     );
-    const [
-      userBalanceOfLUSDC,
-      totalCollateral,
-      totalSupplyOfLUSDC,
-    ] = await Promise.all([
-      lemmaToken.balanceOf(account),
-      lemmaPerpetual.getTotalCollateral(),
-      lemmaToken.totalSupply(),
-    ]);
+    const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] =
+      await Promise.all([
+        lemmaToken.balanceOf(account),
+        lemmaPerpetual.getTotalCollateral(),
+        lemmaToken.totalSupply(),
+      ]);
 
     let maxWithdrwableEth = new BigNumber.from("0");
 
