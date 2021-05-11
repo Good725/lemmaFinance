@@ -309,7 +309,7 @@ function LaunchPage({ classes }) {
                 Reserve allocation for our Mainnet release
               </Grid>
               <Grid item className={classes.subtitle}>
-                Initial hard cap will be 500 ETH
+                Initial total hard cap will be 500 ETH, personal hard cap will be 10 ETH
               </Grid>
             </Grid>
 
