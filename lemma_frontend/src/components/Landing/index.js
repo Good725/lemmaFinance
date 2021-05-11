@@ -162,7 +162,7 @@ function LandingPage({ classes }) {
       setErrorOpen(true);
       return;
     }
-    if (parseEther(amount.toString()).add(deposited).gt(ethBalance)) {
+    if (parseEther(amount.toString()).add(deposited).gt(parseEther("10"))) {
       setErrorMessage("Individual ETH deposit is capped at 10 ETH");
       setErrorOpen(true);
       return;
@@ -210,9 +210,8 @@ function LandingPage({ classes }) {
     console.log([maxHoldingBaseAsset.d.toString(), openInterestNotionalCap.d.toString(), currentOpenInterest.toString(), position.size.d.toString()]);
 
     if (
-      // openInterestNotionalCap.d.lt(
-      //   currentOpenInterest.add(parseEther(amount.toString()))     ) ||
-
+      openInterestNotionalCap.d.lt(
+        currentOpenInterest.add(parseEther(amount.toString()))) ||
       maxHoldingBaseAsset.d.lt(
         position.size.d.add(parseEther(amount.toString()))
       )
