@@ -1,6 +1,6 @@
 {
     "rinkeby": {
-        "lemmaMainnet": "0xBDd42b35D7217739d8ff53a4a54e17addb09C804",
+        "lemmaMainnet": "0x755F41f1a81C2d3a97Ed7A6383A4B7fE93E73421",
         "weth": "0xc778417e063141139fce010982780140aa0cd5ab",
         "trustedForwarder": "0xFD4973FeB2031D4409fB57afEE5dF2051b171104",
         "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
@@ -15,8 +15,8 @@
         "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
     },
     "xDAIRinkeby": {
-        "lemmaxDAI": "0x6900C64b2F95781FDeDd1C23029402C3ab437094",
-        "lemmaPerpetual": "0x9fE48432c8C93af7b48805b0e574033Dc871C489"
+        "lemmaxDAI": "0x7c1C48460C66C279022F4a0afD9267dbC9744C30",
+        "lemmaPerpetual": "0xF56a5ED165b18Af0Eb0031285EF18736d290F4D3"
     },
     "perpRinkebyXDAI": {
         "layers": {

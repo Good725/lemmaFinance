@@ -119,15 +119,16 @@ function LandingPage({ classes }) {
     }
   };
 
+
   const handleSliderChange = (event, value) => {
     if (!isConnected) {
       return;
     }
     value = BigNumber.from(value);
     const hundreadBN = BigNumber.from("100");
-    //below to make sure that every operation happens in the BigNumber
+    //below to make sure that every operation happens in the BigNumber 
     //otherwise it can open us upto unexpectedErrors
-    setAmount(convertToReadableFormat(value.mul(ethBalance).div(hundreadBN)));
+    setAmount((convertToReadableFormat(value.mul(ethBalance).div(hundreadBN))));
     setSliderValue(value);
   };
 
@@ -137,13 +138,12 @@ function LandingPage({ classes }) {
     }
     value = BigNumber.from(value);
     const hundreadBN = BigNumber.from("100");
-    //below to make sure that every operation happens in the BigNumber
+    //below to make sure that every operation happens in the BigNumber 
     //otherwise it can open us upto unexpectedErrors
-    setAmount(
-      convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))
-    );
+    setAmount((convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))));
     setSliderValue(value);
   };
+
 
   const getExplorerLink = (transactionHash, networkName) => {
     const blockExplorerURL =
@@ -331,10 +331,12 @@ function LandingPage({ classes }) {
         // let contractInterface = new ethers.utils.Interface(LemmaToken.abi);
         let userAddress = account;
         // Create your target method signature.. here we are calling setQuote() method of our contract
-        let { data } =
-          await lemmaTokenWithBiconomy.populateTransaction.withdraw(
-            lUSDCAmount
-          );
+        const minETHOut = ZERO;
+        let {
+          data,
+        } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
+          lUSDCAmount, minETHOut
+        );
         console.log("data", data);
         let provider = biconomy.getEthersProvider();
 
@@ -361,12 +363,18 @@ function LandingPage({ classes }) {
         //to test the blockscout link
         // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
-        const lemmaMainnetETHWithdrawedFilter =
-          lemmaMain.instance.filters.ETHWithdrawed(account);
+
+        const lemmaMainnetWithdrawInfoAdded = lemmaMain.instance.filters.WithdrawalInfoAdded(account);
+        lemmaMain.instance.once(lemmaMainnetWithdrawInfoAdded, onWithdrawInfoAdded);
+
+        const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
+          account
+        );
         lemmaMain.instance.once(
           lemmaMainnetETHWithdrawedFilter,
           onSuccessfulWithdrawal
         );
+
 
         console.log("Transaction hash : ", txHash);
         setExplorerLink(getExplorerLink(txHash, "xdai"));
@@ -433,7 +441,7 @@ function LandingPage({ classes }) {
 
   const refreshBalances = async () => {
     console.log("refresh Balance start");
-
+    onWithdrawInfoAdded();
     setLoadingBalance(true);
     //to update the balance
     await onConnect();
@@ -582,6 +590,41 @@ function LandingPage({ classes }) {
       });
     } else {
       console.log("not necessary to mint by user");
+    }
+  };
+
+  const onWithdrawInfoAdded = async () => {
+    const biconomyApiKey = constants.biconomy.rinkeby.withdraw.apiKey;
+    const biconomyMethodAPIKey = constants.biconomy.rinkeby.withdraw.methodAPIKey;
+    const headers = {
+      "x-api-key": biconomyApiKey,
+      "Content-Type": "application/json",
+    };
+    const amountOnLemma = await lemmaMain.instance.withdrawalInfo(account);
+    if (!amountOnLemma.isZero()) {
+      console.log("in");
+      const apiData = {
+        userAddress: "",
+        // 'from': '',
+        to: "",
+        // 'gasLimit': '',
+        params: Array(0),
+        apiId: biconomyMethodAPIKey,
+      };
+
+      apiData.userAddress = ethers.constants.AddressZero;
+      apiData.to = lemmaMain.address;
+      apiData.params = [account];
+
+      //tell biconomy to make a mint transaction
+      await axios({
+        method: "post",
+        url: "https://api.biconomy.io/api/v2/meta-tx/native",
+        headers: headers,
+        data: apiData,
+      });
+    } else {
+      console.log("not necessary to withdraw by user");
     }
   };
 

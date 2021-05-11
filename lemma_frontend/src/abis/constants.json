@@ -3,11 +3,17 @@
         "xdai": {
             "mint": {
                 "apiKey": "Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39",
-                "methodAPIKey": "b9e3a7f2-b78a-416c-b057-d8a36ba76400"
+                "methodAPIKey": "c8ce5cea-1f6b-4250-b068-4deb7a979e45"
             },
             "withdraw": {
                 "apiKey": "8u2bSHCoH.849e2a72-c03f-4784-bc0e-8ad964ee3ad5",
-                "methodAPIKey": "13905749-edfe-4367-a4e8-c1fdf7cf9e1b"
+                "methodAPIKey": "ea8be762-2830-4ff8-b77d-52a3cc212c6f"
+            }
+        },
+        "rinkeby": {
+            "withdraw": {
+                "apiKey": "qtEU79q8w.a181871e-c3fd-4901-8440-23aa88902e5c",
+                "methodAPIKey": "7937b80e-b7fc-4eb1-ad89-3344bb66a6c9"
             }
         }
     }

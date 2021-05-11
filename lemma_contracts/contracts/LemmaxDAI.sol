@@ -148,6 +148,8 @@ contract LemmaToken is
         //totalSupply is equal to the total USDC deposited
 
         collateral.safeTransfer(address(perpetualProtocol), amount);
+
+        uint256 totalCollateral = perpetualProtocol.getTotalCollateral();
         //open position on perpetual
         uint256 amountAfterOpeningPosition = perpetualProtocol.open(amount);
 
@@ -155,7 +157,7 @@ contract LemmaToken is
         if (totalSupply() != 0) {
             toMint =
                 (totalSupply() * amountAfterOpeningPosition) /
-                perpetualProtocol.getTotalCollateral();
+                totalCollateral;
         } else {
             //  just so that lUSDC minted is ~USDC deposited
             toMint = amountAfterOpeningPosition * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC

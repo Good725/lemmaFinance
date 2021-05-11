@@ -40,7 +40,7 @@ async function main() {
     const perpMetadataUrl = "https://metadata.perp.exchange/" + (network == "mainnet" ? "production" : "staging") + ".json";
     const perpMetadata = await fetch(perpMetadataUrl).then(res => res.json());
 
-    const xDAIProvider = new ethers.getDefaultProvider("https://rpc.xdaichain.com/");
+    const xDAIProvider = new ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/");
     const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
     const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
 
