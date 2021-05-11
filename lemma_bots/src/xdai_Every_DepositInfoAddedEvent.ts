@@ -1,97 +1,72 @@
 // Import dependencies available in the autotask environment
 import { RelayerParams } from 'defender-relay-client/lib/relayer';
 import { DefenderRelayProvider } from 'defender-relay-client/lib/ethers';
-import { BigNumber, ethers, Signer } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 
 // Import an ABI which will be embedded into the generated js
 import IERC20 from '@openzeppelin/contracts/build/contracts/IERC20.json';
 import LemmaToken from "./abis/LemmaToken.json";
 import addresses from "./addresses.json";
-import { id } from '@ethersproject/hash';
-import { isGetAccessor } from 'typescript';
+// import { id } from '@ethersproject/hash';
+// import { isGetAccessor } from 'typescript';
 import axios from 'axios';
+// import Web3 from "web3";
 
 
 //TODO: use the same biconomy keys for both files
 //move it to a .json file
 const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
-const biconomyMethodAPIKey = 'b9e3a7f2-b78a-416c-b057-d8a36ba76400';
+const biconomyMethodAPIKey = 'c8ce5cea-1f6b-4250-b068-4deb7a979e45';
 const headers = {
   'x-api-key': biconomyApiKey,
   'Content-Type': 'application/json',
 };
 
-// export async function handler(credentials: RelayerParams) {
-//   const provider = new DefenderRelayProvider(credentials);
-//   const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, LemmaToken.abi, provider);
-
-//   const eventFilter: ethers.EventFilter = lemmaToken.filters.DepositInfoAdded();
-//   //if the last 30 blocks (5 sec block time)  had the depositInfoAdded 
-//   // const events: ethers.Event[] = await lemmaToken.queryFilter(eventFilter);
-//   // console.log(events.length, "events found");
 
 // Entrypoint for the Autotask
-export async function handler(params: any) {
-  // const provider = new DefenderRelayProvider(credentials);
-  const payload = params.request.body;
-  const transaction = payload.transaction;
-  const matchReasons = payload.matchReasons;
-  const sentinel = payload.sentinel;
-  const abi = sentinel.abi;
-
-  const provider = ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/");
-  console.log(provider._isProvider)
+export async function handler(credentials: RelayerParams) {
+  const provider = new DefenderRelayProvider(credentials);
+  // const web3Provider = new Web3.providers.HttpProvider("https://rpc.xdaichain.com/")
+  // const provider = new ethers.providers.Web3Provider(web3Provider)
   const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, LemmaToken.abi, provider);
-  console.log("matchReasons", matchReasons)
-  console.log("transaction", transaction)
 
-  //
-  // const lemmaTokenInterface = new ethers.utils.Interface(LemmaToken.abi);
-  // const account = transaction
-  // const events = [1]
-  // for (let i = 0; i < events.length; i++) {
-  //   console.log("evaluating for", i);
-  //   // const account = events[i].args.account;
-  //   const account = "0x55f5E03fcbE088EDdba68B4657ade3243AC45009";
-  //   // const amount: BigNumber = events[i].args.amount;
-  //   const amountOnLemma: BigNumber = await lemmaToken.depositInfo(account);
-  //   console.log("amountOnLemmaPending", amountOnLemma.toString())
-  //   if (!amountOnLemma.isZero()) {
-  //     console.log("minting for: " + account);
+  const latestBlockNumber: number = await provider.getBlockNumber();
+  const eventFilter: ethers.EventFilter = lemmaToken.filters.DepositInfoAdded();
+  //if the last 30 blocks (5 sec block time)  had the depositInfoAdded 
+  const events: ethers.Event[] = await lemmaToken.queryFilter(eventFilter,-60);
+  console.log(events.length,"events found")
+  for (let i = events.length -1 ; i>=0; i--) {
+    const account = events[i].args.account;
+    const amount: BigNumber = events[i].args.amount;
+    const amountOnLemma: BigNumber = await lemmaToken.depositInfo(account);
+    console.log("seeing if mint transaction is necessary");
+    if (!amountOnLemma.isZero()) {     
+      const apiData = {
+        'userAddress': '',
+        // 'from': '',
+        'to': '',
+        // 'gasLimit': '',
+        'params': Array(0),
+        'apiId': biconomyMethodAPIKey,
+      };
 
-  //     //lets estimateGas before
-  //     let tx = await lemmaToken.populateTransaction.mint(account);
-  //     let estimatedGas = await provider.estimateGas(tx);
-  //     const apiData = {
-  //       'userAddress': '',
-  //       // 'from': '',
-  //       'to': '',
-  //       // 'gasLimit': '',
-  //       'params': Array(0),
-  //       'apiId': biconomyMethodAPIKey,
-  //     };
-
-  //     apiData.userAddress = ethers.constants.AddressZero;
-  //     // apiData.from = accounts[0];
-  //     apiData.to = lemmaToken.address;
-  //     apiData.params = [account];
-
-  //     console.log("trying to send transaction via biconomy");
-  //     try {
-  //       let txHash = await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
-  //       console.log("transaction sent with txHash", txHash)
-  //     }
-  //     catch (e) {
-  //       console.log("transction failed");
-  //       console.log(e);
-  //     }
-  //     //tell biconomy to make a mint transaction
-  //   } else {
-  //     console.log("not necessary")
-  //   }
-
-  // }
-  // // const amount = await lemmaToken.
+      apiData.userAddress = ethers.constants.AddressZero;
+      // apiData.from = accounts[0];
+      apiData.to = lemmaToken.address;
+      apiData.params = [account];
+      console.log("sending mint transaction using biconomy for ",account);
+      try {
+      await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+      }
+      catch (e) {
+        console.log("sending mint transaction for ",account," failed");
+      }
+      //tell biconomy to make a mint transaction
+    }else{
+      console.log("not necessary")
+    }
+  }
+  // const amount = await lemmaToken.
 }
 
 // Sample typescript type definitions

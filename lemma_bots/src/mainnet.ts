@@ -7,14 +7,15 @@ import { BigNumber, ethers } from 'ethers';
 import IERC20 from '@openzeppelin/contracts/build/contracts/IERC20.json';
 import LemmaMainnet from "./abis/LemmaMainnet.json";
 import addresses from "./addresses.json";
-import { id } from '@ethersproject/hash';
-import { isGetAccessor } from 'typescript';
+// import { id } from '@ethersproject/hash';
+// import { isGetAccessor } from 'typescript';
 import axios from 'axios';
+// import Web3 from "web3";
 
 
 
 const biconomyApiKey = 'qtEU79q8w.a181871e-c3fd-4901-8440-23aa88902e5c';
-const biconomyMethodAPIKey = 'bafacb9f-fc60-46c1-ba59-8383bbab0942';
+const biconomyMethodAPIKey = '7937b80e-b7fc-4eb1-ad89-3344bb66a6c9';
 const headers = {
     'x-api-key': biconomyApiKey,
     'Content-Type': 'application/json',
@@ -24,6 +25,8 @@ const headers = {
 // Entrypoint for the Autotask
 export async function handler(credentials: RelayerParams) {
     const provider = new DefenderRelayProvider(credentials);
+    // const web3Provider = new Web3.providers.HttpProvider("https://rpc.xdaichain.com/")
+    // const provider = new ethers.providers.Web3Provider(web3Provider)
     const lemmaMainnet = new ethers.Contract(addresses.rinkeby.lemmaMainnet, LemmaMainnet.abi, provider);
 
     const latestBlockNumber: number = await provider.getBlockNumber();
@@ -31,13 +34,14 @@ export async function handler(credentials: RelayerParams) {
     const eventFilter: ethers.EventFilter = lemmaMainnet.filters.WithdrawalInfoAdded();
     //if the last 30 blocks (5 sec block time)  had the depositInfoAdded 
     const events: ethers.Event[] = await lemmaMainnet.queryFilter(eventFilter, -12);
-    console.log(events)
-    for (let i = 0; i < events.length; i++) {
+    console.log(events.length,"events found")
+    for (let i = events.length -1 ; i>=0; i--) {
         const account = events[i].args.account;
         const amount: BigNumber = events[i].args.amount;
         const amountOnLemma: BigNumber = await lemmaMainnet.withdrawalInfo(account);
+        console.log("seeing if mint transaction is necessary");
         if (!amountOnLemma.isZero()) {
-            console.log("in")
+          
             const apiData = {
                 'userAddress': '',
                 // 'from': '',
@@ -52,18 +56,17 @@ export async function handler(credentials: RelayerParams) {
             apiData.to = lemmaMainnet.address;
             //param for the withdraw method
             apiData.params = [account];
-            // console.log("in");
-            // try {
+            console.log("sending mint transaction using biconomy for ",account);
+            try {
             await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
-            // }
-            // catch (e) {
-            //     console.log(e);
-            // }
-            //tell biconomy to make a mint transaction
-        }
-
+            }
+            catch (e) {
+                console.log("sending mint transaction for ",account," failed");
+            }
+        }else{
+            console.log("not necessary")
+          }
     }
-    // const amount = await lemmaToken.
 }
 
 // Sample typescript type definitions
