@@ -102,11 +102,7 @@ function LandingPage({ classes }) {
   const ZERO = BigNumber.from("0");
 
   const handleAmountChange = (event) => {
-    if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
-      setErrorMessage("Please enter a number!");
-      setErrorOpen(true);
-      setAmount("0");
-    } else {
+    if (event.target.value === "" || !isNaN(event.target.value)) {
       setAmount(event.target.value);
 
       const balance = Number(
@@ -152,8 +148,8 @@ function LandingPage({ classes }) {
   };
 
   const handleDepositSubmit = async () => {
-    if (!amount) {
-      setErrorMessage("Please enter a number!");
+    if (!amount || amount === "0") {
+      setErrorMessage("Invalid input");
       setErrorOpen(true);
       return;
     }
@@ -292,8 +288,8 @@ function LandingPage({ classes }) {
   };
 
   const handleWithdrawSubmit = async () => {
-    if (!amount) {
-      setErrorMessage("Please enter a number!");
+    if (!amount || amount === "0") {
+      setErrorMessage("Invalid input");
       setErrorOpen(true);
       return;
     }
