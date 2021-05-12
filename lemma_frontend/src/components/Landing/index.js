@@ -853,11 +853,11 @@ function LandingPage({ classes }) {
                   </Button>
                 </Grid>
               )} */}
-              <Grid item>
+              {/* <Grid item>
                 <Button className={classes.navButton} onClick={onAddLUSDT}>
                   Add LUSDT to wallet
                 </Button>
-              </Grid>
+              </Grid> */}
               <Grid item>
                 <Button
                   className={classes.connectButton}
