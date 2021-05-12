@@ -780,7 +780,7 @@ function LandingPage({ classes }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              See on explorer
+              see on explorer
             </a>
           </span>
         </Alert>
