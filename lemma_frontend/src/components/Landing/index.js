@@ -680,6 +680,28 @@ function LandingPage({ classes }) {
     }
   };
 
+  const onAddLUSDT = async () => {
+    try {
+      if (!rawProvider) {
+        return;
+      }
+
+      await rawProvider.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: addresses.xDAIRinkeby.lemmaxDAI,
+            symbol: "LUSDT",
+            decimals: 18,
+          },
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const alertAnchor = {
     vertical: "top",
     horizontal: "center",
@@ -831,6 +853,11 @@ function LandingPage({ classes }) {
                   </Button>
                 </Grid>
               )} */}
+              <Grid item>
+                <Button className={classes.navButton} onClick={onAddLUSDT}>
+                  Add LUSDT to wallet
+                </Button>
+              </Grid>
               <Grid item>
                 <Button
                   className={classes.connectButton}
