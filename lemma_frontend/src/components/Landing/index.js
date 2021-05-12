@@ -98,6 +98,13 @@ function LandingPage({ classes }) {
     return ethers.utils.formatUnits(bignumber, decimals);
   };
 
+  const formatBigNumber = (bignumber, decimals = 18) => {
+    if (bignumber.isZero) {
+      return "0";
+    }
+    return Number(ethers.utils.formatUnits(bignumber, decimals)).toFixed(6);
+  };
+
   const ONE = convertTo18Decimals(1);
   const ZERO = BigNumber.from("0");
 
@@ -724,7 +731,7 @@ function LandingPage({ classes }) {
         setWrongNetwork(true);
       }
     }
-  }, [isConnected, networkId]);
+  }, [isConnected, account, networkId]);
 
   useEffect(() => {
     if (!isConnected) {
@@ -991,9 +998,7 @@ function LandingPage({ classes }) {
                                   <Typography variant="body1">
                                     <b>
                                       {isConnected
-                                        ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                        ? formatBigNumber(ethBalance)
                                         : 0}
                                     </b>
                                   </Typography>
@@ -1093,11 +1098,7 @@ function LandingPage({ classes }) {
                                     />
                                   ) : (
                                     <Typography variant="body1">
-                                      <b>
-                                        {Number(
-                                          convertToReadableFormat(deposited)
-                                        ).toFixed(6)}
-                                      </b>
+                                      <b>{formatBigNumber(deposited)}</b>
                                     </Typography>
                                   )}
                                 </Grid>
@@ -1127,11 +1128,7 @@ function LandingPage({ classes }) {
                                     />
                                   ) : (
                                     <Typography variant="body1">
-                                      <b>
-                                        {Number(
-                                          convertToReadableFormat(earnings)
-                                        ).toFixed(6)}
-                                      </b>
+                                      <b>{formatBigNumber(earnings)}</b>
                                     </Typography>
                                   )}
                                 </Grid>
