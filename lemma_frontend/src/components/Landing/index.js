@@ -762,7 +762,7 @@ function LandingPage({ classes }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              see on explorer
+              See on explorer
             </a>
           </span>
         </Alert>
@@ -969,8 +969,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                            utils.formatEther(ethBalance)
-                                          ).toFixed(6)
+                                          utils.formatEther(ethBalance)
+                                        ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
