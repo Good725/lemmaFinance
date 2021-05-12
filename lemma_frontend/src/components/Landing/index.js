@@ -102,11 +102,7 @@ function LandingPage({ classes }) {
   const ZERO = BigNumber.from("0");
 
   const handleAmountChange = (event) => {
-    if (event.target.value !== "" && isNaN(parseFloat(event.target.value))) {
-      setErrorMessage("Please enter a number!");
-      setErrorOpen(true);
-      setAmount("0");
-    } else {
+    if (event.target.value === "" || !isNaN(event.target.value)) {
       setAmount(event.target.value);
 
       const balance = Number(
@@ -152,8 +148,8 @@ function LandingPage({ classes }) {
   };
 
   const handleDepositSubmit = async () => {
-    if (!amount) {
-      setErrorMessage("Please enter a number!");
+    if (!amount || amount === "0") {
+      setErrorMessage("Invalid input");
       setErrorOpen(true);
       return;
     }
@@ -292,8 +288,8 @@ function LandingPage({ classes }) {
   };
 
   const handleWithdrawSubmit = async () => {
-    if (!amount) {
-      setErrorMessage("Please enter a number!");
+    if (!amount || amount === "0") {
+      setErrorMessage("Invalid input");
       setErrorOpen(true);
       return;
     }
@@ -684,6 +680,28 @@ function LandingPage({ classes }) {
     }
   };
 
+  const onAddLUSDT = async () => {
+    try {
+      if (!rawProvider) {
+        return;
+      }
+
+      await rawProvider.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: {
+            address: addresses.xDAIRinkeby.lemmaxDAI,
+            symbol: "LUSDT",
+            decimals: 18,
+          },
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const alertAnchor = {
     vertical: "top",
     horizontal: "center",
@@ -835,6 +853,11 @@ function LandingPage({ classes }) {
                   </Button>
                 </Grid>
               )} */}
+              <Grid item>
+                <Button className={classes.navButton} onClick={onAddLUSDT}>
+                  Add LUSDT to wallet
+                </Button>
+              </Grid>
               <Grid item>
                 <Button
                   className={classes.connectButton}
