@@ -119,16 +119,15 @@ function LandingPage({ classes }) {
     }
   };
 
-
   const handleSliderChange = (event, value) => {
     if (!isConnected) {
       return;
     }
     value = BigNumber.from(value);
     const hundreadBN = BigNumber.from("100");
-    //below to make sure that every operation happens in the BigNumber 
+    //below to make sure that every operation happens in the BigNumber
     //otherwise it can open us upto unexpectedErrors
-    setAmount((convertToReadableFormat(value.mul(ethBalance).div(hundreadBN))));
+    setAmount(convertToReadableFormat(value.mul(ethBalance).div(hundreadBN)));
     setSliderValue(value);
   };
 
@@ -138,12 +137,13 @@ function LandingPage({ classes }) {
     }
     value = BigNumber.from(value);
     const hundreadBN = BigNumber.from("100");
-    //below to make sure that every operation happens in the BigNumber 
+    //below to make sure that every operation happens in the BigNumber
     //otherwise it can open us upto unexpectedErrors
-    setAmount((convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))));
+    setAmount(
+      convertToReadableFormat(value.mul(withdrawableETH).div(hundreadBN))
+    );
     setSliderValue(value);
   };
-
 
   const getExplorerLink = (transactionHash, networkName) => {
     const blockExplorerURL =
@@ -207,11 +207,17 @@ function LandingPage({ classes }) {
         lemmaPerpetual.address
       ),
     ]);
-    console.log([maxHoldingBaseAsset.d.toString(), openInterestNotionalCap.d.toString(), currentOpenInterest.toString(), position.size.d.toString()]);
+    console.log([
+      maxHoldingBaseAsset.d.toString(),
+      openInterestNotionalCap.d.toString(),
+      currentOpenInterest.toString(),
+      position.size.d.toString(),
+    ]);
 
     if (
       openInterestNotionalCap.d.lt(
-        currentOpenInterest.add(parseEther(amount.toString()))) ||
+        currentOpenInterest.add(parseEther(amount.toString()))
+      ) ||
       maxHoldingBaseAsset.d.lt(
         position.size.d.add(parseEther(amount.toString()))
       )
@@ -278,6 +284,9 @@ function LandingPage({ classes }) {
         // setDepositLoading(false);
       } catch {
         // setDepositLoading(false);
+        setLoadOpen(false);
+        setErrorMessage("Deposit Failed");
+        setErrorOpen(true);
       }
     }
   };
@@ -331,11 +340,11 @@ function LandingPage({ classes }) {
         let userAddress = account;
         // Create your target method signature.. here we are calling setQuote() method of our contract
         const minETHOut = ZERO;
-        let {
-          data,
-        } = await lemmaTokenWithBiconomy.populateTransaction.withdraw(
-          lUSDCAmount, minETHOut
-        );
+        let { data } =
+          await lemmaTokenWithBiconomy.populateTransaction.withdraw(
+            lUSDCAmount,
+            minETHOut
+          );
         console.log("data", data);
         let provider = biconomy.getEthersProvider();
 
@@ -362,18 +371,19 @@ function LandingPage({ classes }) {
         //to test the blockscout link
         // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
-
-        const lemmaMainnetWithdrawInfoAdded = lemmaMain.instance.filters.WithdrawalInfoAdded(account);
-        lemmaMain.instance.once(lemmaMainnetWithdrawInfoAdded, onWithdrawInfoAdded);
-
-        const lemmaMainnetETHWithdrawedFilter = lemmaMain.instance.filters.ETHWithdrawed(
-          account
+        const lemmaMainnetWithdrawInfoAdded =
+          lemmaMain.instance.filters.WithdrawalInfoAdded(account);
+        lemmaMain.instance.once(
+          lemmaMainnetWithdrawInfoAdded,
+          onWithdrawInfoAdded
         );
+
+        const lemmaMainnetETHWithdrawedFilter =
+          lemmaMain.instance.filters.ETHWithdrawed(account);
         lemmaMain.instance.once(
           lemmaMainnetETHWithdrawedFilter,
           onSuccessfulWithdrawal
         );
-
 
         console.log("Transaction hash : ", txHash);
         setExplorerLink(getExplorerLink(txHash, "xdai"));
@@ -594,7 +604,8 @@ function LandingPage({ classes }) {
 
   const onWithdrawInfoAdded = async () => {
     const biconomyApiKey = constants.biconomy.rinkeby.withdraw.apiKey;
-    const biconomyMethodAPIKey = constants.biconomy.rinkeby.withdraw.methodAPIKey;
+    const biconomyMethodAPIKey =
+      constants.biconomy.rinkeby.withdraw.methodAPIKey;
     const headers = {
       "x-api-key": biconomyApiKey,
       "Content-Type": "application/json",
@@ -958,8 +969,8 @@ function LandingPage({ classes }) {
                                     <b>
                                       {isConnected
                                         ? Number(
-                                          utils.formatEther(ethBalance)
-                                        ).toFixed(6)
+                                            utils.formatEther(ethBalance)
+                                          ).toFixed(6)
                                         : 0}
                                     </b>
                                   </Typography>
