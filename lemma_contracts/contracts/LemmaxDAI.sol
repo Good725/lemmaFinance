@@ -229,7 +229,7 @@ contract LemmaToken is
     }
 
     /// @param _contractOnOtherSide is lemma toke address deployed on mainnet network
-    /// @param _data is ABI-encodes
+    /// @param _data is ABI-encoded function data
     function callBridge(
         address _contractOnOtherSide,
         bytes memory _data,

@@ -17,8 +17,6 @@ import {
 import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
 import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
-// import 'hardhat/console.sol';
-
 /// @title Lemma Perpetual contract for interacting with perpetual protocol.
 /// @author yashnaman
 /// @dev All function calls are currently implemented.
@@ -29,9 +27,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     IClearingHouse public clearingHouse;
     IClearingHouseViewer public clearingHouseViewer;
-    IAmm public amm;
-    IERC20 public collateral;
-    address public lemmaToken;
+    IAmm public amm; //ETH-USDC
+    IERC20 public collateral; //USDC
+    address public lemmaToken; //lemmaXDAI and lemmaToken are interchangable
 
     modifier onlyLemmaToken() {
         require(msg.sender == lemmaToken, 'Lemma: only lemma token allowed');
@@ -41,7 +39,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     /// @notice Initialize proxy
     /// @param _clearingHouse Perpetual protocol's clearingHouse proxy contract address.
     /// @param _clearingHouseViewer Perpetual protocol's clearingHouseViewer proxy contract address.
-    /// @param _amm ETH_collateral AMM address.
+    /// @param _amm undelryingAsset_collateral (ETH_USDC) AMM address.
     /// @param _collateral collateral address.
     function initialize(
         IClearingHouse _clearingHouse,
@@ -53,7 +51,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         clearingHouse = _clearingHouse;
         clearingHouseViewer = _clearingHouseViewer;
         amm = _amm;
-        //@dev make sure that collateral = amm.quoteToken()
         collateral = _collateral;
         _collateral.safeApprove(address(_clearingHouse), type(uint256).max);
     }
@@ -103,27 +100,16 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         onlyLemmaToken
         returns (uint256)
     {
-        // console.log('collateralBalance before:', collateral.balanceOf(address(this)));
-
         (
             Decimal.decimal memory assetAmount,
             Decimal.decimal memory leverage,
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
 
-        // console.log('removed margin enought to cover the fees');
-        // console.log('totalCollateral', getTotalCollateral());
-        // console.log('assetAmount', assetAmount.toUint());
-        // console.log('_amount', _amount);
         if (getTotalCollateral() == _amount) {
             clearingHouse.closePosition(amm, Decimal.zero());
-            // console.log('closed postion');
         } else {
             clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
-            // console.log(
-            //     'collateralBalance after getting fees:',
-            //     collateral.balanceOf(address(this))
-            // );
             clearingHouse.openPosition(
                 amm,
                 IClearingHouse.Side.SELL,
@@ -134,16 +120,15 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             clearingHouse.removeMargin(amm, assetAmount);
         }
 
-        // console.log('opened position on other side');
-        //TODO: add require that leverage should not be greater than one
         uint256 collateralBalance = collateral.balanceOf(address(this));
-        // console.log('collateralBalance', collateralBalance);
+
         collateral.safeTransfer(lemmaToken, collateralBalance);
 
         return collateralBalance;
-        // return amountGotBackAfterClosing;
     }
 
+    ///@notice calculates input paramets for opening position on perpetual protcol
+    ///@param _amount amount
     function calcInputsToPerp(uint256 _amount)
         internal
         returns (
@@ -154,14 +139,12 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     {
         Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(collateral), _amount);
-
+        //following equation makes sure that amount = assetAmount + assetAmount * fees (fees = tollRatio + spreadRatio)
         assetAmount = amount.divD(
             (Decimal.one().addD((amm.tollRatio().addD(amm.spreadRatio()))))
         );
-        //here levarage = 1 so quoteAssetAmount  = assetAmount * levarage = assetAmount
+        //here levarage = 1 meaining quoteAssetAmount  = assetAmount * levarage = assetAmount
         leverage = Decimal.one();
-
-        //TODO: add calculation for baseAssetAmountLimit with slippage from user
         baseAssetAmountLimit = Decimal.zero();
     }
 
@@ -214,6 +197,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             );
     }
 
+    ///@notice calculates fees that will taken by perpetual protocol
+    ///@param _amm AMM (ETH-USDC in this case)
+    ///@param _positionNotional amount to put up as collateral * leverage
     function calcFee(IAmm _amm, Decimal.decimal memory _positionNotional)
         public
         view

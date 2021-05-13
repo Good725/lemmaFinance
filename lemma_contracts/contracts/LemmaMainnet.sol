@@ -10,8 +10,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol';
 
-// import 'hardhat/console.sol';
-
 /// @title UniswapV2Router02 Interface
 interface IUniswapV2Router02 {
     function swapExactETHForTokens(
@@ -30,7 +28,7 @@ interface IUniswapV2Router02 {
     ) external returns (uint256[] memory amounts);
 }
 
-/// @title LemmaToken interface. LemmaToken is exist on XDAI network.
+/// @title LemmaXDAI interface. LemmaXDAI exists on XDAI network.
 interface ILemmaxDAI {
     function setDepositInfo(address account, uint256 amount) external;
 }
@@ -64,7 +62,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
 
     /// @notice Initialize proxy.
     /// @param _lemmaXDAI Lemma token deployed on xdai network.
-    /// @param _ambBridge Bridge contract address
+    /// @param _ambBridge Bridge contract address on mainnet
     function initialize(
         IERC20 _USDC,
         IERC20 _WETH,
@@ -94,7 +92,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (address sender)
     {
-        //ERC2771ContextUpgradeable._msgSender();
+        //this is same as ERC2771ContextUpgradeable._msgSender();
+        //We want to use the _msgSender() implementation of ERC2771ContextUpgradeable
         return super._msgSender();
     }
 
@@ -105,7 +104,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         override(ContextUpgradeable, ERC2771ContextUpgradeable)
         returns (bytes calldata)
     {
-        //ERC2771ContextUpgradeable._msgData();
+        //this is same as ERC2771ContextUpgradeable._msgData();
+        //We want to use the _msgData() implementation of ERC2771ContextUpgradeable
         return super._msgData();
     }
 
@@ -152,7 +152,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @notice Set Withdraw Info
     /// @dev This function can be called by only lemmaXDAI contract via ambBridge contract.
     /// @param _account is an account for withdrawing.
-    /// @param  _amount is the USDC amount converted to Weth.
+    /// @param  _amount is the USDC amount.
     function setWithdrawalInfo(
         address _account,
         uint256 _amount,
@@ -176,7 +176,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     }
 
     /// @notice Withdraw eth based on the USDC amount set by WithdrawInfo.
-    /// @dev The USDC set by withdrawInfo is converted to Weth on uniswap and the weth is transferred to the account.
+    /// @dev The USDC set by withdrawInfo is converted to ETH on sushiswap and the ETH is transferred to _account.
     /// @param _account is an account withdrawn to.
     function withdraw(address _account) public {
         uint256 amount = withdrawalInfo[_account];
@@ -210,8 +210,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         multiTokenMediator.relayTokens(address(_token), _receiver, _amount);
     }
 
-    /// @param _contractOnOtherSide is lemma toke address deployed on xdai network
-    /// @param _data is ABI-encodes
+    /// @param _contractOnOtherSide is lemmaXDAI address deployed on xdai network in our case
+    /// @param _data is ABI-encoded function data
     function callBridge(
         address _contractOnOtherSide,
         bytes memory _data,
