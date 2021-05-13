@@ -145,8 +145,6 @@ contract LemmaToken is
     function mint(address _account) public {
         uint256 amount = depositInfo[_account];
         delete depositInfo[_account];
-        //totalSupply is equal to the total USDC deposited
-
         collateral.safeTransfer(address(perpetualProtocol), amount);
 
         uint256 totalCollateral = perpetualProtocol.getTotalCollateral();
@@ -159,19 +157,17 @@ contract LemmaToken is
                 (totalSupply() * amountAfterOpeningPosition) /
                 totalCollateral;
         } else {
-            //  just so that lUSDC minted is ~USDC deposited
             toMint = amountAfterOpeningPosition * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
 
         _mint(_account, toMint);
 
         emit USDCDeposited(_account, amountAfterOpeningPosition);
-
-        // //require(toMint>=minimumToMint)
     }
 
     /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
     /// @param _amount The number of lemma tokens to be burned.
+    ///@param _minETHOut minimum ETH user should get back to protect users from sadwich attacks on mainnet
     function withdraw(uint256 _amount, uint256 _minETHOut) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
@@ -179,9 +175,6 @@ contract LemmaToken is
 
         uint256 amountGotBackAfterClosing =
             perpetualProtocol.close(userShareAmountOfCollateral);
-
-        //require(userShare>=minimumUserShare)
-
         //withdraw
         multiTokenTransfer(
             collateral,
