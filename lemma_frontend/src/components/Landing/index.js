@@ -11,8 +11,12 @@ import {
   Tab,
   Slider,
   CircularProgress,
-  Tooltip,
+  Hidden,
+  Drawer,
+  IconButton,
+  List,
 } from "@material-ui/core";
+import { Menu } from "@material-ui/icons";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
 import Web3 from "web3";
 import axios from "axios";
@@ -87,8 +91,20 @@ function LandingPage({ classes }) {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [sliderValue, setSliderValue] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const history = useHistory();
+
+  const toggleDrawer = (open) => (event) => {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return;
+    }
+
+    setIsOpen(open);
+  };
 
   const convertTo18Decimals = (number, decimals = 18) => {
     return ethers.utils.parseUnits(number.toString(), decimals);
@@ -807,6 +823,7 @@ function LandingPage({ classes }) {
           {errorMessage}
         </Alert>
       </Snackbar>
+
       <div className={classes.body}>
         <Grid container justify="center">
           <Grid
@@ -837,46 +854,119 @@ function LandingPage({ classes }) {
                 </Typography>
               </Grid>
             </Grid>
-            <Grid item container xs={8} justify="flex-end" spacing={4}>
-              <Grid item>
-                <Button
-                  className={classes.navButton}
-                  href="https://docs.lemma.finance"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Docs
-                </Button>
-              </Grid>
-              <Grid item>
-                <Button className={classes.navButton} href="/registration">
-                  Early Access
-                </Button>
-              </Grid>
-              {/* {isConnected && networkId !== 100 && (
+            <Hidden smDown>
+              <Grid item container xs={8} justify="flex-end" spacing={4}>
+                <Grid item>
+                  <Button
+                    className={classes.navButton}
+                    href="https://docs.lemma.finance"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Docs
+                  </Button>
+                </Grid>
+                <Grid item>
+                  <Button className={classes.navButton} href="/registration">
+                    Early Access
+                  </Button>
+                </Grid>
+
+                {/* {isConnected && networkId !== 100 && (
                 <Grid item>
                   <Button className={classes.navButton} onClick={onConnectXDai}>
                     Connect to xDAI
                   </Button>
                 </Grid>
-              )} */}
-              {/* <Grid item>
-                <Button className={classes.navButton} onClick={onAddLUSDT}>
-                  Add LUSDT to wallet
-                </Button>
-              </Grid> */}
-              <Grid item>
-                <Button
-                  className={classes.connectButton}
-                  variant="outlined"
-                  onClick={() =>
-                    isConnected ? onDisconnect() : handleConnectWallet()
-                  }
-                >
-                  {isConnected ? account.slice(0, 8) + "..." : "Connect Wallet"}
-                </Button>
+                )} */}
+                {/* <Grid item>
+                  <Button className={classes.navButton} onClick={onAddLUSDT}>
+                    Add LUSDT to wallet
+                  </Button>
+                </Grid> */}
+                <Grid item>
+                  <Button
+                    className={classes.connectButton}
+                    variant="outlined"
+                    onClick={() =>
+                      isConnected ? onDisconnect() : handleConnectWallet()
+                    }
+                  >
+                    {isConnected
+                      ? account.slice(0, 8) + "..."
+                      : "Connect Wallet"}
+                  </Button>
+                </Grid>
               </Grid>
-            </Grid>
+            </Hidden>
+            <Hidden mdUp>
+              <IconButton
+                edge="start"
+                aria-label="menu"
+                onClick={toggleDrawer(true)}
+              >
+                <Menu fontSize="large" style={{ color: `white` }} />
+              </IconButton>
+
+              <Drawer
+                anchor="right"
+                open={isOpen}
+                onClose={toggleDrawer(false)}
+              >
+                <div
+                  className={classes.list}
+                  role="presentation"
+                  onClick={toggleDrawer(false)}
+                  onKeyDown={toggleDrawer(false)}
+                >
+                  <List component="nav">
+                    <Grid item>
+                      <Button
+                        className={classes.navButton}
+                        href="https://docs.lemma.finance"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Docs
+                      </Button>
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        className={classes.navButton}
+                        href="/registration"
+                      >
+                        Early Access
+                      </Button>
+                    </Grid>
+
+                    {/* {isConnected && networkId !== 100 && (
+                      <Grid item>
+                        <Button className={classes.navButton} onClick={onConnectXDai}>
+                          Connect to xDAI
+                        </Button>
+                      </Grid>
+                      )} */}
+                    {/* <Grid item>
+                        <Button className={classes.navButton} onClick={onAddLUSDT}>
+                          Add LUSDT to wallet
+                        </Button>
+                      </Grid> */}
+                    <Grid item>
+                      <Button
+                        className={classes.navButton}
+                        onClick={() =>
+                          isConnected ? onDisconnect() : handleConnectWallet()
+                        }
+                      >
+                        {isConnected
+                          ? account.slice(0, 8) + "..."
+                          : "Connect Wallet"}
+                      </Button>
+                    </Grid>
+                  </List>
+                </div>
+              </Drawer>
+            </Hidden>
           </Grid>
 
           <Grid
