@@ -15,6 +15,7 @@ import {
   Drawer,
   IconButton,
   List,
+  Link,
 } from "@material-ui/core";
 import { Menu } from "@material-ui/icons";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
@@ -36,6 +37,9 @@ import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
 
 import { styles } from "./styles";
 import { parseEther } from "@ethersproject/units";
+
+import { ReactComponent as DiscordIcon } from "../../assets/img/footer_discord.svg";
+import { ReactComponent as TwitterIcon } from "../../assets/img/footer_twitter.svg";
 
 function LandingPage({ classes }) {
   const XDAI_URL =
@@ -1290,6 +1294,35 @@ function LandingPage({ classes }) {
                   </Grid>
                 </Paper>
               </Grid>
+            </Grid>
+          </Grid>
+          <Grid
+            container
+            className={classes.footer}
+            justify="center"
+            alignItems="center"
+          >
+            <Grid item className={classes.footerItem}>
+              <Link
+                target="_blank"
+                href="https://docs.lemma.finance/resources/disclaimer"
+                color="primary"
+              >
+                Disclaimer
+              </Link>
+            </Grid>
+            <Grid item className={classes.footerItem}>
+              <Link target="_blank" href="https://twitter.com/LemmaFinance">
+                <TwitterIcon />
+              </Link>
+            </Grid>
+            <Grid item className={classes.footerItem}>
+              <Link
+                target="_blank"
+                href="https://discord.com/invite/bbFtEYhNc9"
+              >
+                <DiscordIcon />
+              </Link>
             </Grid>
           </Grid>
         </Grid>

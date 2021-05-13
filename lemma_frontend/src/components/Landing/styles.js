@@ -161,4 +161,14 @@ export const styles = (theme) => ({
     paddingLeft: 10,
     paddingTop: 10,
   },
+  footer: {
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+  footerItem: {
+    paddingLeft: 20,
+    paddingRight: 20,
+    fontSize: 14,
+    color: "white",
+  },
 });
