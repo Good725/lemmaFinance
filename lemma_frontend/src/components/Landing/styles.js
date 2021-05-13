@@ -42,15 +42,15 @@ export const styles = (theme) => ({
     height: 40,
   },
   link: {
-    color: 'white'
+    color: "white",
   },
   connectButton: {
     textTransform: "none",
     [theme.breakpoints.down("sm")]: {
-      color: "#6A758A",
-      border: "solid 2px #6A758A",
+      color: "white",
+      border: "solid 2px white",
       "&:hover": {
-        border: "solid 2px #6A758A",
+        border: "solid 2px white",
       },
     },
     [theme.breakpoints.up("md")]: {
@@ -64,6 +64,7 @@ export const styles = (theme) => ({
   navButton: {
     textTransform: "none",
     color: "white",
+    justifyContent: "flex-start",
   },
   title: {
     marginBottom: "1vh",
@@ -152,5 +153,12 @@ export const styles = (theme) => ({
   button: {
     color: "white",
     height: "54px",
+  },
+  list: {
+    width: 250,
+    height: "100vh",
+    background: "#1E242B",
+    paddingLeft: 10,
+    paddingTop: 10,
   },
 });
