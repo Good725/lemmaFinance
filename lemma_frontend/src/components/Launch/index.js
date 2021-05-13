@@ -96,7 +96,7 @@ function LaunchPage({ classes }) {
               </Link>
             </Grid>
             <Grid item>
-              <Link target="_blank" href="https://discord.com/invite/eZd4vCMZ">
+              <Link target="_blank" href="https://discord.com/invite/bbFtEYhNc9">
                 <Fab className={classes.discordFab}>
                   <img src={DiscordIcon} className={classes.discordIcon} />
                 </Fab>
