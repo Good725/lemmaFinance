@@ -11,6 +11,6 @@ where:
  n is the number of LUSDC in circulation.
  m is the amount of USDC Lemma has.
 
-Local development and testing.
+# Local development and testing.
 
-Requirements
+* Requirements
