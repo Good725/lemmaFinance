@@ -99,7 +99,7 @@ function LandingPage({ classes }) {
   };
 
   const formatBigNumber = (bignumber, decimals = 18) => {
-    if (bignumber.isZero) {
+    if (bignumber.isZero()) {
       return "0";
     }
     return Number(ethers.utils.formatUnits(bignumber, decimals)).toFixed(6);
