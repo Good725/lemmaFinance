@@ -17,6 +17,8 @@ import {
 import {IClearingHouse} from '../interfaces/IClearingHouse.sol';
 import {IClearingHouseViewer} from '../interfaces/IClearingHouseViewer.sol';
 
+import 'hardhat/console.sol';
+
 /// @title Lemma Perpetual contract for interacting with perpetual protocol.
 /// @author yashnaman
 /// @dev All function calls are currently implemented.
@@ -30,6 +32,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     IAmm public amm; //ETH-USDC
     IERC20 public collateral; //USDC
     address public lemmaToken; //lemmaXDAI and lemmaToken are interchangable
+    //yield is denominated in ETH that is why every fundingPayment coollected/paid in USDC needs to converted to ETH
+    //below updates evrytime fundingPayment gets converted to ETH
+    //not neccesarily same as clearingHouse.getPosition(amm,address(this)).lastUpdatedCumulativePremiumFraction
+    SignedDecimal.signedDecimal public lastUpdatedCumulativePremiumFraction;
 
     modifier onlyLemmaToken() {
         require(msg.sender == lemmaToken, 'Lemma: only lemma token allowed');
@@ -66,7 +72,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     /// @dev This function can be called through lemma token contract
     /// @param _amount The number of collateral to open perpetual protocol.
     function open(uint256 _amount)
-        external
+        public
         override
         onlyLemmaToken
         returns (uint256)
@@ -84,6 +90,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             leverage,
             baseAssetAmountLimit
         );
+        reInvestFundingPayment();
         return
             convert18DecimalsToCollateralAmount(
                 address(collateral),
@@ -95,7 +102,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     /// @dev This function can be called through lemma token contract.
     /// @param _amount The number of collateral to be closed from perpetual protocol.
     function close(uint256 _amount)
-        external
+        public
         override
         onlyLemmaToken
         returns (uint256)
@@ -118,6 +125,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 baseAssetAmountLimit
             );
             clearingHouse.removeMargin(amm, assetAmount);
+            reInvestFundingPayment();
         }
 
         uint256 collateralBalance = collateral.balanceOf(address(this));
@@ -125,6 +133,70 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         collateral.safeTransfer(lemmaToken, collateralBalance);
 
         return collateralBalance;
+    }
+
+    function reInvestFundingPayment() public {
+        //how to keep track of lastUpdatedCumulativePremiumFraction?
+        //recreate the caluclation of funding payment from clearingHouseViewer.sol
+        //just replace postion.lastUpdatedCumulativePremiumFraction with lastUpdatedCumulativePremiumFraction
+
+        SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
+            clearingHouse.getLatestCumulativePremiumFraction(amm);
+        //change the position first
+        IClearingHouse.Position memory position =
+            clearingHouse.getPosition(amm, address(this));
+
+        //if it's first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
+        if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
+            lastUpdatedCumulativePremiumFraction = position
+                .lastUpdatedCumulativePremiumFraction;
+        }
+        //recreated the equation to caclculate fundingPayment from from https://github.com/perpetual-protocol/perpetual-protocol/blob/ca394d424c7d34cbd7e193cf1f763327d0acb0fd/src/ClearingHouseViewer.sol#L109
+        SignedDecimal.signedDecimal memory fundingPayment =
+            position.size.toInt() == 0
+                ? SignedDecimal.zero()
+                : latestCumulativePremiumFraction
+                    .subD(lastUpdatedCumulativePremiumFraction)
+                    .mulD(position.size)
+                    .mulScalar(-1);
+
+        console.log('fundin payment', fundingPayment.abs().d);
+        console.log(
+            'lastUpdatedCumulativePremiumFraction',
+            lastUpdatedCumulativePremiumFraction.abs().d
+        );
+        if (fundingPayment.toInt() != 0) {
+            if (!fundingPayment.isNegative()) {
+                //remove the collateral equal to funding payment
+                clearingHouse.removeMargin(amm, fundingPayment.abs());
+                //open position with the funding Payments
+                uint256 collateralFromFundingPayment =
+                    collateral.balanceOf(address(this));
+                open(collateralFromFundingPayment);
+            } else {
+                //following equation makes sure that amount = assetAmount + assetAmount * fees (fees = tollRatio + spreadRatio)
+                Decimal.decimal memory assetAmount =
+                    fundingPayment.abs().divD(
+                        (
+                            Decimal.one().addD(
+                                (amm.tollRatio().addD(amm.spreadRatio()))
+                            )
+                        )
+                    );
+                clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
+                //here levarage = 1 meaining quoteAssetAmount  = assetAmount * levarage = assetAmount
+                Decimal.decimal memory leverage = Decimal.one();
+                Decimal.decimal memory baseAssetAmountLimit = Decimal.zero();
+                clearingHouse.openPosition(
+                    amm,
+                    IClearingHouse.Side.SELL,
+                    assetAmount,
+                    leverage,
+                    baseAssetAmountLimit
+                );
+            }
+            lastUpdatedCumulativePremiumFraction = latestCumulativePremiumFraction;
+        }
     }
 
     ///@notice calculates input paramets for opening position on perpetual protcol
