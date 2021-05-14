@@ -909,7 +909,7 @@ function LandingPage({ classes }) {
                 aria-label="menu"
                 onClick={toggleDrawer(true)}
               >
-                <Menu fontSize="large" style={{ color: `white` }} />
+                <Menu fontSize="large" style={{ color: `grey` }} />
               </IconButton>
 
               <Drawer
@@ -1307,6 +1307,7 @@ function LandingPage({ classes }) {
                 target="_blank"
                 href="https://docs.lemma.finance/resources/disclaimer"
                 color="primary"
+                className={classes.footerLink}
               >
                 Disclaimer
               </Link>

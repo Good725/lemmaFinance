@@ -168,6 +168,8 @@ export const styles = (theme) => ({
   footerItem: {
     paddingLeft: 20,
     paddingRight: 20,
+  },
+  footerLink: {
     fontSize: 14,
     color: "white",
   },
