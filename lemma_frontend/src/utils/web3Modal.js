@@ -5,7 +5,7 @@ const providerOptions = {
   walletconnect: {
     package: WalletConnectProvider, // required
     options: {
-      infuraId: "29a7f0c37b214a90934bec1b032d5c8f", // required
+      infuraId: "2a1a54c3aa374385ae4531da66fdf150", // lemma finance infuraId
     },
   },
 };
