@@ -176,6 +176,11 @@ function LandingPage({ classes }) {
   };
 
   const handleDepositSubmit = async () => {
+    if (!isConnected) {
+      setErrorMessage("Please connect your wallet first");
+      setErrorOpen(true);
+      return;
+    }
     if (!amount || amount === "0") {
       setErrorMessage("Invalid input");
       setErrorOpen(true);
@@ -316,6 +321,11 @@ function LandingPage({ classes }) {
   };
 
   const handleWithdrawSubmit = async () => {
+    if (!isConnected) {
+      setErrorMessage("Please connect your wallet first");
+      setErrorOpen(true);
+      return;
+    }
     if (!amount || amount === "0") {
       setErrorMessage("Invalid input");
       setErrorOpen(true);
