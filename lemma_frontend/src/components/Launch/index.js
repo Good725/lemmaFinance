@@ -96,7 +96,10 @@ function LaunchPage({ classes }) {
               </Link>
             </Grid>
             <Grid item>
-              <Link target="_blank" href="https://discord.com/invite/bbFtEYhNc9">
+              <Link
+                target="_blank"
+                href="https://discord.com/invite/bbFtEYhNc9"
+              >
                 <Fab className={classes.discordFab}>
                   <img src={DiscordIcon} className={classes.discordIcon} />
                 </Fab>
@@ -115,7 +118,8 @@ function LaunchPage({ classes }) {
     return utils.isAddress(address);
   };
   const getIsTwitterURLValid = (twitterURL) => {
-    const twitterRegEX = /http(?:s)?:\/\/(?:www\.)?twitter\.com\/([a-zA-Z0-9_]+)/;
+    const twitterRegEX =
+      /http(?:s)?:\/\/(?:www\.)?twitter\.com\/([a-zA-Z0-9_]+)/;
     const match = twitter.match(twitterRegEX);
     console.log(match);
     if (!match) {
@@ -146,12 +150,12 @@ function LaunchPage({ classes }) {
       }
     }
     if (activeStep === 1) {
-      const isValidTwitterURL = getIsTwitterURLValid(twitter);
-      if (!isValidTwitterURL) {
-        setErrorMessage("Enter a valid tweet URL");
-        setErrorOpen(true);
-        setActiveStep(0);
-      }
+      // const isValidTwitterURL = getIsTwitterURLValid(twitter);
+      // if (!isValidTwitterURL) {
+      //   setErrorMessage("Enter a valid tweet URL");
+      //   setErrorOpen(true);
+      //   setActiveStep(0);
+      // }
     }
     if (activeStep === steps.length - 1) {
       if (!getIsAddressValid(address)) {
@@ -309,7 +313,8 @@ function LaunchPage({ classes }) {
                 Reserve allocation for our Mainnet release
               </Grid>
               <Grid item className={classes.subtitle}>
-                Initial total hard cap will be 500 ETH, personal hard cap will be 10 ETH
+                Initial total hard cap will be 500 ETH, personal hard cap will
+                be 10 ETH
               </Grid>
             </Grid>
 
