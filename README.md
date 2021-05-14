@@ -10,7 +10,9 @@ The price of LUSDC is dictated by the following equation: P = m / n
 
 where:
  P is the price of LUSDC.
+
  n is the number of LUSDC in circulation.
+
  m is the amount of USDC Lemma has.
 
 ## Docs
@@ -31,14 +33,9 @@ npm compile
 ## Unit Testing
 All tests are located under the test folder.
 ```
-npx hardhat --network [network] test [test file location]
+npx hardhat --network [your-network] test [test file location]
 ```
 ## Coverage Testing
 ```
-npx hardhat coverage --testfiles [test file location] --network [network]
-```
-
-## Deploy
-```
-npm deploy
+npx hardhat coverage --testfiles [test file location] --network [your-network]
 ```
