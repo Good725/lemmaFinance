@@ -34,6 +34,7 @@ import Amm from "@perp/contract/build/contracts/src/Amm.sol/Amm.json";
 
 import { useConnectedWeb3Context } from "../../context";
 import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
+import { web3Modal } from "../../utils";
 
 import { styles } from "./styles";
 import { parseEther } from "@ethersproject/units";
@@ -754,7 +755,7 @@ function LandingPage({ classes }) {
   }, [isConnected, account, networkId]);
 
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected && web3Modal.cachedProvider) {
       handleConnectWallet();
     }
   }, []);
