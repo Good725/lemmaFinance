@@ -116,38 +116,37 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
 
-        // if (amm.open()) {
-        if (getTotalCollateral() == _amount) {
-            clearingHouse.closePosition(amm, Decimal.zero());
-            lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
+        if (amm.open()) {
+            if (getTotalCollateral() == _amount) {
+                clearingHouse.closePosition(amm, Decimal.zero());
+                lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
+            } else {
+                clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
+                clearingHouse.openPosition(
+                    amm,
+                    IClearingHouse.Side.SELL,
+                    assetAmount,
+                    leverage,
+                    baseAssetAmountLimit
+                );
+                clearingHouse.removeMargin(amm, assetAmount);
+                // reInvestFundingPayment();
+            }
+
+            uint256 collateralBalance = collateral.balanceOf(address(this));
+
+            collateral.safeTransfer(lemmaToken, collateralBalance);
+
+            return collateralBalance;
         } else {
-            clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
-            clearingHouse.openPosition(
-                amm,
-                IClearingHouse.Side.SELL,
-                assetAmount,
-                leverage,
-                baseAssetAmountLimit
-            );
-            clearingHouse.removeMargin(amm, assetAmount);
-            // reInvestFundingPayment();
+            //there is not point in adding this condition because the function will fail before getting here
+            // IClearingHouse.Position memory position =
+            //     clearingHouse.getPosition(amm, address(this));
+            // if (position.size.toInt() != 0) {
+            //     settlePosition();
+            // }
+            collateral.safeTransfer(lemmaToken, _amount);
         }
-
-        uint256 collateralBalance = collateral.balanceOf(address(this));
-
-        collateral.safeTransfer(lemmaToken, collateralBalance);
-
-        return collateralBalance;
-
-        //if amm is not open it will just fail
-        // } else {
-        //     IClearingHouse.Position memory position =
-        //         clearingHouse.getPosition(amm, address(this));
-        //     if (position.size.toInt() != 0) {
-        //         settlePosition();
-        //     }
-        //     collateral.safeTransfer(lemmaToken, _amount);
-        // }
     }
 
     //decided not to call reInvestFundingPayment() when opening and closing because of the restrction mode that can be on
@@ -308,7 +307,11 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                         .margin
                 );
         } else {
-            return collateral.balanceOf(address(this));
+            uint256 collateralBalance = collateral.balanceOf(address(this));
+            //requires that someone has called settlePosition before trying to withdraw
+            //because of below require statement the withdraw will fail if someone has not called settlePosition
+            require(collateralBalance > 0, 'settle funding not called');
+            return collateralBalance;
         }
     }
 
