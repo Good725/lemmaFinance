@@ -136,6 +136,7 @@ contract LemmaToken is
         emit DepositInfoAdded(_account, _amount);
         //if AMB call is done after relaying of tokens
         if (collateral.balanceOf(address(this)) >= depositInfo[_account]) {
+            //we need to allow this to fail
             mint(_account);
         }
     }

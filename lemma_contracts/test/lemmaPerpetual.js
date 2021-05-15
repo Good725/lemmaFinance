@@ -159,17 +159,20 @@ describe("LemmaPerpetual", () => {
 
   it("should open position correctly", async function () {
     //transfer USDC to lemmaPerpetual first
-    await this.clearingHouse.payFunding(ammAddress);
+
+
     const amount = ethers.utils.parseUnits("1000", "6");
     expect(amount).to.be.lte((await this.usdc.balanceOf(hasUSDC._address)));
     // console.log(amount.toString());
-    // console.log((await this.usdc.balanceOf(hasUSDC._address)).toString());
-    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
+    console.log((await this.usdc.balanceOf(hasUSDC._address)).toString());
+    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, await this.usdc.balanceOf(hasUSDC._address));
 
     //should revert if open position is called by an address other than lemmaToken
-    await expect(this.lemmaPerpetual.connect(someAccount).open(amount)).to.be.revertedWith("Lemma: only lemma token allowed");
+    // await expect(this.lemmaPerpetual.connect(someAccount).open(amount)).to.be.revertedWith("Lemma: only lemma token allowed");
 
-    await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+    for (let i = 0; i < 12; i++) {
+      await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+    }
 
     const tollRatio = await this.amm.tollRatio();
     const spreadRatio = await this.amm.spreadRatio();
@@ -191,29 +194,49 @@ describe("LemmaPerpetual", () => {
     // console.log(fees.spreadRatio.d);
     // console.log(fees[0].d);
     // console.log(fees[1].d);
-    // console.log("spreadFees from perp", fees[1].d.toString());
-    expect(perpFees).to.be.closeTo(fees[0].d.add(fees[1].d), 1);
-    expect(fees[0].d.add(fees[1].d).add(amountToOpenPositionWith)).to.be.closeTo(usdcAmountInWei, 1);
+    // // console.log("spreadFees from perp", fees[1].d.toString());
+    // expect(perpFees).to.be.closeTo(fees[0].d.add(fees[1].d), 1);
+    // expect(fees[0].d.add(fees[1].d).add(amountToOpenPositionWith)).to.be.closeTo(usdcAmountInWei, 1);
     // console.log(fees);
 
     const toalUSDCNeeded = convertWeiAmountToUSDC(amountToOpenPositionWith).add(convertWeiAmountToUSDC(perpFees));
 
     // console.log("totalUSDCNeed", toalUSDCNeeded.toString());
-    expect(toalUSDCNeeded).to.be.closeTo(amount, 1);
-    const position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+    // expect(toalUSDCNeeded).to.be.closeTo(amount, 1);
+    let position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
       ammAddress,
       this.lemmaPerpetual.address,
     );
     //since leverage == 1
-    expect(position.openNotional.d).to.equal(amountToOpenPositionWith);
+    // expect(position.openNotional.d).to.equal(amountToOpenPositionWith);
+    console.log("position of lemmaPerpetual: size", position.size.d.toString());
+    console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
+    console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
+    console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
+    console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
+    console.log((await this.usdc.balanceOf(this.lemmaPerpetual.address)).toString());
 
+    await hre.network.provider.request({
+      method: "evm_increaseTime",
+      params: [60 * 60]
+    }
+    );
 
-    // console.log("position of lemmaPerpetual: size", position.size.d.toString());
-    // console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
-    // console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
-    // console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
-    // console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
-    // console.log((await this.usdc.balanceOf(this.lemmaPerpetual.address)).toString());
+    await this.clearingHouse.payFunding(ammAddress);
+
+    await this.lemmaPerpetual.reInvestFundingPayment();
+
+    position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+      ammAddress,
+      this.lemmaPerpetual.address,
+    );
+
+    console.log("position of lemmaPerpetual: size", position.size.d.toString());
+    console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
+    console.log("position of lemmaPerpetual: openNotional", position.openNotional.d.toString());
+    console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", position.lastUpdatedCumulativePremiumFraction.d.toString());
+    console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
+    console.log((await this.usdc.balanceOf(this.lemmaPerpetual.address)).toString());
   });
 
 
