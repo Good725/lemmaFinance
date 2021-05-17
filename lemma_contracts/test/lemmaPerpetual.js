@@ -165,14 +165,14 @@ describe("LemmaPerpetual", () => {
     expect(amount).to.be.lte((await this.usdc.balanceOf(hasUSDC._address)));
     // console.log(amount.toString());
     console.log((await this.usdc.balanceOf(hasUSDC._address)).toString());
-    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, await this.usdc.balanceOf(hasUSDC._address));
+    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
 
     //should revert if open position is called by an address other than lemmaToken
     // await expect(this.lemmaPerpetual.connect(someAccount).open(amount)).to.be.revertedWith("Lemma: only lemma token allowed");
 
-    for (let i = 0; i < 12; i++) {
-      await this.lemmaPerpetual.connect(lemmaToken).open(amount);
-    }
+    // for (let i = 0; i < 12; i++) {
+    await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+    // }
 
     const tollRatio = await this.amm.tollRatio();
     const spreadRatio = await this.amm.spreadRatio();

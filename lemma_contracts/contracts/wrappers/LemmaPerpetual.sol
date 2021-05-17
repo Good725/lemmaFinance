@@ -153,6 +153,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //if there is a liquidation/bad debt in the system at the same block
     //call this function once after payFunding is called
     function reInvestFundingPayment() public {
+        clearingHouse.payFunding(amm);
         //how to keep track of lastUpdatedCumulativePremiumFraction?
         //recreate the caluclation of funding payment from clearingHouseViewer.sol
         //just replace postion.lastUpdatedCumulativePremiumFraction with lastUpdatedCumulativePremiumFraction
@@ -176,6 +177,9 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             'lastUpdatedCumulativePremiumFraction',
             lastUpdatedCumulativePremiumFraction.abs().d
         );
+        console.log('size', position.size.abs().toUint());
+        console.log('margin', position.margin.toUint());
+        console.log('openNotional', position.openNotional.toUint());
         if (fundingPayment.toInt() != 0) {
             if (!fundingPayment.isNegative()) {
                 console.log('postive funding Rate');
@@ -227,6 +231,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             }
             lastUpdatedCumulativePremiumFraction = latestCumulativePremiumFraction;
         }
+        position = clearingHouse.getPosition(amm, address(this));
+        console.log('size', position.size.abs().toUint());
+        console.log('margin', position.margin.toUint());
+        console.log('openNotional', position.openNotional.toUint());
     }
 
     ///@notice will be called when AMM is closed to settle lemmaPerpetual's position
@@ -310,7 +318,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             uint256 collateralBalance = collateral.balanceOf(address(this));
             //requires that someone has called settlePosition before trying to withdraw
             //because of below require statement the withdraw will fail if someone has not called settlePosition
-            require(collateralBalance > 0, 'settle funding not called');
+            require(collateralBalance > 0, 'settlePosition not called');
             return collateralBalance;
         }
     }
