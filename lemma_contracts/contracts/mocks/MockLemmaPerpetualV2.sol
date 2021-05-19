@@ -78,7 +78,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         external
         override
         onlyLemmaToken
-        returns (uint256 temp)
+        returns (uint256 temp, uint256 temp1)
     {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
         //open postion on perptual protcol
@@ -108,7 +108,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         external
         override
         onlyLemmaToken
-        returns (uint256)
+        returns (uint256 temp, uint256 temp1)
     {
         Decimal.decimal memory amount =
             convertCollteralAmountTo18Decimals(address(USDC), _amount);
@@ -162,7 +162,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             convert18DecimalsToCollateralAmount(address(USDC), assetAmount);
         USDC.transfer(lemmaToken, amountGotBackAfterClosing);
 
-        return amountGotBackAfterClosing;
+        // return amountGotBackAfterClosing;
     }
 
     function convertCollteralAmountTo18Decimals(

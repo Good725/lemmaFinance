@@ -75,13 +75,17 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         public
         override
         onlyLemmaToken
-        returns (uint256)
+        returns (uint256 collateralAmount, uint256 underlyingAssetAmount)
     {
         (
             Decimal.decimal memory assetAmount,
             Decimal.decimal memory leverage,
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
+
+        IClearingHouse.Position memory position =
+            clearingHouse.getPosition(amm, address(this));
+        SignedDecimal.signedDecimal memory sizeBefore = position.size;
 
         clearingHouse.openPosition(
             amm,
@@ -90,12 +94,27 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             leverage,
             baseAssetAmountLimit
         );
+        position = clearingHouse.getPosition(amm, address(this));
+        SignedDecimal.signedDecimal memory sizeAfter = position.size;
+
         // reInvestFundingPayment();
-        return
-            convert18DecimalsToCollateralAmount(
-                address(collateral),
-                assetAmount
-            );
+        // uint256 baseAssetAmountFromAmm =
+        //     amm.getInputPrice(IAmm.Dir.ADD_TO_AMM, assetAmount).toUint();
+        // console.log('baseAssetAmountFromAmm', baseAssetAmountFromAmm);
+        // console.log(
+        //     'size difference',
+        //     ((sizeAfter.subD(sizeBefore))).abs().toUint()
+        // );
+        // require(
+        //     ((sizeAfter.subD(sizeBefore))).abs().toUint() ==
+        //         baseAssetAmountFromAmm,
+        //     'not the same'
+        // );
+        collateralAmount = convert18DecimalsToCollateralAmount(
+            address(collateral),
+            assetAmount
+        );
+        underlyingAssetAmount = sizeAfter.subD(sizeBefore).abs().toUint();
 
         //if amm is not open then just let the transaction fail
         //do not do anything with it
@@ -108,45 +127,50 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         public
         override
         onlyLemmaToken
-        returns (uint256)
+        returns (uint256 collateralAmount, uint256 underlyingAssetAmount)
     {
         (
             Decimal.decimal memory assetAmount,
             Decimal.decimal memory leverage,
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
-
-        if (amm.open()) {
-            if (getTotalCollateral() == _amount) {
-                clearingHouse.closePosition(amm, Decimal.zero());
-                lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
-            } else {
-                clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
-                clearingHouse.openPosition(
-                    amm,
-                    IClearingHouse.Side.SELL,
-                    assetAmount,
-                    leverage,
-                    baseAssetAmountLimit
-                );
-                clearingHouse.removeMargin(amm, assetAmount);
-                // reInvestFundingPayment();
-            }
-
-            uint256 collateralBalance = collateral.balanceOf(address(this));
-
-            collateral.safeTransfer(lemmaToken, collateralBalance);
-
-            return collateralBalance;
+        IClearingHouse.Position memory position =
+            clearingHouse.getPosition(amm, address(this));
+        SignedDecimal.signedDecimal memory sizeBefore = position.size;
+        // if (amm.open()) {
+        if (getTotalCollateral() == _amount) {
+            clearingHouse.closePosition(amm, Decimal.zero());
+            lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
         } else {
-            //there is not point in adding this condition because the function will fail before getting here
-            // IClearingHouse.Position memory position =
-            //     clearingHouse.getPosition(amm, address(this));
-            // if (position.size.toInt() != 0) {
-            //     settlePosition();
-            // }
-            collateral.safeTransfer(lemmaToken, _amount);
+            clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
+            clearingHouse.openPosition(
+                amm,
+                IClearingHouse.Side.SELL,
+                assetAmount,
+                leverage,
+                baseAssetAmountLimit
+            );
+            clearingHouse.removeMargin(amm, assetAmount);
+            // reInvestFundingPayment();
         }
+        position = clearingHouse.getPosition(amm, address(this));
+        SignedDecimal.signedDecimal memory sizeAfter = position.size;
+
+        uint256 collateralBalance = collateral.balanceOf(address(this));
+
+        collateral.safeTransfer(lemmaToken, collateralBalance);
+
+        collateralAmount = collateralBalance;
+        underlyingAssetAmount = sizeBefore.subD(sizeAfter).abs().toUint();
+        // } else {
+        //     //there is not point in adding this condition because the function will fail before getting here
+        //     // IClearingHouse.Position memory position =
+        //     //     clearingHouse.getPosition(amm, address(this));
+        //     // if (position.size.toInt() != 0) {
+        //     //     settlePosition();
+        //     // }
+        //     collateral.safeTransfer(lemmaToken, _amount);
+        // }
     }
 
     //decided not to call reInvestFundingPayment() when opening and closing because of the restrction mode that can be on

@@ -54,8 +54,12 @@ contract LemmaToken is
     IMultiTokenMediator public multiTokenMediator;
     ILemmaMainnet public lemmaMainnet;
     uint256 public gasLimit;
+    uint256 public feesFromProfit;
+    address public lemmaVault;
 
     mapping(address => uint256) public depositInfo;
+    //amount of underlying asset user deposited
+    mapping(address => uint256) public underlyingAssetAmountByUser;
 
     event USDCDeposited(address indexed account, uint256 indexed amount);
     event USDCWithdrawed(address indexed account, uint256 indexed amount);
@@ -150,7 +154,9 @@ contract LemmaToken is
 
         uint256 totalCollateral = perpetualProtocol.getTotalCollateral();
         //open position on perpetual
-        uint256 amountAfterOpeningPosition = perpetualProtocol.open(amount);
+        (uint256 amountAfterOpeningPosition, uint256 underlyingAssetAmount) =
+            perpetualProtocol.open(amount);
+        underlyingAssetAmountByUser[_account] += underlyingAssetAmount;
 
         uint256 toMint;
         if (totalSupply() != 0) {
@@ -174,13 +180,31 @@ contract LemmaToken is
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
         _burn(_msgSender(), _amount);
 
-        uint256 amountGotBackAfterClosing =
+        (uint256 amountGotBackAfterClosing, uint256 underlyingAssetAmount) =
             perpetualProtocol.close(userShareAmountOfCollateral);
-        //withdraw
+
+        uint256 underlyingAssetWOFundingPayments =
+            (underlyingAssetAmountByUser[_msgSender()] * _amount) /
+                balanceOf(_msgSender());
+        underlyingAssetAmountByUser[
+            _msgSender()
+        ] -= underlyingAssetWOFundingPayments;
+
+        uint256 fees;
+        if (underlyingAssetWOFundingPayments > underlyingAssetAmount) {
+            uint256 profitInCollateral =
+                (amountGotBackAfterClosing *
+                    (underlyingAssetWOFundingPayments -
+                        underlyingAssetAmount)) /
+                    underlyingAssetWOFundingPayments;
+            fees = (profitInCollateral * feesFromProfit) / 100;
+        }
+        collateral.safeTransfer(lemmaVault, fees);
+
         multiTokenTransfer(
             collateral,
             address(lemmaMainnet),
-            amountGotBackAfterClosing
+            amountGotBackAfterClosing - fees
         );
 
         //now realy the depositInfo to lemmaXDAI

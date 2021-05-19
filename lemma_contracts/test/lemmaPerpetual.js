@@ -172,6 +172,9 @@ describe("LemmaPerpetual", () => {
 
     // for (let i = 0; i < 12; i++) {
     await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+
+
+
     // }
 
     const tollRatio = await this.amm.tollRatio();
@@ -216,20 +219,30 @@ describe("LemmaPerpetual", () => {
     console.log("position of lemmaPerpetual: liquidityHistoryIndex", position.liquidityHistoryIndex.toString());
     console.log((await this.usdc.balanceOf(this.lemmaPerpetual.address)).toString());
 
+
     await hre.network.provider.request({
       method: "evm_increaseTime",
-      params: [60 * 60]
+      params: [7200]
     }
     );
+    // console.log();
 
     await this.clearingHouse.payFunding(ammAddress);
 
     await this.lemmaPerpetual.reInvestFundingPayment();
+    const totalCollateral = await this.lemmaPerpetual.getTotalCollateral();
+
+    //close position when totalCollateral is given as input
+    await this.lemmaPerpetual.connect(lemmaToken).close(totalCollateral);
+
+
 
     position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
       ammAddress,
       this.lemmaPerpetual.address,
     );
+
+
 
     console.log("position of lemmaPerpetual: size", position.size.d.toString());
     console.log("position of lemmaPerpetual: margin", position.margin.d.toString());
