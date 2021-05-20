@@ -222,7 +222,11 @@ describe("LemmaPerpetual", () => {
 
     await hre.network.provider.request({
       method: "evm_increaseTime",
-      params: [7200]
+      params: [3600]
+    }
+    );
+    await hre.network.provider.request({
+      method: "evm_mine",
     }
     );
     // console.log();

@@ -25,7 +25,7 @@ import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol';
 
-// import 'hardhat/console.sol';
+import 'hardhat/console.sol';
 
 interface ILemmaMainnet {
     function setWithdrawalInfo(
@@ -56,7 +56,6 @@ contract LemmaToken is
     uint256 public gasLimit;
     uint256 public feesFromProfit;
     address public lemmaVault;
-
     mapping(address => uint256) public depositInfo;
     //amount of underlying asset user deposited
     mapping(address => uint256) public underlyingAssetAmountByUser;
@@ -89,6 +88,8 @@ contract LemmaToken is
         multiTokenMediator = _multiTokenMediator;
         // lemmaMainnet = _lemmaMainnet;
         gasLimit = 1000000;
+        feesFromProfit = 30;
+        lemmaVault = address(1);
     }
 
     function _msgSender()
@@ -178,28 +179,54 @@ contract LemmaToken is
     function withdraw(uint256 _amount, uint256 _minETHOut) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
+        uint256 balance = balanceOf(_msgSender());
         _burn(_msgSender(), _amount);
 
         (uint256 amountGotBackAfterClosing, uint256 underlyingAssetAmount) =
             perpetualProtocol.close(userShareAmountOfCollateral);
 
+        console.log(
+            'closed position',
+            amountGotBackAfterClosing,
+            underlyingAssetAmount
+        );
+
+        console.log(
+            'underlyingAssetAmountByUser',
+            underlyingAssetAmountByUser[_msgSender()]
+        );
+
+        console.log('amount and balance', _amount, balance);
+
+        console.log('msg.sender', _msgSender());
+
         uint256 underlyingAssetWOFundingPayments =
-            (underlyingAssetAmountByUser[_msgSender()] * _amount) /
-                balanceOf(_msgSender());
+            (underlyingAssetAmountByUser[_msgSender()] * _amount) / balance;
+
+        console.log(
+            'underlyingAssetWOFundingPayments',
+            underlyingAssetWOFundingPayments
+        );
+
         underlyingAssetAmountByUser[
             _msgSender()
         ] -= underlyingAssetWOFundingPayments;
 
         uint256 fees;
-        if (underlyingAssetWOFundingPayments > underlyingAssetAmount) {
+        if (underlyingAssetAmount > underlyingAssetWOFundingPayments) {
+            console.log('in');
             uint256 profitInCollateral =
                 (amountGotBackAfterClosing *
-                    (underlyingAssetWOFundingPayments -
-                        underlyingAssetAmount)) /
-                    underlyingAssetWOFundingPayments;
+                    (underlyingAssetAmount -
+                        underlyingAssetWOFundingPayments)) /
+                    underlyingAssetAmount;
+            console.log('profitInCollateral', profitInCollateral);
             fees = (profitInCollateral * feesFromProfit) / 100;
+            console.log('fees', fees);
+            if (fees != 0) {
+                collateral.safeTransfer(lemmaVault, fees);
+            }
         }
-        collateral.safeTransfer(lemmaVault, fees);
 
         multiTokenTransfer(
             collateral,
