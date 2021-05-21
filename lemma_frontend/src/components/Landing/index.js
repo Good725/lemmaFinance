@@ -34,7 +34,7 @@ import Amm from "@perp/contract/build/contracts/src/Amm.sol/Amm.json";
 
 import { useConnectedWeb3Context } from "../../context";
 import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
-import { web3Modal } from "../../utils";
+import { web3Modal, getSignatures } from "../../utils";
 
 import { styles } from "./styles";
 import { parseEther } from "@ethersproject/units";
@@ -402,6 +402,7 @@ function LandingPage({ classes }) {
         // you can also use networkProvider created above
         // signature will be taken by mexa using normal provider (metamask wallet etc) that you passed in Biconomy options
         let txHash = await provider.send("eth_sendTransaction", [txParams]);
+
         //to test the blockscout link
         // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
 
@@ -433,6 +434,9 @@ function LandingPage({ classes }) {
           tx = await ethers.getDefaultProvider(XDAI_URL).getTransaction(txHash);
         }
         await tx.wait();
+
+        let signatures = await getSignatures(txHash);
+        console.log("signatures", signatures);
 
         setAmount("0");
 
@@ -768,6 +772,12 @@ function LandingPage({ classes }) {
     if (!isConnected && web3Modal.cachedProvider) {
       handleConnectWallet();
     }
+  }, []);
+
+  useEffect(() => {
+    getSignatures(
+      "0xe5f665ddbd3cd240289a7b1e579007d8f51fa5b1072043f19ccf0e7619b933fa"
+    );
   }, []);
 
   return (
