@@ -139,11 +139,13 @@ contract LemmaToken is
         );
         depositInfo[_account] += _amount;
         emit DepositInfoAdded(_account, _amount);
-        //if AMB call is done after relaying of tokens
-        if (collateral.balanceOf(address(this)) >= depositInfo[_account]) {
-            //we need to allow this to fail
-            mint(_account);
-        }
+        //do not do this because if mint fails due to restrictions in perpetual then there
+        //will be no way of getting the funds back
+        // //if AMB call is done after relaying of tokens
+        // if (collateral.balanceOf(address(this)) >= depositInfo[_account]) {
+        //     //we need to allow this to fail
+        //     mint(_account);
+        // }
     }
 
     /// @notice Mint lemma token to _account on xdai network.
@@ -198,8 +200,6 @@ contract LemmaToken is
 
         console.log('amount and balance', _amount, balance);
 
-        console.log('msg.sender', _msgSender());
-
         uint256 underlyingAssetWOFundingPayments =
             (underlyingAssetAmountByUser[_msgSender()] * _amount) / balance;
 
@@ -211,7 +211,6 @@ contract LemmaToken is
         underlyingAssetAmountByUser[
             _msgSender()
         ] -= underlyingAssetWOFundingPayments;
-
         uint256 fees;
         if (underlyingAssetAmount > underlyingAssetWOFundingPayments) {
             console.log('in');

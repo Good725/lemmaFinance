@@ -201,7 +201,7 @@ contract("LemmaXDAI", accounts => {
 
     it("should Withdraw correctly", async function () {
         const provider = accounts[0].provider;
-        const usdcAmountToDeposit = ethers.utils.parseUnits("1000", "6");
+        const usdcAmountToDeposit = ethers.utils.parseUnits("1", "6");
         const account = accounts[0].address;
         await ambBridgeContract.setDepositInfo(account, usdcAmountToDeposit);
         await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, usdcAmountToDeposit);
@@ -279,6 +279,7 @@ contract("LemmaXDAI", accounts => {
         console.log("Lusdc balance", lUSDCBalance.toString());
 
         await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance, "0");
+        expect(await LemmaXDAIContract.underlyingAssetAmountByUser(account)).to.equal("0");
     });
 
 
