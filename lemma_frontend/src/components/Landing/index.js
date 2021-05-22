@@ -21,12 +21,14 @@ import { Menu } from "@material-ui/icons";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
 import Web3 from "web3";
 import axios from "axios";
+import { Multicall } from "ethereum-multicall";
 
 import { ethers, BigNumber, utils } from "ethers";
 import { Biconomy } from "@biconomy/mexa";
 import addresses from "../../abis/addresses.json";
 import constants from "../../abis/constants.json";
 import LemmaToken from "../../abis/LemmaToken.json";
+import LemmaPerpetual from "../../abis/LemmaPerpetual.json";
 import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
 import ClearingHouseViewer from "@perp/contract/build/contracts/src/ClearingHouseViewer.sol/ClearingHouseViewer.json";
 import ClearingHouse from "@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json";
@@ -205,51 +207,110 @@ function LandingPage({ classes }) {
       addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouseViewer
         .address;
     const lemmaPerpetualAddress = addresses.xDAIRinkeby.lemmaPerpetual;
+    //below is the implemetation w/o the multicall
+    // const ethUSDCAMM = new ethers.Contract(
+    //   ethUSDCAMMAddress,
+    //   Amm.abi,
+    //   ethers.getDefaultProvider(XDAI_URL)
+    // );
+    // const clearingHouse = new ethers.Contract(
+    //   clearingHouseAddress,
+    //   ClearingHouse.abi,
+    //   ethers.getDefaultProvider(XDAI_URL)
+    // );
+    // const clearingHouseViewer = new ethers.Contract(
+    //   clearingHouseViewerAddress,
+    //   ClearingHouseViewer.abi,
+    //   ethers.getDefaultProvider(XDAI_URL)
+    // );
+    // const [
+    //   maxHoldingBaseAsset,
+    //   openInterestNotionalCap,
+    //   currentOpenInterest,
+    //   position,
+    // ] = await Promise.all([
+    //   ethUSDCAMM.getMaxHoldingBaseAsset(),
+    //   ethUSDCAMM.getOpenInterestNotionalCap(),
+    //   clearingHouse.openInterestNotionalMap(ethUSDCAMM.address),
+    //   clearingHouseViewer.getPersonalPositionWithFundingPayment(
+    //     ethUSDCAMM.address,
+    //     lemmaPerpetual.address
+    //   ),
+    // ]);
+    // console.log([
+    //   maxHoldingBaseAsset.d.toString(),
+    //   openInterestNotionalCap.d.toString(),
+    //   currentOpenInterest.toString(),
+    //   position.size.d.toString(),
+    // ]);
+    const multicall = new Multicall({
+      nodeUrl: XDAI_URL,
+      multicallCustomContractAddress:
+        "0xb5b692a88bdfc81ca69dcb1d924f59f0413a602a",
+    });
 
-    const ethUSDCAMM = new ethers.Contract(
-      ethUSDCAMMAddress,
-      Amm.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
-    const clearingHouse = new ethers.Contract(
-      clearingHouseAddress,
-      ClearingHouse.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
-    const clearingHouseViewer = new ethers.Contract(
-      clearingHouseViewerAddress,
-      ClearingHouseViewer.abi,
-      ethers.getDefaultProvider(XDAI_URL)
-    );
+    const contractCallContext = [
+      {
+        reference: "ethUSDCAMM",
+        contractAddress: ethUSDCAMMAddress,
+        abi: Amm.abi,
+        calls: [
+          { methodName: "getMaxHoldingBaseAsset", methodParameters: [] },
+          { methodName: "getOpenInterestNotionalCap", methodParameters: [] },
+        ],
+      },
+      {
+        reference: "clearingHouse",
+        contractAddress: clearingHouseAddress,
+        abi: ClearingHouse.abi,
+        calls: [
+          {
+            methodName: "openInterestNotionalMap",
+            methodParameters: [ethUSDCAMMAddress],
+          },
+        ],
+      },
+      {
+        reference: "clearingHouseViewer",
+        contractAddress: clearingHouseViewerAddress,
+        abi: ClearingHouseViewer.abi,
+        calls: [
+          {
+            methodName: "getPersonalPositionWithFundingPayment",
+            methodParameters: [ethUSDCAMMAddress, lemmaPerpetual.address],
+          },
+        ],
+      },
+    ];
+
+    const { results } = await multicall.call(contractCallContext);
 
     const [
       maxHoldingBaseAsset,
       openInterestNotionalCap,
       currentOpenInterest,
       position,
-    ] = await Promise.all([
-      ethUSDCAMM.getMaxHoldingBaseAsset(),
-      ethUSDCAMM.getOpenInterestNotionalCap(),
-      clearingHouse.openInterestNotionalMap(ethUSDCAMM.address),
-      clearingHouseViewer.getPersonalPositionWithFundingPayment(
-        ethUSDCAMM.address,
-        lemmaPerpetual.address
-      ),
-    ]);
-    console.log([
-      maxHoldingBaseAsset.d.toString(),
-      openInterestNotionalCap.d.toString(),
-      currentOpenInterest.toString(),
-      position.size.d.toString(),
-    ]);
+    ] = [
+        BigNumber.from(
+          results["ethUSDCAMM"].callsReturnContext[0].returnValues[0].hex
+        ),
+        BigNumber.from(
+          results["ethUSDCAMM"].callsReturnContext[1].returnValues[0].hex
+        ),
+        BigNumber.from(
+          results["clearingHouse"].callsReturnContext[0].returnValues[0].hex
+        ),
+        BigNumber.from(
+          results["clearingHouseViewer"].callsReturnContext[0].returnValues[0][0]
+            .hex
+        ),
+      ];
 
     if (
-      openInterestNotionalCap.d.lt(
+      openInterestNotionalCap.lt(
         currentOpenInterest.add(parseEther(amount.toString()))
       ) ||
-      maxHoldingBaseAsset.d.lt(
-        position.size.d.add(parseEther(amount.toString()))
-      )
+      maxHoldingBaseAsset.lt(position.add(parseEther(amount.toString())))
     ) {
       setErrorMessage("Sorry, Maximum limit reached");
       setErrorOpen(true);
@@ -493,12 +554,54 @@ function LandingPage({ classes }) {
       IUniswapV2Router02.abi,
       signer
     );
-    const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] =
-      await Promise.all([
-        lemmaToken.balanceOf(account),
-        lemmaPerpetual.getTotalCollateral(),
-        lemmaToken.totalSupply(),
-      ]);
+    //w/o the multicall
+    // const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] =
+    // await Promise.all([
+    //   lemmaToken.balanceOf(account),
+    //   lemmaPerpetual.getTotalCollateral(),
+    //   lemmaToken.totalSupply(),
+    // ]);
+
+    const multicall = new Multicall({
+      nodeUrl: XDAI_URL,
+      multicallCustomContractAddress:
+        "0xb5b692a88bdfc81ca69dcb1d924f59f0413a602a",
+    });
+    const contractCallContext = [
+      {
+        reference: "lemmaToken",
+        contractAddress: addresses.xDAIRinkeby.lemmaxDAI,
+        abi: LemmaToken.abi,
+        calls: [
+          { methodName: "balanceOf", methodParameters: [account] },
+          { methodName: "totalSupply", methodParameters: [] },
+        ],
+      },
+      {
+        reference: "lemmaPerpetual",
+        contractAddress: addresses.xDAIRinkeby.lemmaPerpetual,
+        abi: LemmaPerpetual.abi,
+        calls: [
+          {
+            methodName: "getTotalCollateral",
+            methodParameters: [],
+          },
+        ],
+      },
+    ];
+
+    const { results } = await multicall.call(contractCallContext);
+    const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] = [
+      BigNumber.from(
+        results["lemmaToken"].callsReturnContext[0].returnValues[0].hex
+      ),
+      BigNumber.from(
+        results["lemmaPerpetual"].callsReturnContext[0].returnValues[0].hex
+      ),
+      BigNumber.from(
+        results["lemmaToken"].callsReturnContext[1].returnValues[0].hex
+      ),
+    ];
 
     let maxWithdrwableEth = new BigNumber.from("0");
 
