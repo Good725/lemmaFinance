@@ -207,7 +207,42 @@ function LandingPage({ classes }) {
       addresses.perpRinkebyXDAI.layers.layer2.contracts.ClearingHouseViewer
         .address;
     const lemmaPerpetualAddress = addresses.xDAIRinkeby.lemmaPerpetual;
-
+    //below is the implemetation w/o the multicall
+    // const ethUSDCAMM = new ethers.Contract(
+    //   ethUSDCAMMAddress,
+    //   Amm.abi,
+    //   ethers.getDefaultProvider(XDAI_URL)
+    // );
+    // const clearingHouse = new ethers.Contract(
+    //   clearingHouseAddress,
+    //   ClearingHouse.abi,
+    //   ethers.getDefaultProvider(XDAI_URL)
+    // );
+    // const clearingHouseViewer = new ethers.Contract(
+    //   clearingHouseViewerAddress,
+    //   ClearingHouseViewer.abi,
+    //   ethers.getDefaultProvider(XDAI_URL)
+    // );
+    // const [
+    //   maxHoldingBaseAsset,
+    //   openInterestNotionalCap,
+    //   currentOpenInterest,
+    //   position,
+    // ] = await Promise.all([
+    //   ethUSDCAMM.getMaxHoldingBaseAsset(),
+    //   ethUSDCAMM.getOpenInterestNotionalCap(),
+    //   clearingHouse.openInterestNotionalMap(ethUSDCAMM.address),
+    //   clearingHouseViewer.getPersonalPositionWithFundingPayment(
+    //     ethUSDCAMM.address,
+    //     lemmaPerpetual.address
+    //   ),
+    // ]);
+    // console.log([
+    //   maxHoldingBaseAsset.d.toString(),
+    //   openInterestNotionalCap.d.toString(),
+    //   currentOpenInterest.toString(),
+    //   position.size.d.toString(),
+    // ]);
     const multicall = new Multicall({
       nodeUrl: XDAI_URL,
       multicallCustomContractAddress:
@@ -256,20 +291,20 @@ function LandingPage({ classes }) {
       currentOpenInterest,
       position,
     ] = [
-      BigNumber.from(
-        results["ethUSDCAMM"].callsReturnContext[0].returnValues[0].hex
-      ),
-      BigNumber.from(
-        results["ethUSDCAMM"].callsReturnContext[1].returnValues[0].hex
-      ),
-      BigNumber.from(
-        results["clearingHouse"].callsReturnContext[0].returnValues[0].hex
-      ),
-      BigNumber.from(
-        results["clearingHouseViewer"].callsReturnContext[0].returnValues[0][0]
-          .hex
-      ),
-    ];
+        BigNumber.from(
+          results["ethUSDCAMM"].callsReturnContext[0].returnValues[0].hex
+        ),
+        BigNumber.from(
+          results["ethUSDCAMM"].callsReturnContext[1].returnValues[0].hex
+        ),
+        BigNumber.from(
+          results["clearingHouse"].callsReturnContext[0].returnValues[0].hex
+        ),
+        BigNumber.from(
+          results["clearingHouseViewer"].callsReturnContext[0].returnValues[0][0]
+            .hex
+        ),
+      ];
 
     if (
       openInterestNotionalCap.lt(
@@ -519,6 +554,13 @@ function LandingPage({ classes }) {
       IUniswapV2Router02.abi,
       signer
     );
+    //w/o the multicall
+    // const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] =
+    // await Promise.all([
+    //   lemmaToken.balanceOf(account),
+    //   lemmaPerpetual.getTotalCollateral(),
+    //   lemmaToken.totalSupply(),
+    // ]);
 
     const multicall = new Multicall({
       nodeUrl: XDAI_URL,
@@ -547,6 +589,7 @@ function LandingPage({ classes }) {
         ],
       },
     ];
+
     const { results } = await multicall.call(contractCallContext);
     const [userBalanceOfLUSDC, totalCollateral, totalSupplyOfLUSDC] = [
       BigNumber.from(
