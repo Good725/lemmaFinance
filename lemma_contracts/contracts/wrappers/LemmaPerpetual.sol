@@ -188,7 +188,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         IClearingHouse.Position memory position =
             clearingHouse.getPosition(amm, address(this));
 
-        //if it's first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
+        //if it's the first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
         if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
             lastUpdatedCumulativePremiumFraction = position
                 .lastUpdatedCumulativePremiumFraction;
@@ -231,7 +231,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 Decimal.decimal memory assetAmount =
                     fundingPayment.abs().divD(
                         (
-                            Decimal.one().addD(
+                            Decimal.one().subD(
                                 (amm.tollRatio().addD(amm.spreadRatio()))
                             )
                         )

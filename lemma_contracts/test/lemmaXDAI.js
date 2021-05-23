@@ -253,14 +253,14 @@ contract("LemmaXDAI", accounts => {
 
         await this.clearingHouse.payFunding(ammAddress);
 
-        const postionAfterGettingFunding = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+        const positionAfterGettingFunding = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
             ammAddress,
             LemmaPerpetualContract.address,
         );
-        console.log("position of lemmaPerpetual: size", postionAfterGettingFunding.size.d.toString());
-        console.log("position of lemmaPerpetual: margin", postionAfterGettingFunding.margin.d.toString());
-        console.log("position of lemmaPerpetual: openNotional", postionAfterGettingFunding.openNotional.d.toString());
-        console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", postionAfterGettingFunding.lastUpdatedCumulativePremiumFraction.d.toString());
+        console.log("position of lemmaPerpetual: size", positionAfterGettingFunding.size.d.toString());
+        console.log("position of lemmaPerpetual: margin", positionAfterGettingFunding.margin.d.toString());
+        console.log("position of lemmaPerpetual: openNotional", positionAfterGettingFunding.openNotional.d.toString());
+        console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterGettingFunding.lastUpdatedCumulativePremiumFraction.d.toString());
 
 
         await LemmaPerpetualContract.reInvestFundingPayment();
@@ -280,6 +280,8 @@ contract("LemmaXDAI", accounts => {
 
         await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance, "0");
         expect(await LemmaXDAIContract.underlyingAssetAmountByUser(account)).to.equal("0");
+
+        //calculate the profit and make sure that 30% of it went to the lemma vault
     });
 
 
