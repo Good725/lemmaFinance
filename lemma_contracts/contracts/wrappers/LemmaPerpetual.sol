@@ -30,6 +30,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     IAmm public amm; //ETH-USDC
     IERC20 public collateral; //USDC
     address public lemmaToken; //lemmaXDAI and lemmaToken are interchangable
+    //yield is denominated in ETH that is why every fundingPayment coollected/paid in USDC needs to converted to ETH
+    //below updates evrytime fundingPayment gets converted to ETH
+    //not neccesarily same as clearingHouse.getPosition(amm,address(this)).lastUpdatedCumulativePremiumFraction
+    SignedDecimal.signedDecimal public lastUpdatedCumulativePremiumFraction;
 
     modifier onlyLemmaToken() {
         require(msg.sender == lemmaToken, 'Lemma: only lemma token allowed');
@@ -66,10 +70,10 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     /// @dev This function can be called through lemma token contract
     /// @param _amount The number of collateral to open perpetual protocol.
     function open(uint256 _amount)
-        external
+        public
         override
         onlyLemmaToken
-        returns (uint256)
+        returns (uint256 collateralAmount)
     {
         (
             Decimal.decimal memory assetAmount,
@@ -84,21 +88,24 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             leverage,
             baseAssetAmountLimit
         );
-        return
-            convert18DecimalsToCollateralAmount(
-                address(collateral),
-                assetAmount
-            );
+
+        collateralAmount = convert18DecimalsToCollateralAmount(
+            address(collateral),
+            assetAmount
+        );
+
+        //if amm is not open then just let the transaction fail
+        //do not do anything with it
     }
 
     /// @notice close on which side needs to be decide by rebalacer logic
     /// @dev This function can be called through lemma token contract.
     /// @param _amount The number of collateral to be closed from perpetual protocol.
     function close(uint256 _amount)
-        external
+        public
         override
         onlyLemmaToken
-        returns (uint256)
+        returns (uint256 collateralAmount)
     {
         (
             Decimal.decimal memory assetAmount,
@@ -108,6 +115,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
         if (getTotalCollateral() == _amount) {
             clearingHouse.closePosition(amm, Decimal.zero());
+            lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
         } else {
             clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
             clearingHouse.openPosition(
@@ -120,11 +128,86 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             clearingHouse.removeMargin(amm, assetAmount);
         }
 
-        uint256 collateralBalance = collateral.balanceOf(address(this));
+        collateralAmount = collateral.balanceOf(address(this));
 
-        collateral.safeTransfer(lemmaToken, collateralBalance);
+        collateral.safeTransfer(lemmaToken, collateralAmount);
 
-        return collateralBalance;
+        //there is not point in adding condition where amm is not open because lemmaXDAI will not be able to call this function when that condition is met
+    }
+
+    //decided not to call reInvestFundingPayment() when opening and closing because of the restrction mode that can be on
+    //if there is a liquidation/bad debt in the system at the same block
+    //call this function once after payFunding is called
+    function reInvestFundingPayment() public override onlyLemmaToken {
+        //how to keep track of lastUpdatedCumulativePremiumFraction?
+        //recreate the caluclation of funding payment from clearingHouseViewer.sol
+        //just replace postion.lastUpdatedCumulativePremiumFraction with lastUpdatedCumulativePremiumFraction
+
+        SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
+            clearingHouse.getLatestCumulativePremiumFraction(amm);
+        //change the position first
+        IClearingHouse.Position memory position =
+            clearingHouse.getPosition(amm, address(this));
+
+        //if it's the first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
+        if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
+            lastUpdatedCumulativePremiumFraction = position
+                .lastUpdatedCumulativePremiumFraction;
+        }
+        SignedDecimal.signedDecimal memory fundingPayment =
+            getFundingPayment(position, latestCumulativePremiumFraction);
+
+        if (fundingPayment.toInt() != 0) {
+            if (!fundingPayment.isNegative()) {
+                //remove the collateral equal to funding payment
+                clearingHouse.removeMargin(amm, fundingPayment.abs());
+                //open position with the funding Payments
+                uint256 collateralFromFundingPayment =
+                    collateral.balanceOf(address(this));
+                (
+                    Decimal.decimal memory assetAmount,
+                    Decimal.decimal memory leverage,
+                    Decimal.decimal memory baseAssetAmountLimit
+                ) = calcInputsToPerp(collateralFromFundingPayment);
+
+                clearingHouse.openPosition(
+                    amm,
+                    IClearingHouse.Side.BUY,
+                    assetAmount,
+                    leverage,
+                    baseAssetAmountLimit
+                );
+            } else {
+                //following equation makes sure that amount = assetAmount + assetAmount * fees (fees = tollRatio + spreadRatio)
+                Decimal.decimal memory assetAmount =
+                    fundingPayment.abs().divD(
+                        (
+                            Decimal.one().subD(
+                                (amm.tollRatio().addD(amm.spreadRatio()))
+                            )
+                        )
+                    );
+                clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
+
+                //here levarage = 1 meaining quoteAssetAmount  = assetAmount * levarage = assetAmount
+                Decimal.decimal memory leverage = Decimal.one();
+                Decimal.decimal memory baseAssetAmountLimit = Decimal.zero();
+                clearingHouse.openPosition(
+                    amm,
+                    IClearingHouse.Side.SELL,
+                    assetAmount,
+                    leverage,
+                    baseAssetAmountLimit
+                );
+            }
+            lastUpdatedCumulativePremiumFraction = latestCumulativePremiumFraction;
+        }
+        position = clearingHouse.getPosition(amm, address(this));
+    }
+
+    ///@notice will be called when AMM is closed to settle lemmaPerpetual's position
+    function settlePosition() public {
+        clearingHouse.settlePosition(amm);
     }
 
     ///@notice calculates input paramets for opening position on perpetual protcol
@@ -188,13 +271,24 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     /// @dev Return total collateral amount.
     function getTotalCollateral() public view override returns (uint256) {
-        return
-            convert18DecimalsToCollateralAmount(
-                address(collateral),
-                clearingHouseViewer
-                    .getPersonalPositionWithFundingPayment(amm, address(this))
-                    .margin
-            );
+        if (amm.open()) {
+            return
+                convert18DecimalsToCollateralAmount(
+                    address(collateral),
+                    clearingHouseViewer
+                        .getPersonalPositionWithFundingPayment(
+                        amm,
+                        address(this)
+                    )
+                        .margin
+                );
+        } else {
+            uint256 collateralBalance = collateral.balanceOf(address(this));
+            //requires that someone has called settlePosition before trying to withdraw
+            //because of below require statement the withdraw will fail if someone has not called settlePosition
+            require(collateralBalance > 0, 'settlePosition not called');
+            return collateralBalance;
+        }
     }
 
     ///@notice calculates fees that will taken by perpetual protocol
@@ -208,5 +302,65 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         (Decimal.decimal memory toll, Decimal.decimal memory spread) =
             _amm.calcFee(_positionNotional);
         return toll.addD(spread);
+    }
+
+    //recreated the equation to caclculate fundingPayment from from https://github.com/perpetual-protocol/perpetual-protocol/blob/ca394d424c7d34cbd7e193cf1f763327d0acb0fd/src/ClearingHouseViewer.sol#L109
+    function getFundingPayment(
+        IClearingHouse.Position memory _position,
+        SignedDecimal.signedDecimal memory _latestCumulativePremiumFraction
+    ) public view returns (SignedDecimal.signedDecimal memory) {
+        return
+            _position.size.toInt() == 0
+                ? SignedDecimal.zero()
+                : _latestCumulativePremiumFraction
+                    .subD(lastUpdatedCumulativePremiumFraction)
+                    .mulD(_position.size)
+                    .mulScalar(-1);
+    }
+
+    function getFundingPaymentNotReInvestedWithFees()
+        public
+        view
+        override
+        returns (int256 fundingPaymentNotReInvestedWithFees)
+    {
+        //if it's the first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
+
+        SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
+            clearingHouse.getLatestCumulativePremiumFraction(amm);
+        //change the position first
+        IClearingHouse.Position memory position =
+            clearingHouse.getPosition(amm, address(this));
+
+
+            SignedDecimal.signedDecimal
+                memory lastUpdatedCumulativePremiumFractionToConsider
+         = lastUpdatedCumulativePremiumFraction;
+
+        if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
+            lastUpdatedCumulativePremiumFractionToConsider = position
+                .lastUpdatedCumulativePremiumFraction;
+        }
+
+        SignedDecimal.signedDecimal memory fundingPaymentNotReInvested =
+            position.size.toInt() == 0
+                ? SignedDecimal.zero()
+                : latestCumulativePremiumFraction
+                    .subD(lastUpdatedCumulativePremiumFractionToConsider)
+                    .mulD(position.size)
+                    .mulScalar(-1);
+
+        //fees to open position with on the position
+        //fees would be substracted from the fundingPayment
+
+        Decimal.decimal memory fees =
+            calcFee(amm, fundingPaymentNotReInvested.abs());
+
+        fundingPaymentNotReInvestedWithFees = (
+            fundingPaymentNotReInvested.subD(
+                SignedDecimal.signedDecimal(int256(fees.toUint()))
+            )
+        )
+            .toInt();
     }
 }

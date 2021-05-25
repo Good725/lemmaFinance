@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
 require("@openzeppelin/hardhat-upgrades");
 require("@nomiclabs/hardhat-ethers");
+require("@tenderly/hardhat-tenderly");
 require("solidity-coverage");
 
 require("dotenv").config();

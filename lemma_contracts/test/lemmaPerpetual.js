@@ -29,7 +29,6 @@ describe("LemmaPerpetual", () => {
     this.amm = await ethers.getContractAt("IAmm", ammAddress);
     this.clearingHouseViewer = await ethers.getContractAt("IClearingHouseViewer", clearingHouseViewerAddress);
 
-
     this.usdc = new ethers.Contract(usdcAddress, TEST_USDC_ABI, owner);
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -39,18 +38,11 @@ describe("LemmaPerpetual", () => {
     hasUSDC = await ethers.provider.getSigner("0x1A48776f436bcDAA16845A378666cf4BA131eb0F");
 
   });
-  it("initializations correctly", async function () {
-    expect(await this.lemmaPerpetual.owner()).to.equal(owner.address);
-    expect(await this.lemmaPerpetual.clearingHouse()).to.equal(clearingHouseAddress);
-    expect(await this.lemmaPerpetual.clearingHouseViewer()).to.equal(clearingHouseViewerAddress);
-    expect(await this.lemmaPerpetual.amm()).to.equal(ammAddress);
-    expect(await this.lemmaPerpetual.collateral()).to.equal(usdcAddress);
-    expect(await this.lemmaPerpetual.lemmaToken()).to.equal(lemmaToken.address);
-    expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
-  });
-
   const getAmountToOpenPositionWith = (amount, tollRatio, spreadRatio) => {
     return (amount.mul(ONE)).div(ONE.add(tollRatio.add(spreadRatio)));
+  };
+  const getAmountToSellForReInvestinFundingPayment = (amount, tollRatio, spreadRatio) => {
+    return (amount.mul(ONE)).div(ONE.sub(tollRatio.add(spreadRatio)));
   };
   const convertWeiAmountToUSDC = (amount) => {
     //(amount ) / 10^18-6
@@ -62,6 +54,15 @@ describe("LemmaPerpetual", () => {
     return amount.mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("12")));
   };
 
+  it("initializations correctly", async function () {
+    expect(await this.lemmaPerpetual.owner()).to.equal(owner.address);
+    expect(await this.lemmaPerpetual.clearingHouse()).to.equal(clearingHouseAddress);
+    expect(await this.lemmaPerpetual.clearingHouseViewer()).to.equal(clearingHouseViewerAddress);
+    expect(await this.lemmaPerpetual.amm()).to.equal(ammAddress);
+    expect(await this.lemmaPerpetual.collateral()).to.equal(usdcAddress);
+    expect(await this.lemmaPerpetual.lemmaToken()).to.equal(lemmaToken.address);
+    expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
+  });
 
 
   it("should open position correctly", async function () {
@@ -103,10 +104,10 @@ describe("LemmaPerpetual", () => {
     expect(fees[0].d.add(fees[1].d).add(amountToOpenPositionWith)).to.be.closeTo(usdcAmountInWei, 1);
     // console.log(fees);
 
-    const toalUSDCNeeded = convertWeiAmountToUSDC(amountToOpenPositionWith).add(convertWeiAmountToUSDC(perpFees));
+    const totalUSDCNeeded = convertWeiAmountToUSDC(amountToOpenPositionWith).add(convertWeiAmountToUSDC(perpFees));
 
-    // console.log("totalUSDCNeed", toalUSDCNeeded.toString());
-    expect(toalUSDCNeeded).to.be.closeTo(amount, 1);
+    // console.log("totalUSDCNeed", totalUSDCNeeded.toString());
+    expect(totalUSDCNeeded).to.be.closeTo(amount, 1);
     const position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
       ammAddress,
       this.lemmaPerpetual.address,
@@ -151,13 +152,108 @@ describe("LemmaPerpetual", () => {
     expect(position.margin.d).to.equal(ZERO);
     expect(position.size.d).to.equal(ZERO);
     expect((await this.usdc.balanceOf(this.lemmaPerpetual.address))).to.equal(ZERO);
-    //check the balance of lemmaTOken
+    //TODO: check the balance of lemmaToken
     //should be amountInwei - fees1 -fees2
 
 
   });
 
-  //TODO: add tests for partial close
+  it("should close partial position correctly", async function () {
+    //transfer USDC to lemmaPerpetual first
+    const amount = ethers.utils.parseUnits("1000", "6");
+    expect(amount).to.be.lte((await this.usdc.balanceOf(hasUSDC._address)));
+    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
+
+    await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+    const balanceOfLemmaTokenBefore = await this.usdc.balanceOf(lemmaToken.address);
+    //close position when totalCollateral is given as input
+    const closingAmount = amount.div(10);
+    await this.lemmaPerpetual.connect(lemmaToken).close(closingAmount);
+
+    const tollRatio = await this.amm.tollRatio();
+    const spreadRatio = await this.amm.spreadRatio();
+    expect((await this.usdc.balanceOf(this.lemmaPerpetual.address))).to.equal(ZERO);
+    const balanceOfLemmaTokenAfter = await this.usdc.balanceOf(lemmaToken.address);
+    const collateralThatLemmaTokenGot = balanceOfLemmaTokenAfter.sub(balanceOfLemmaTokenBefore);
+    expect(collateralThatLemmaTokenGot).to.be.closeTo(getAmountToOpenPositionWith(closingAmount, tollRatio.d, spreadRatio.d), 1);
+  });
+
+
+  it("should re invest funding payments correctly", async function () {
+    //transfer USDC to lemmaPerpetual first
+    const amount = ethers.utils.parseUnits("100000", "6");
+    expect(amount).to.be.lte((await this.usdc.balanceOf(hasUSDC._address)));
+    //open the long position
+    console.log((await this.usdc.balanceOf(hasUSDC._address)).toString());
+    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
+    await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+
+
+    const tollRatio = await this.amm.tollRatio();
+    const spreadRatio = await this.amm.spreadRatio();
+
+    //go forward in time to be able to distribute the fundingPayments
+    await hre.network.provider.request({
+      method: "evm_increaseTime",
+      params: [3600]
+    }
+    );
+    await hre.network.provider.request({
+      method: "evm_mine",
+    }
+    );
+    //distribute the funding payments
+    await this.clearingHouse.payFunding(ammAddress);
+
+    position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+      ammAddress,
+      this.lemmaPerpetual.address,
+    );
+    const marginBeforeReInvestingWithFundingPayment = position.margin;
+    const positionWOFundingPayment = await this.clearingHouse.getPosition(ammAddress, this.lemmaPerpetual.address);
+    const marginBeforeReInvestingWOFundingPayment = positionWOFundingPayment.margin;
+    const fundingPayment = marginBeforeReInvestingWithFundingPayment.d.sub(marginBeforeReInvestingWOFundingPayment.d);
+    console.log("fundingPayment in test", fundingPayment.toString());
+
+    //re invest the funding payments
+    await this.lemmaPerpetual.connect(lemmaToken).reInvestFundingPayment();
+
+    position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+      ammAddress,
+      this.lemmaPerpetual.address,
+    );
+    const currentMargin = position.margin;
+
+
+    //make sure that openNotional == margin 
+    //this means that it got reInvested properly (fundingPayment negative or positive does not matter)
+    expect(position.margin.d).to.equal(position.openNotional.d);
+    //below marginBeforeReInvesting already has the fundingPayment added (since we are calling getPersonalPositionWithFundingPayment() to get the position)
+    console.log("marginBeforeReInvestingWithFundingPayment", marginBeforeReInvestingWithFundingPayment.d.toString());
+
+    console.log("currentMargin", currentMargin.d.toString());
+    let feesToOpenPositionForReInvestingFundingPayment;
+    let amountToOpenPositionWithForReInvestingFundingPayment;
+    if (fundingPayment.isNegative()) {
+      amountToOpenPositionWithForReInvestingFundingPayment = getAmountToSellForReInvestinFundingPayment(fundingPayment, tollRatio.d, spreadRatio.d);
+      feesToOpenPositionForReInvestingFundingPayment = await this.lemmaPerpetual.calcFee(ammAddress, [amountToOpenPositionWithForReInvestingFundingPayment.abs()]);
+    }
+    else {
+      amountToOpenPositionWithForReInvestingFundingPayment = getAmountToOpenPositionWith(fundingPayment, tollRatio.d, spreadRatio.d);
+      feesToOpenPositionForReInvestingFundingPayment = await this.lemmaPerpetual.calcFee(ammAddress, [amountToOpenPositionWithForReInvestingFundingPayment]);
+    }
+    console.log("feesToOpenPositionForReInvestingFundingPayment", feesToOpenPositionForReInvestingFundingPayment.d.toString());
+    console.log("amountToOpenPositionWithForReInvestingFundingPayment", amountToOpenPositionWithForReInvestingFundingPayment.toString());
+
+    //only fees to open position is subtracted from the margin with funding payment in both cases
+    //in the contract the conversion will happen and that is why converting below is also necessary
+    //TODO: check if closeTo 1 is necessary below
+    expect(convertWeiAmountToUSDC(marginBeforeReInvestingWithFundingPayment.d).sub(convertWeiAmountToUSDC(feesToOpenPositionForReInvestingFundingPayment.d))).to.be.closeTo(convertWeiAmountToUSDC(currentMargin.d), 1);
+
+
+  });
+
+
 
 
 });

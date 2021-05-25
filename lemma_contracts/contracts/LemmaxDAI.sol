@@ -25,8 +25,6 @@ import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol';
 
-// import 'hardhat/console.sol';
-
 interface ILemmaMainnet {
     function setWithdrawalInfo(
         address account,
@@ -54,7 +52,9 @@ contract LemmaToken is
     IMultiTokenMediator public multiTokenMediator;
     ILemmaMainnet public lemmaMainnet;
     uint256 public gasLimit;
-
+    uint256 public feesFromProfit;
+    int256 public amountOfLUSDCDeservedByLemmaVault;
+    address public lemmaVault;
     mapping(address => uint256) public depositInfo;
 
     event USDCDeposited(address indexed account, uint256 indexed amount);
@@ -85,6 +85,8 @@ contract LemmaToken is
         multiTokenMediator = _multiTokenMediator;
         // lemmaMainnet = _lemmaMainnet;
         gasLimit = 1000000;
+        feesFromProfit = 3000;
+        lemmaVault = address(1);
     }
 
     function _msgSender()
@@ -134,10 +136,6 @@ contract LemmaToken is
         );
         depositInfo[_account] += _amount;
         emit DepositInfoAdded(_account, _amount);
-        //if AMB call is done after relaying of tokens
-        if (collateral.balanceOf(address(this)) >= depositInfo[_account]) {
-            mint(_account);
-        }
     }
 
     /// @notice Mint lemma token to _account on xdai network.
@@ -171,11 +169,13 @@ contract LemmaToken is
     function withdraw(uint256 _amount, uint256 _minETHOut) external {
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
+
+        uint256 balance = balanceOf(_msgSender());
         _burn(_msgSender(), _amount);
 
         uint256 amountGotBackAfterClosing =
             perpetualProtocol.close(userShareAmountOfCollateral);
-        //withdraw
+
         multiTokenTransfer(
             collateral,
             address(lemmaMainnet),
@@ -194,6 +194,31 @@ contract LemmaToken is
         callBridge(address(lemmaMainnet), data, gasLimit);
 
         emit USDCWithdrawed(_msgSender(), amountGotBackAfterClosing);
+    }
+
+    function reInvestFundingPayment() public {
+        int256 fundingPayment =
+            perpetualProtocol.getFundingPaymentNotReInvestedWithFees();
+
+        int256 totalCollateral =
+            int256(perpetualProtocol.getTotalCollateral()) -
+                (fundingPayment / 10**12);
+
+        //10**16 = 10**12 + 10**4 (10**4 is becuase the fees are in 1/10000)
+        int256 feesOnfundingPayment =
+            (fundingPayment * int256(feesFromProfit)) / int256(10**16);
+
+        int256 amountOfLUSDCToMintOrBurn =
+            (int256(totalSupply()) * feesOnfundingPayment) / totalCollateral;
+
+        amountOfLUSDCDeservedByLemmaVault += amountOfLUSDCToMintOrBurn;
+
+        if (amountOfLUSDCDeservedByLemmaVault > 0) {
+            _mint(lemmaVault, uint256(amountOfLUSDCDeservedByLemmaVault));
+            amountOfLUSDCDeservedByLemmaVault = 0;
+        }
+
+        perpetualProtocol.reInvestFundingPayment();
     }
 
     //maybe we can use this later
