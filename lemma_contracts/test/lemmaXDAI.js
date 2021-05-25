@@ -12,7 +12,7 @@ contract("LemmaXDAI", accounts => {
     let LemmaXDAIContract;
     const ambBridgeOnXDai = addresses.perpMainnetXDAI.layers.layer2.externalContracts.ambBridgeOnXDai;
     const multiTokenMediatorOnXDai = addresses.perpMainnetXDAI.layers.layer2.externalContracts.multiTokenMediatorOnXDai;
-    const trustedForwaderXDAI = addresses.xdai.trustedForwarder;
+    const trustedForwarderXDAI = addresses.xdai.trustedForwarder;
     const lemmaMainnet = addresses.rinkeby.lemmaMainnet;
 
     const clearingHouseAddress = addresses.perpMainnetXDAI.layers.layer2.contracts.ClearingHouse.address;
@@ -20,11 +20,14 @@ contract("LemmaXDAI", accounts => {
     const ammAddress = addresses.perpMainnetXDAI.layers.layer2.contracts.ETHUSDC.address;
     const testusdcAddress = addresses.perpMainnetXDAI.layers.layer2.externalContracts.usdc;
     const zeroAddress = "0x0000000000000000000000000000000000000000";
+    const lemmaVault = "0x0000000000000000000000000000000000000001";
+    const fees = 30;
     const myEmitter = new EventEmitter();
+    const ONE = ethers.utils.parseUnits("1", "18");
     let ambBridgeContract;
     let impersonate_account;
 
-    before(async function () {
+    beforeEach(async function () {
         accounts = await ethers.getSigners();
         const LemmaXDAI = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
@@ -39,7 +42,7 @@ contract("LemmaXDAI", accounts => {
 
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });
         LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress], { initializer: 'initialize' });
-        LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwaderXDAI], { initializer: 'initialize' });
+        LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwarderXDAI], { initializer: 'initialize' });
 
         await LemmaPerpetualContract.setLemmaToken(LemmaXDAIContract.address);
         await LemmaXDAIContract.setLemmaMainnet(lemmaMainnet);
@@ -201,7 +204,7 @@ contract("LemmaXDAI", accounts => {
 
     it("should Withdraw correctly", async function () {
         const provider = accounts[0].provider;
-        const usdcAmountToDeposit = ethers.utils.parseUnits("1", "6");
+        const usdcAmountToDeposit = ethers.utils.parseUnits("1000", "6");
         const account = accounts[0].address;
         await ambBridgeContract.setDepositInfo(account, usdcAmountToDeposit);
         await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, usdcAmountToDeposit);
@@ -231,14 +234,6 @@ contract("LemmaXDAI", accounts => {
         console.log("position of lemmaPerpetual: openNotional", positionAfter.openNotional.d.toString());
         console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfter.lastUpdatedCumulativePremiumFraction.d.toString());
 
-
-
-        console.log("underlyingAssetAmountByUser", (await LemmaXDAIContract.underlyingAssetAmountByUser(account)).toString());
-
-        const underlyingAssetAmountByUser = await LemmaXDAIContract.underlyingAssetAmountByUser(account);
-        const sizeDifference = positionAfter.size.d.sub(positionBefore.size.d);
-
-
         console.log((await provider.getBlock('latest')).timestamp);
         await hre.network.provider.request({
             method: "evm_increaseTime",
@@ -253,6 +248,19 @@ contract("LemmaXDAI", accounts => {
 
         await this.clearingHouse.payFunding(ammAddress);
 
+        await hre.network.provider.request({
+            method: "evm_increaseTime",
+            params: [60 * 60]
+        }
+        );
+        await hre.network.provider.request({
+            method: "evm_mine",
+        }
+        );
+        console.log((await provider.getBlock('latest')).timestamp);
+
+        await this.clearingHouse.payFunding(ammAddress);
+        //here we are fetching the position with fundingPayment considered
         const positionAfterGettingFunding = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
             ammAddress,
             LemmaPerpetualContract.address,
@@ -263,25 +271,72 @@ contract("LemmaXDAI", accounts => {
         console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterGettingFunding.lastUpdatedCumulativePremiumFraction.d.toString());
 
 
-        await LemmaPerpetualContract.reInvestFundingPayment();
+        // await LemmaPerpetualContract.reInvestFundingPayment();
+        await LemmaXDAIContract.reInvestFundingPayment();
 
-        const positionAfterFundingPayment = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+        const positionAfterReInvestingFundingPayment = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
             ammAddress,
             LemmaPerpetualContract.address,
         );
-        console.log("position of lemmaPerpetual: size", positionAfterFundingPayment.size.d.toString());
-        console.log("position of lemmaPerpetual: margin", positionAfterFundingPayment.margin.d.toString());
-        console.log("position of lemmaPerpetual: openNotional", positionAfterFundingPayment.openNotional.d.toString());
-        console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterFundingPayment.lastUpdatedCumulativePremiumFraction.d.toString());
+        console.log("position of lemmaPerpetual: size", positionAfterReInvestingFundingPayment.size.d.toString());
+        console.log("position of lemmaPerpetual: margin", positionAfterReInvestingFundingPayment.margin.d.toString());
+        console.log("position of lemmaPerpetual: openNotional", positionAfterReInvestingFundingPayment.openNotional.d.toString());
+        console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterReInvestingFundingPayment.lastUpdatedCumulativePremiumFraction.d.toString());
 
 
-        const lUSDCBalance = await LemmaXDAIContract.balanceOf(account);
+        let lUSDCBalance = await LemmaXDAIContract.balanceOf(account);
         console.log("Lusdc balance", lUSDCBalance.toString());
 
+
+
+
+        await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance.div(BigNumber.from("2")), "0");
+        lUSDCBalance = await LemmaXDAIContract.balanceOf(account);
+
         await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance, "0");
-        expect(await LemmaXDAIContract.underlyingAssetAmountByUser(account)).to.equal("0");
+
+
+        // expect(await LemmaXDAIContract.underlyingAssetAmountByUser(account)).to.equal("0");
 
         //calculate the profit and make sure that 30% of it went to the lemma vault
+
+        //we know that profit is equal to the funding rate - the fees
+        //here we will get the total funding rate and just compare it with how much lemmaVault got
+
+        // const profitWOPerpFees = positionAfterReInvestingFundingPayment.margin.d.sub(positionAfter.margin.d);
+        // //because closing the position still has the 0.1% we need to take that into account too
+
+
+        // const perpFeesOnProfit = await LemmaPerpetualContract.calcFee(ammAddress, [profitWOPerpFees]);
+        // const profit = profitWOPerpFees.sub(perpFeesOnProfit.d);
+        // console.log("profit in testing", (profit).toString());
+        // if (!profit.isNegative()) {
+        //     const feesFromProfit = (profit.mul(BigNumber.from("30"))).div((BigNumber.from("100")));
+        //     console.log("feesFromProfit", (feesFromProfit).toString());
+        // }
+
+        const positionAfterClosing = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+            ammAddress,
+            LemmaPerpetualContract.address,
+        );
+        console.log("position of lemmaPerpetual: size", positionAfterClosing.size.d.toString());
+        console.log("position of lemmaPerpetual: margin", positionAfterClosing.margin.d.toString());
+        console.log("position of lemmaPerpetual: openNotional", positionAfterClosing.openNotional.d.toString());
+        console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterClosing.lastUpdatedCumulativePremiumFraction.d.toString());
+
+
+        const lUSDCBalanceEnd = await LemmaXDAIContract.balanceOf(account);
+        console.log("Lusdc balance", lUSDCBalanceEnd.toString());
+
+        console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
+
+        console.log("amount of lusdc deserved by lemma", (await LemmaXDAIContract.amountOfLUSDCDeservedByLemmaVault()).toString());
+
+
+
+
+
+
     });
 
 

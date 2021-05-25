@@ -166,9 +166,6 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         withdrawalInfo[_account] += _amount;
         minimumETHToBeWithdrawn[_account] = _minETHOut;
         emit WithdrawalInfoAdded(_account, _amount);
-        if (USDC.balanceOf(address(this)) >= withdrawalInfo[_account]) {
-            withdraw(_account);
-        }
     }
 
     function setMinimuETHToBeWithdrawn(uint256 _minETHOut) external {
