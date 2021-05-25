@@ -216,7 +216,7 @@ describe("LemmaPerpetual", () => {
     console.log("fundingPayment in test", fundingPayment.toString());
 
     //re invest the funding payments
-    await this.lemmaPerpetual.reInvestFundingPayment();
+    await this.lemmaPerpetual.connect(lemmaToken).reInvestFundingPayment();
 
     position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
       ammAddress,
