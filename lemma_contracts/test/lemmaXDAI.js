@@ -269,7 +269,7 @@ contract("LemmaXDAI", accounts => {
         console.log("position of lemmaPerpetual: margin", positionAfterGettingFunding.margin.d.toString());
         console.log("position of lemmaPerpetual: openNotional", positionAfterGettingFunding.openNotional.d.toString());
         console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterGettingFunding.lastUpdatedCumulativePremiumFraction.d.toString());
-
+        console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
         // await LemmaPerpetualContract.reInvestFundingPayment();
         await LemmaXDAIContract.reInvestFundingPayment();
@@ -287,13 +287,13 @@ contract("LemmaXDAI", accounts => {
         let lUSDCBalance = await LemmaXDAIContract.balanceOf(account);
         console.log("Lusdc balance", lUSDCBalance.toString());
 
-
+        console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
 
         await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance.div(BigNumber.from("2")), "0");
         lUSDCBalance = await LemmaXDAIContract.balanceOf(account);
 
-        await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance, "0");
+        // await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance, "0");
 
 
         // expect(await LemmaXDAIContract.underlyingAssetAmountByUser(account)).to.equal("0");
