@@ -27,7 +27,7 @@ contract("LemmaXDAI", accounts => {
     let ambBridgeContract;
     let impersonate_account;
 
-    beforeEach(async function () {
+    before(async function () {
         accounts = await ethers.getSigners();
         const LemmaXDAI = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
@@ -67,140 +67,117 @@ contract("LemmaXDAI", accounts => {
         return amount.mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("12")));
     };
 
-    // it("Set LemmaMainnet on xdai contract", async function() {
-    //     await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
-    //     expect(await LemmaXDAIContract.lemmaMainnet()).to.equal(lemmaMainnet);
-    // });
+    it("Set LemmaMainnet on xdai contract", async function() {
+        await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
+        expect(await LemmaXDAIContract.lemmaMainnet()).to.equal(lemmaMainnet);
+    });
 
-    // it("Set LemmaMainnet on perpetual contract", async function() {
-    //     await LemmaPerpetualContract.setLemmaXDAI(LemmaXDAIContract.address);
-    //     expect(await LemmaPerpetualContract.LemmaXDAI()).to.equal(LemmaXDAIContract.address);
-    // });
+    it("Set LemmaMainnet on perpetual contract", async function() {
+        await LemmaPerpetualContract.setLemmaToken(LemmaXDAIContract.address);
+        expect(await LemmaPerpetualContract.lemmaToken()).to.equal(LemmaXDAIContract.address);
+    });
 
-    // it("Only ambBridge contract can call setDepositInfo function", async function() {
-    //     let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
-    //     try {
-    //         await LemmaXDAIContract.connect(accounts[0]).setDepositInfo(accounts[0].address, depositUSDCAmountOut);
-    //     }
-    //     catch (error) {
-    //         expect(error.message).to.equal("VM Exception while processing transaction: revert not ambBridge");
-    //     }
-    // });
+    it("Only ambBridge contract can call setDepositInfo function", async function() {
+        let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
+        try {
+            await LemmaXDAIContract.connect(accounts[0]).setDepositInfo(accounts[0].address, depositUSDCAmountOut);
+        }
+        catch (error) {
+            expect(error.message).to.equal("VM Exception while processing transaction: revert not ambBridge");
+        }
+    });
 
-    // it("Can not deposit if ambBridge's messageSender() is not the same as lemmaMainnet", async function() {
-    //     let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
-    //     await ambBridgeContract.setXDAIContract(LemmaXDAIContract.address);
-    //     try {
-    //         await ambBridgeContract.setDepositInfo(accounts[0].address, depositUSDCAmountOut);
-    //     }
-    //     catch (error) {
-    //         expect(error.message).to.equal("VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaMainnet");
-    //     }
-    // });
+    it("Can not deposit if ambBridge's messageSender() is not the same as lemmaMainnet", async function() {
+        let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
+        await ambBridgeContract.setXDAIContract(LemmaXDAIContract.address);
+        try {
+            await ambBridgeContract.setDepositInfo(accounts[0].address, depositUSDCAmountOut);
+        }
+        catch (error) {
+            expect(error.message).to.equal("VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaMainnet");
+        }
+    });
 
-    // it("Set xdai and mainnet contract on AMB", async function() {
-    //     await ambBridgeContract.setMainnetContract(lemmaMainnet);
-    //     expect(await ambBridgeContract.mainnetContract()).to.equal(lemmaMainnet);
-    // });
+    it("Set xdai and mainnet contract on AMB", async function() {
+        await ambBridgeContract.setMainnetContract(lemmaMainnet);
+        expect(await ambBridgeContract.mainnetContract()).to.equal(lemmaMainnet);
+    });
 
-    // it("Set gasLimit", async function() {
-    //     await LemmaXDAIContract.connect(accounts[0]).setGasLimit(1000000);
-    //     expect(await LemmaXDAIContract.gasLimit()).to.equal(1000000);
-    // });
+    it("Set gasLimit", async function() {
+        await LemmaXDAIContract.connect(accounts[0]).setGasLimit(1000000);
+        expect(await LemmaXDAIContract.gasLimit()).to.equal(1000000);
+    });
 
-    // it("Set Deposit", async function() {
-    //     let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
-    //     await accounts[0].sendTransaction({to: impersonate_account._address, value: ethers.utils.parseEther("2")});
+    it("Set Deposit", async function() {
+        let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
+        await accounts[0].sendTransaction({to: impersonate_account._address, value: ethers.utils.parseEther("2")});
+    
+        let amountTransfer = BigNumber.from(7 * 10 ** 6);
+        let test_usdc_balance_1 = await testusdc.balanceOf(impersonate_account._address);
+        let spreadRatio = BigNumber.from(10 ** 15);
+        let tollRatio = BigNumber.from(0);
+        let one = BigNumber.from(1e18.toString());
+        
+        let amountAfterOpeningPosition = minimumUSDCAmountOut.mul(one).div(one.add(spreadRatio));
+        await testusdc.connect(impersonate_account).approve(LemmaXDAIContract.address, amountTransfer);
+        await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, amountTransfer);
+        expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaXDAIContract, "DepositInfoAdded").withArgs(impersonate_account._address, minimumUSDCAmountOut);
+        expect(await LemmaXDAIContract.mint(impersonate_account._address)).to.emit(LemmaXDAIContract, "USDCDeposited").withArgs(impersonate_account._address, amountAfterOpeningPosition);
+        let test_usdc_balance_2 = await testusdc.balanceOf(impersonate_account._address);
+        expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
+    });
 
-    //     let  amountTransfer = BigNumber.from(7 * 10 ** 6);
-    //     let test_usdc_balance_1 = await testusdc.balanceOf(impersonate_account._address);
+    it("Can not withdraw LemmaXDAI before setting lemmaMainnet", async function() {
+        await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(zeroAddress);
+        let amountWithdraw_1 = BigNumber.from(1e18.toString());
+        let balance = await LemmaXDAIContract.balanceOf(impersonate_account._address);
+        console.log(balance.toString());
+        try {
+            await LemmaXDAIContract.connect(impersonate_account).withdraw(balance, 0);
+        } catch (error) {
+            expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
+        };
+    });
 
-    //     await testusdc.connect(impersonate_account).approve(LemmaXDAIContract.address, amountTransfer);
-    //     await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, amountTransfer);
-    //     expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaXDAIContract, "DepositInfoAdded").withArgs(impersonate_account._address, minimumUSDCAmountOut);
-    //     expect(await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut)).to.emit(LemmaXDAIContract, "USDCDeposited").withArgs(impersonate_account._address, minimumUSDCAmountOut);
-    //     let test_usdc_balance_2 = await testusdc.balanceOf(impersonate_account._address);
-    //     expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
-    // });
+    it("Withdraw LemmaXDAI", async function() {
+        await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
+        let amountWithdraw = await LemmaXDAIContract.balanceOf(impersonate_account._address);
+        let lemmabalanceBeforeWithdraw = await LemmaXDAIContract.balanceOf(impersonate_account._address);
+        await LemmaXDAIContract.connect(impersonate_account).withdraw(amountWithdraw, 0);
+        let test_usdc_balance_after_withdraw = await testusdc.balanceOf(LemmaXDAIContract.address);
+        expect(test_usdc_balance_after_withdraw).to.equal(6000000);
+    });
 
-    // it("Deposit in the case of existing totalSupply", async function() {
-    //     let minimumUSDCAmountOut_2 = BigNumber.from(2 * 10 ** 6);
-    //     let getTotalCollateral = await LemmaPerpetualContract.getTotalCollateral();
-    //     let lemmaBalance_1 = await LemmaXDAIContract.balanceOf(impersonate_account._address);
-    //     await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmountOut_2);
-    //     let lemmaBalance_2 = await LemmaXDAIContract.balanceOf(impersonate_account._address);
-    //     let amount_mint = lemmaBalance_1 * minimumUSDCAmountOut_2 / getTotalCollateral;
-    //     expect(lemmaBalance_2 / 10000).to.equal(lemmaBalance_1 / 10000 + amount_mint / 10000);
-    // }); 
+    it("should mint correctly", async function () {
+        const usdcAmountToDeposit = ethers.utils.parseUnits("1", "6");
+        const account = accounts[1].address;
+        await ambBridgeContract.setDepositInfo(account, usdcAmountToDeposit);
+        expect(await LemmaXDAIContract.depositInfo(account)).to.equal(usdcAmountToDeposit);
 
-    // it("Can not mint more amount than the contract's balance", async function() {
-    //     let minimumUSDCAmount = BigNumber.from(10 * 10 ** 6);
-    //     let test_usdc_balance_beforeDeposit = await testusdc.balanceOf(impersonate_account._address);
-    //     await ambBridgeContract.setDepositInfo(impersonate_account._address, minimumUSDCAmount);
-    //     let test_usdc_balance_afterDeposit = await testusdc.balanceOf(impersonate_account._address);
-    //     expect(test_usdc_balance_beforeDeposit).to.equal(test_usdc_balance_afterDeposit);
-    // });
+        await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, usdcAmountToDeposit);
 
-    // it("Can not withdraw LemmaXDAI before setting lemmaMainnet", async function() {
-    //     await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(zeroAddress);
-    //     let amountWithdraw_1 = BigNumber.from(1e18.toString());
+        const positionBefore = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+            ammAddress,
+            LemmaPerpetualContract.address,
+        );
+        await LemmaXDAIContract.mint(account);
+        const positionAfter = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
+            ammAddress,
+            LemmaPerpetualContract.address,
+        );
 
-    //     try {
-    //         await LemmaXDAIContract.connect(impersonate_account).withdraw(amountWithdraw_1);
-    //     } catch (error) {BigNumber.from(2e18.toString());
-    //         expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
-    //     };
-    // });
+        console.log("position of lemmaPerpetual: size", positionBefore.size.d.toString());
+        console.log("position of lemmaPerpetual: margin", positionBefore.margin.d.toString());
+        console.log("position of lemmaPerpetual: openNotional", positionBefore.openNotional.d.toString());
+        // console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionBefore.lastUpdatedCumulativePremiumFraction.d.toString());
+        // console.log("position of lemmaPerpetual: liquidityHistoryIndex", positionBefore.liquidityHistoryIndex.toString());
 
-    // it("Withdraw LemmaXDAI", async function() {
-    //     await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
-    //     let amountWithdraw = BigNumber.from(1e18.toString());
-    //     let lemmabalanceBeforeWithdraw = await LemmaXDAIContract.balanceOf(impersonate_account._address);
-    //     await LemmaXDAIContract.connect(impersonate_account).withdraw(amountWithdraw);
-
-    //     let test_usdc_balance_after_withdraw = await testusdc.balanceOf(LemmaXDAIContract.address);
-    //     expect(test_usdc_balance_after_withdraw).to.equal(3000000);
-    // });
-
-
-    // it("should mint correctly", async function () {
-    //     const usdcAmountToDeposit = ethers.utils.parseUnits("1", "6");
-    //     const account = accounts[0].address;
-    //     await ambBridgeContract.setDepositInfo(account, usdcAmountToDeposit);
-    //     expect(await LemmaXDAIContract.depositInfo(account)).to.equal(usdcAmountToDeposit);
-
-    //     await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, usdcAmountToDeposit);
-
-    //     const positionBefore = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
-    //         ammAddress,
-    //         LemmaPerpetualContract.address,
-    //     );
-    //     await LemmaXDAIContract.mint(account);
-    //     const positionAfter = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
-    //         ammAddress,
-    //         LemmaPerpetualContract.address,
-    //     );
-
-    //     console.log("position of lemmaPerpetual: size", positionBefore.size.d.toString());
-    //     console.log("position of lemmaPerpetual: margin", positionBefore.margin.d.toString());
-    //     console.log("position of lemmaPerpetual: openNotional", positionBefore.openNotional.d.toString());
-    //     // console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionBefore.lastUpdatedCumulativePremiumFraction.d.toString());
-    //     // console.log("position of lemmaPerpetual: liquidityHistoryIndex", positionBefore.liquidityHistoryIndex.toString());
-
-    //     console.log("position of lemmaPerpetual: size", positionAfter.size.d.toString());
-    //     console.log("position of lemmaPerpetual: margin", positionAfter.margin.d.toString());
-    //     console.log("position of lemmaPerpetual: openNotional", positionAfter.openNotional.d.toString());
-    //     // console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfter.lastUpdatedCumulativePremiumFraction.d.toString());
-    //     // console.log("position of lemmaPerpetual: liquidityHistoryIndex", positionAfter.liquidityHistoryIndex.toString());
-
-
-    //     console.log("underlyingAssetAmountByUser", (await LemmaXDAIContract.underlyingAssetAmountByUser(account)).toString());
-
-    //     const underlyingAssetAmountByUser = await LemmaXDAIContract.underlyingAssetAmountByUser(account);
-    //     const sizeDifference = positionAfter.size.d.sub(positionBefore.size.d);
-    //     expect(underlyingAssetAmountByUser).to.equal(sizeDifference);
-    //     // expect(await LemmaXDAIContract.balanceOf(account)).to.equal(convertUSDCAmountInWei(usdcAmountToDeposit));
-    // });
+        console.log("position of lemmaPerpetual: size", positionAfter.size.d.toString());
+        console.log("position of lemmaPerpetual: margin", positionAfter.margin.d.toString());
+        console.log("position of lemmaPerpetual: openNotional", positionAfter.openNotional.d.toString());
+        // console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfter.lastUpdatedCumulativePremiumFraction.d.toString());
+        // console.log("position of lemmaPerpetual: liquidityHistoryIndex", positionAfter.liquidityHistoryIndex.toString());
+    });
 
     it("should Withdraw correctly", async function () {
         const provider = accounts[0].provider;

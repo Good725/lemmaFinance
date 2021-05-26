@@ -168,6 +168,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         emit WithdrawalInfoAdded(_account, _amount);
     }
 
+    /// @notice Set minimum withdrawn eth amount per user.
+    /// @param _minETHOut msg.sender's minimun eth withdrawn amount.
     function setMinimuETHToBeWithdrawn(uint256 _minETHOut) external {
         minimumETHToBeWithdrawn[_msgSender()] = _minETHOut;
     }

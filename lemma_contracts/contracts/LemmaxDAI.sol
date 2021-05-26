@@ -196,6 +196,7 @@ contract LemmaToken is
         emit USDCWithdrawed(_msgSender(), amountGotBackAfterClosing);
     }
 
+    /// @notice reopen perpetual position.
     function reInvestFundingPayment() public {
         int256 fundingPayment =
             perpetualProtocol.getFundingPaymentNotReInvestedWithFees();
