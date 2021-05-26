@@ -114,27 +114,28 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             Decimal.decimal memory leverage,
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
+        if (amm.open()) {
+            if (getTotalCollateral() == _amount) {
+                clearingHouse.closePosition(amm, Decimal.zero());
+                lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
+            } else {
+                clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
+                clearingHouse.openPosition(
+                    amm,
+                    IClearingHouse.Side.SELL,
+                    assetAmount,
+                    leverage,
+                    baseAssetAmountLimit
+                );
+                clearingHouse.removeMargin(amm, assetAmount);
+            }
+            collateralAmount = collateral.balanceOf(address(this));
 
-        if (getTotalCollateral() == _amount) {
-            clearingHouse.closePosition(amm, Decimal.zero());
-            lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
+            collateral.safeTransfer(lemmaToken, collateralAmount);
         } else {
-            clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
-            clearingHouse.openPosition(
-                amm,
-                IClearingHouse.Side.SELL,
-                assetAmount,
-                leverage,
-                baseAssetAmountLimit
-            );
-            clearingHouse.removeMargin(amm, assetAmount);
+            ///after amm is closed clearing will transfer collateral here (once settle position is called)
+            collateral.safeTransfer(lemmaToken, _amount);
         }
-
-        collateralAmount = collateral.balanceOf(address(this));
-
-        collateral.safeTransfer(lemmaToken, collateralAmount);
-
-        //there is not point in adding condition where amm is not open because lemmaXDAI will not be able to call this function when that condition is met
     }
 
     function reInvestFundingPayment(uint256 _baseAssetAmountLimit)
