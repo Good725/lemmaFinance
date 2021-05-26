@@ -239,7 +239,7 @@ contract LemmaToken is
 
     /// @notice re-invest the funding Payment
     /// @dev only lemmaReInvestor can call this function (mainly to make sure that re-Investing transaction does not get frontrun by setting the right basAssetLimit)
-    ///@param _baseAssetAmountLimit 
+    ///@param _baseAssetAmountLimit
     function reInvestFundingPayment(uint256 _baseAssetAmountLimit) public {
         require(
             _msgSender() == lemmaReInvestor,
@@ -278,13 +278,6 @@ contract LemmaToken is
 
         perpetualProtocol.reInvestFundingPayment(_baseAssetAmountLimit);
     }
-
-    //maybe we can use this later
-    function onTokenTransfer(
-        address from,
-        uint256 amount,
-        bytes calldata data
-    ) external returns (bool) {}
 
     //
     // INTERNAL
