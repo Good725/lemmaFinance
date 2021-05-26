@@ -7,7 +7,11 @@ interface Mainnet {
 }
 
 interface XDAI {
-    function setDepositInfo(address _account, uint256 _amount) external;
+    function setDepositInfo(
+        address _account,
+        uint256 _amoun,
+        uint256 _minLUSDCOut
+    ) external;
 }
 
 contract MockLemmaXdaiAMB is OwnableUpgradeable {
@@ -35,8 +39,12 @@ contract MockLemmaXdaiAMB is OwnableUpgradeable {
         mainnetContract.setWithdrawalInfo(_account, _amount);
     }
 
-    function setDepositInfo(address _account, uint256 _amount) public {
-        xdaiContract.setDepositInfo(_account, _amount);
+    function setDepositInfo(
+        address _account,
+        uint256 _amount,
+        uint256 _minLUSDCOut
+    ) public {
+        xdaiContract.setDepositInfo(_account, _amount, _minLUSDCOut);
     }
 
     function requireToPassMessage(

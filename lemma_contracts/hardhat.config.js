@@ -32,7 +32,8 @@ module.exports = {
       // },
       accounts: {
         mnemonic: process.env.MNEMONIC,
-      }
+      },
+      // chainId: 100,
     },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,

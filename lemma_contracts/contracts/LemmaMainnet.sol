@@ -30,7 +30,11 @@ interface IUniswapV2Router02 {
 
 /// @title LemmaXDAI interface. LemmaXDAI exists on XDAI network.
 interface ILemmaxDAI {
-    function setDepositInfo(address account, uint256 amount) external;
+    function setDepositInfo(
+        address account,
+        uint256 amount,
+        uint256 minLUSDCAmountOut
+    ) external;
 }
 
 /// @title LemmaContract for Mainnet.
@@ -132,7 +136,10 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @notice Pay ethereum to deposit USDC.
     /// @dev Paid eth is converted to USDC on Uniswap and then deposited to lemmaXDAI.
     /// @param _minimumUSDCAmountOut is the minumum amount to get from Paid Eth.
-    function deposit(uint256 _minimumUSDCAmountOut) external payable {
+    function deposit(uint256 _minimumUSDCAmountOut, uint256 _minLUSDCAmountOut)
+        external
+        payable
+    {
         totalETHDeposited += msg.value;
         require(totalETHDeposited <= cap, 'Lemma: cap reached');
         address[] memory path = new address[](2);
@@ -152,7 +159,12 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         //now realy the depositInfo to lemmaXDAI
         bytes4 functionSelector = ILemmaxDAI.setDepositInfo.selector;
         bytes memory data =
-            abi.encodeWithSelector(functionSelector, _msgSender(), amounts[1]);
+            abi.encodeWithSelector(
+                functionSelector,
+                _msgSender(),
+                amounts[1],
+                _minLUSDCAmountOut
+            );
         callBridge(address(lemmaXDAI), data, gasLimit);
         emit ETHDeposited(_msgSender(), msg.value);
     }

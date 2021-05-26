@@ -48,6 +48,7 @@ contract LemmaToken is
     int256 public amountOfLUSDCDeservedByLemmaVault;
     address public lemmaVault;
     mapping(address => uint256) public depositInfo;
+    mapping(address => uint256) public minLUSDCOut;
 
     event USDCDeposited(address indexed account, uint256 indexed amount);
     event USDCWithdrawn(address indexed account, uint256 indexed amount);
@@ -136,20 +137,32 @@ contract LemmaToken is
     /// @dev This function is called by bridge contract when depositing USDC on mainnet.
     /// @param _account The account lemma token is minted to.
     /// @param _amount The amount of lemma token is minted.
-    function setDepositInfo(address _account, uint256 _amount) external {
+    function setDepositInfo(
+        address _account,
+        uint256 _amount,
+        uint256 _minLUSDCAmountOut
+    ) external {
         require(_msgSender() == address(ambBridge), 'not ambBridge');
         require(
             ambBridge.messageSender() == address(lemmaMainnet),
             "ambBridge's messageSender is not lemmaMainnet"
         );
         depositInfo[_account] += _amount;
+        minLUSDCOut[_account] = _minLUSDCAmountOut;
         emit DepositInfoAdded(_account, _amount);
+    }
+
+    /// @notice Set minimum withdrawn eth amount per user.
+    /// @param _minLUSDCAmountOut Minimum ETH user should go long on perpetual protocol
+    function setMinLUSDCOut(uint256 _minLUSDCAmountOut) external {
+        minLUSDCOut[_msgSender()] = _minLUSDCAmountOut;
     }
 
     /// @notice Mint lemma token to _account on xdai network.
     /// @param _account The lemma token is minted to.
     function mint(address _account) public {
         uint256 amount = depositInfo[_account];
+        uint256 minLUSDCAmountOut = minLUSDCOut[_account];
         delete depositInfo[_account];
         collateral.safeTransfer(address(perpetualProtocol), amount);
 
@@ -165,7 +178,7 @@ contract LemmaToken is
         } else {
             toMint = amountAfterOpeningPosition * (10**(12)); //12 = 18 -6 = decimals of LUSDC - decimals of USDC
         }
-
+        require(toMint >= minLUSDCAmountOut, 'insufficient LUSDC amount');
         _mint(_account, toMint);
 
         emit USDCDeposited(_account, amountAfterOpeningPosition);
@@ -173,8 +186,12 @@ contract LemmaToken is
 
     /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
     /// @param _amount The number of lemma tokens to be burned.
-    ///@param _minETHOut minimum ETH user should get back to protect users from sadwich attacks on mainnet
-    function withdraw(uint256 _amount, uint256 _minETHOut) external {
+    ///@param _minETHOut minimum ETH user should get back to protect users from frontrunning on mainnet
+    function withdraw(
+        uint256 _amount,
+        uint256 _minETHOut,
+        uint256 _minUSDCOut
+    ) external {
         require(_amount > 0, 'input is 0');
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
@@ -184,6 +201,11 @@ contract LemmaToken is
 
         uint256 amountGotBackAfterClosing =
             perpetualProtocol.close(userShareAmountOfCollateral);
+
+        require(
+            amountGotBackAfterClosing >= _minUSDCOut,
+            'insufficient USDC amount'
+        );
 
         multiTokenTransfer(
             collateral,

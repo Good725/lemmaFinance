@@ -184,7 +184,7 @@ contract("LemmaXDAI", accounts => {
         const provider = accounts[0].provider;
         const usdcAmountToDeposit = ethers.utils.parseUnits("1000", "6");
         const account = accounts[0].address;
-        await ambBridgeContract.setDepositInfo(account, usdcAmountToDeposit);
+        await ambBridgeContract.setDepositInfo(account, usdcAmountToDeposit, 0);
         await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, usdcAmountToDeposit);
         const positionBefore = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
             ammAddress,
@@ -268,7 +268,7 @@ contract("LemmaXDAI", accounts => {
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
 
-        await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance.div(BigNumber.from("2")), "0");
+        await LemmaXDAIContract.connect(accounts[0]).withdraw(lUSDCBalance.div(BigNumber.from("2")), "0", "0");
         lUSDCBalance = await LemmaXDAIContract.balanceOf(account);
 
         //calculate the profit and make sure that 30% of it went to the lemma vault

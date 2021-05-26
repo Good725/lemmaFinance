@@ -30,21 +30,22 @@ contract("LemmaMainnet", accounts => {
         test_LemmaMainnetContract = await upgrades.deployProxy(LemmaMainnet, [usdcAddress, wethAddress, zeroAddress, uniswapV2Router02Address, ambBridgeContract.address, multiTokenMediatorOnEth, trustedForwaderRinkeby], { initializer: 'initialize' });
     });
 
-    it("Can not deposit if lemmaXdai is not set", async function() {
+    it("Can not deposit if lemmaXdai is not set", async function () {
         let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
-        let payableValue = BigNumber.from((10**17).toString());
+        let minLUSDCAmountOut = BigNumber.from(0);
+        let payableValue = BigNumber.from((10 ** 17).toString());
         try {
-            await test_LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});    
+            await test_LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, minLUSDCAmountOut, { value: payableValue });
         }
         catch (error) {
             expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
         }
     });
 
-    it("Transfer USDC from accounts[0] to lemmaMainnet", async function() {
-        let payForBuyingUSDC = BigNumber.from((1*10**18).toString());
-        let usdcAmount = BigNumber.from((70*10**6).toString());
-        await uniswap.connect(accounts[0]).swapETHForExactTokens(usdcAmount.toString(), [wethAddress, usdcAddress], accounts[0].address, '9600952122', {value: payForBuyingUSDC});
+    it("Transfer USDC from accounts[0] to lemmaMainnet", async function () {
+        let payForBuyingUSDC = BigNumber.from((1 * 10 ** 18).toString());
+        let usdcAmount = BigNumber.from((70 * 10 ** 6).toString());
+        await uniswap.connect(accounts[0]).swapETHForExactTokens(usdcAmount.toString(), [wethAddress, usdcAddress], accounts[0].address, '9600952122', { value: payForBuyingUSDC });
         let usdc_balance_account_1 = await usdc.balanceOf(accounts[0].address);
         let amountTransfer = BigNumber.from(30 * 10 ** 6);
         await usdc.connect(accounts[0]).approve(LemmaMainnetContract.address, amountTransfer);
@@ -53,16 +54,17 @@ contract("LemmaMainnet", accounts => {
         expect(usdc_balance_contract_1).to.equal(amountTransfer);
     });
 
-    it("Set gasLimit", async function() {
+    it("Set gasLimit", async function () {
         await LemmaMainnetContract.connect(accounts[0]).setGasLimit(1000000);
         expect(await LemmaMainnetContract.gasLimit()).to.equal(1000000);
     });
 
-    it("Deposit(EthBalanceBeforeDeposit = EthBalanceAfterDeposit + Fee + payableAmount)", async function() {
+    it("Deposit(EthBalanceBeforeDeposit = EthBalanceAfterDeposit + Fee + payableAmount)", async function () {
         let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
-        let payableValue = BigNumber.from((10**18).toString());
+        let payableValue = BigNumber.from((10 ** 18).toString());
         let balanceBeforeDeposit = await accounts[0].getBalance();
-        const tx = await LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, {value: payableValue});
+        let minLUSDCAmountOut = BigNumber.from(0);
+        const tx = await LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, minLUSDCAmountOut, { value: payableValue });
         expect(tx).to.emit(LemmaMainnetContract, "ETHDeposited").withArgs(accounts[0].address, payableValue);
 
         let balance_contract = await usdc.balanceOf(LemmaMainnetContract.address);
@@ -77,7 +79,7 @@ contract("LemmaMainnet", accounts => {
         // expect(balanceAfterDeposit).to.equal(aa.toString());
     });
 
-    it("Only ambBridge contract can call setWithdrawalInfo function", async function() {
+    it("Only ambBridge contract can call setWithdrawalInfo function", async function () {
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
         try {
             await LemmaMainnetContract.connect(accounts[0]).setWithdrawalInfo(accounts[0].address, withdrawUSDCAmountOut);
@@ -87,7 +89,7 @@ contract("LemmaMainnet", accounts => {
         }
     });
 
-    it("Can not withdraw if ambBridge's messageSender() is not the same as lemmaXDAI", async function() {
+    it("Can not withdraw if ambBridge's messageSender() is not the same as lemmaXDAI", async function () {
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
         await ambBridgeContract.setMainnetContract(LemmaMainnetContract.address);
         try {
@@ -98,24 +100,24 @@ contract("LemmaMainnet", accounts => {
         }
     });
 
-    it("Set xdai and mainnet contract on AMB", async function() {
+    it("Set xdai and mainnet contract on AMB", async function () {
         await ambBridgeContract.setXDAIContract(lemmaxDAIAddress);
         expect(await ambBridgeContract.xdaiContract()).to.equal(lemmaxDAIAddress);
     });
 
-    it("Withdraw", async function() {
+    it("Withdraw", async function () {
         let usdcBalanceContractBeforeWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
         let balanceBeforeWithdraw = await accounts[0].getBalance();
-        
+
         expect(await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut)).to.emit(LemmaMainnetContract, "WithdrawalInfoAdded").withArgs(accounts[0].address, withdrawUSDCAmountOut);
-        
+
         let balanceAfterWithdraw = await accounts[0].getBalance();
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
     });
 
-    it("Can not withdraw more amount than the contract's balance", async function() {
+    it("Can not withdraw more amount than the contract's balance", async function () {
         let usdcBalanceContractBeforeWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         let withdrawUSDCAmountOut = BigNumber.from(50 * 10 ** 6);
         await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
@@ -126,4 +128,4 @@ contract("LemmaMainnet", accounts => {
             expect(usdcBalanceContractBeforeWithdraw).to.equal(usdcBalanceContractAfterWithdraw);
         }
     });
-  });
+});
