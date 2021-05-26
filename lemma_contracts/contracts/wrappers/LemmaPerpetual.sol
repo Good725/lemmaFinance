@@ -206,6 +206,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
     ///@notice will be called when AMM is closed to settle lemmaPerpetual's position
     function settlePosition() public {
+        require(!amm.open(), 'amm is not closed');
         clearingHouse.settlePosition(amm);
     }
 
