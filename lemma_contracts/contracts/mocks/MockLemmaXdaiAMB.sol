@@ -55,4 +55,12 @@ contract MockLemmaXdaiAMB is OwnableUpgradeable {
         bytes32 _messageId;
         return _messageId;
     }
+
+    function sourceChainId() public view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
+    }
 }
