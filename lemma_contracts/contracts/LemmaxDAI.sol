@@ -38,9 +38,9 @@ contract LemmaToken is
     IERC20 public collateral;
     IPerpetualProtocol public perpetualProtocol; //at first it would be perpetual wrapper
 
-    // mainnet AMB bridge contract
+    // xdai AMB bridge contract
     IAMB public ambBridge;
-    // mainnet multi-tokens mediator
+    // xdai multi-tokens mediator
     IMultiTokenMediator public multiTokenMediator;
     ILemmaMainnet public lemmaMainnet;
     uint256 public gasLimit;

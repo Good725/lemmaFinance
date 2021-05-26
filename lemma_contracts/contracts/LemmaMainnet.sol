@@ -41,11 +41,10 @@ interface ILemmaxDAI {
 /// @author yashnaman
 /// @dev All function calls are currently implemented.
 contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
-    //USDT returns void (does not follow standard ERC20 that is why it is necessary)
     using SafeERC20 for IERC20;
-    /// @notice xDai AMB bridge contract
+    /// @notice mainnet AMB bridge contract
     IAMB public ambBridge;
-    /// @notice xDai multi-tokens mediator
+    /// @notice mainnet multi-tokens mediator
     IMultiTokenMediator public multiTokenMediator;
 
     ILemmaxDAI public lemmaXDAI;

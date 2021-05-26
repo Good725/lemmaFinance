@@ -26,10 +26,11 @@ contract("LemmaXDAI", accounts => {
     const ONE = ethers.utils.parseUnits("1", "18");
     let ambBridgeContract;
     let impersonate_account;
+    let lemmaReInvestor;
 
     before(async function () {
         accounts = await ethers.getSigners();
-        const lemmaReInvestor = accounts[2];
+        lemmaReInvestor = accounts[2];
         const LemmaXDAI = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
         const AMBBridge = await ethers.getContractFactory("MockLemmaXdaiAMB");
@@ -251,7 +252,7 @@ contract("LemmaXDAI", accounts => {
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
 
-        await LemmaXDAIContract.connect(lemmaReInvestor).reInvestFundingPayment();
+        await LemmaXDAIContract.connect(lemmaReInvestor).reInvestFundingPayment(0);
 
 
         const positionAfterReInvestingFundingPayment = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
@@ -320,7 +321,7 @@ contract("LemmaXDAI", accounts => {
         }
         );
         await this.clearingHouse.payFunding(ammAddress);
-        await LemmaXDAIContract.connect(lemmaReInvestor).reInvestFundingPayment();
+        await LemmaXDAIContract.connect(lemmaReInvestor).reInvestFundingPayment(0);
 
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
