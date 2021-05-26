@@ -67,7 +67,7 @@ contract LemmaToken is
         address _lemmaReInvestor
     ) public initializer {
         __Ownable_init();
-        __ERC20_init('LemmaUSDT', 'LUSDT');
+        __ERC20_init('LemmaUSDC', 'LUSDC');
         __ERC2771Context_init(trustedForwarder);
         collateral = _collateral;
         perpetualProtocol = _perpetualProtocol;
