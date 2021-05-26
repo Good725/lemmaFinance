@@ -57,7 +57,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     mapping(address => uint256) public minimumETHToBeWithdrawn;
 
     event ETHDeposited(address indexed account, uint256 indexed amount);
-    event ETHWithdrawed(address indexed account, uint256 indexed amount);
+    event ETHWithdrawn(address indexed account, uint256 indexed amount);
     event WithdrawalInfoAdded(address indexed account, uint256 indexed amount);
 
     /// @notice Initialize proxy.
@@ -80,7 +80,15 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         lemmaXDAI = _lemmaXDAI;
         uniswapV2Router02 = _uniswapV2Router02;
         ambBridge = _ambBridge;
+        require(
+            _ambBridge.sourceChainId() == block.chainid,
+            'ambBridge chainId not valid'
+        );
         multiTokenMediator = _multiTokenMediator;
+        require(
+            _multiTokenMediator.bridgeContract() == address(_ambBridge),
+            'Invalid ambBridge/multiTokenMediator'
+        );
         setGasLimit(1000000);
         setCap(_cap);
     }
@@ -194,7 +202,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
                 _account,
                 type(uint256).max
             );
-        emit ETHWithdrawed(_account, amounts[1]);
+        emit ETHWithdrawn(_account, amounts[1]);
     }
 
     /// @dev This function is used for sending USDC to multiTokenMediator

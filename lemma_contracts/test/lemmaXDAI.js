@@ -304,7 +304,7 @@ contract("LemmaXDAI", accounts => {
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
         console.log("amount of lusdc deserved by lemma", (await LemmaXDAIContract.amountOfLUSDCDeservedByLemmaVault()).toString());
-        console.log("balance of lemmaVault", (await LemmaXDAIContract.balanceOf(lemmaVault)));
+        console.log("balance of lemmaVault", (await LemmaXDAIContract.balanceOf(lemmaVault)).toString());
 
 
 
@@ -323,7 +323,7 @@ contract("LemmaXDAI", accounts => {
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
         console.log("amount of lusdc deserved by lemma", (await LemmaXDAIContract.amountOfLUSDCDeservedByLemmaVault()).toString());
-        console.log("balance of lemmaVault", (await LemmaXDAIContract.balanceOf(lemmaVault)));
+        console.log("balance of lemmaVault", (await LemmaXDAIContract.balanceOf(lemmaVault)).toString());
 
 
 

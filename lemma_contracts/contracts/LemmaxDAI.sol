@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.3;
 
-// import {
-//     ERC20Upgradeable
-// } from '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
-
 import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-// import 'hardhat/console.sol';
-
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {
     SafeERC20
@@ -15,13 +9,11 @@ import {
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 
 import {IPerpetualProtocol} from './interfaces/IPerpetualProtocol.sol';
-import {IDEX} from './interfaces/IDEX.sol';
 import {IERC677Receiver} from './interfaces/IERC677Receiver.sol';
 import {IMultiTokenMediator} from './interfaces/AMB/IMultiTokenMediator.sol';
 import {IAMB} from './interfaces/AMB/IAMB.sol';
 
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
-// import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol';
 
@@ -58,7 +50,7 @@ contract LemmaToken is
     mapping(address => uint256) public depositInfo;
 
     event USDCDeposited(address indexed account, uint256 indexed amount);
-    event USDCWithdrawed(address indexed account, uint256 indexed amount);
+    event USDCWithdrawn(address indexed account, uint256 indexed amount);
     event DepositInfoAdded(address indexed account, uint256 indexed amount);
 
     /// @notice Initialize proxy
@@ -77,7 +69,15 @@ contract LemmaToken is
         collateral = _collateral;
         perpetualProtocol = _perpetualProtocol;
         ambBridge = _ambBridge;
+        require(
+            _ambBridge.sourceChainId() == block.chainid,
+            'ambBridge chainId not valid'
+        );
         multiTokenMediator = _multiTokenMediator;
+        require(
+            _multiTokenMediator.bridgeContract() == address(_ambBridge),
+            'Invalid ambBridge/multiTokenMediator'
+        );
         setGasLimit(1000000);
         setLemmaVault(_lemmaVault);
         setFeesFromProfit(_feesFromProfit);
@@ -175,6 +175,7 @@ contract LemmaToken is
     /// @param _amount The number of lemma tokens to be burned.
     ///@param _minETHOut minimum ETH user should get back to protect users from sadwich attacks on mainnet
     function withdraw(uint256 _amount, uint256 _minETHOut) external {
+        require(_amount > 0, 'input is 0');
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
 
@@ -201,13 +202,11 @@ contract LemmaToken is
             );
         callBridge(address(lemmaMainnet), data, gasLimit);
 
-        emit USDCWithdrawed(_msgSender(), amountGotBackAfterClosing);
+        emit USDCWithdrawn(_msgSender(), amountGotBackAfterClosing);
     }
 
     /// @notice reopen perpetual position.
     function reInvestFundingPayment() public {
-        perpetualProtocol.reInvestFundingPayment();
-
         int256 fundingPayment =
             perpetualProtocol.getFundingPaymentNotReInvestedWithFees();
 
@@ -238,6 +237,8 @@ contract LemmaToken is
             }
             //else lemmaVault won't get any fees till the protocol has remade the fees
         }
+
+        perpetualProtocol.reInvestFundingPayment();
     }
 
     //maybe we can use this later

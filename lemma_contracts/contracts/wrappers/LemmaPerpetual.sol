@@ -56,6 +56,8 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         clearingHouseViewer = _clearingHouseViewer;
         amm = _amm;
         collateral = _collateral;
+        require(amm.quoteAsset() == _collateral, 'invalid collateral or amm');
+        require(amm.open(), 'amm not open');
         _collateral.safeApprove(address(_clearingHouse), type(uint256).max);
     }
 

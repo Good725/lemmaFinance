@@ -18,13 +18,13 @@ async function main() {
     const perpMetadataUrl = "https://metadata.perp.exchange/" + (network == "mainnet" ? "production" : "staging") + ".json";
     const perpMetadata = await fetch(perpMetadataUrl).then(res => res.json());
 
-    const xDAIProvider = new ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/");
-    const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
-    const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
+    // const xDAIProvider = new ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/");
+    // const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
+    // const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
 
     //for testing in the localhost
-    // const xDAIProvider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
-    // const mainnetProvider = new ethers.getDefaultProvider("http://127.0.0.1:7545");
+    const xDAIProvider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
+    const mainnetProvider = new ethers.getDefaultProvider("http://127.0.0.1:7545");
 
     const xDAIWallet = new ethers.Wallet(process.env.PRIVATE_KEY, xDAIProvider);
     const mainnetWallet = xDAIWallet.connect(mainnetProvider);

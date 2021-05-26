@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.3;
 
-import {IPerpetualProtocol} from '../interfaces/IPerpetualProtocol.sol';
+import {IPerpetualProtocol, IERC20} from '../interfaces/IPerpetualProtocol.sol';
 // import {IAmm, Decimal, IERC20} from '../interfaces/IAmm.sol';
 // import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IAmm, Decimal} from '../interfaces/IAmm.sol';
@@ -23,7 +23,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     IClearingHouse public clearingHouse;
     IClearingHouseViewer public clearingHouseViewer;
     IAmm public ETH_USDC_AMM;
-    IERC20Upgradeable public USDC;
+    IERC20 public collateral;
     address public lemmaToken;
 
     using Decimal for Decimal.decimal;
@@ -48,7 +48,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //     clearingHouse = _clearingHouse;
     //     clearingHouseViewer = _clearingHouseViewer;
     //     ETH_USDC_AMM = _ETH_USDC_AMM;
-    //     USDC = _USDC;
+    //     collateral = _USDC;
     //     _USDC.approve(address(_clearingHouse), type(uint256).max);
     // }
 
@@ -56,14 +56,14 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         IClearingHouse _clearingHouse,
         IClearingHouseViewer _clearingHouseViewer,
         IAmm _ETH_USDC_AMM,
-        IERC20Upgradeable _USDC,
+        IERC20 _USDC,
         uint256 _updatedStorage
     ) public initializer {
         __Ownable_init();
         clearingHouse = _clearingHouse;
         clearingHouseViewer = _clearingHouseViewer;
         ETH_USDC_AMM = _ETH_USDC_AMM;
-        USDC = _USDC;
+        collateral = _USDC;
         updatedStorage = _updatedStorage;
         _USDC.approve(address(_clearingHouse), type(uint256).max);
     }
@@ -83,7 +83,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         // IERC20 quoteToken = ETH_USDC_AMM.quoteAsset();
         //open postion on perptual protcol
         Decimal.decimal memory assetAmount =
-            convertCollteralAmountTo18Decimals(address(USDC), _amount);
+            convertCollteralAmountTo18Decimals(address(collateral), _amount);
 
         Decimal.decimal memory leverage = Decimal.one();
         //TODO: add calculation for baseAssetAmountLimit with slippage from user
@@ -111,7 +111,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         returns (uint256 temp)
     {
         Decimal.decimal memory amount =
-            convertCollteralAmountTo18Decimals(address(USDC), _amount);
+            convertCollteralAmountTo18Decimals(address(collateral), _amount);
 
         Decimal.decimal memory assetAmount =
             amount.divD(
@@ -159,8 +159,11 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         //TODO: add require that leverage should not be greater than one
 
         uint256 amountGotBackAfterClosing =
-            convert18DecimalsToCollateralAmount(address(USDC), assetAmount);
-        USDC.transfer(lemmaToken, amountGotBackAfterClosing);
+            convert18DecimalsToCollateralAmount(
+                address(collateral),
+                assetAmount
+            );
+        collateral.transfer(lemmaToken, amountGotBackAfterClosing);
 
         // return amountGotBackAfterClosing;
     }
@@ -201,7 +204,7 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     function getTotalCollateral() public view override returns (uint256) {
         return
             convert18DecimalsToCollateralAmount(
-                address(USDC),
+                address(collateral),
                 clearingHouseViewer
                     .getPersonalPositionWithFundingPayment(
                     ETH_USDC_AMM,

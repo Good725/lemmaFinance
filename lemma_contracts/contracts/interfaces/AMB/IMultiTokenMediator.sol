@@ -7,4 +7,6 @@ interface IMultiTokenMediator {
         address _receiver,
         uint256 _value
     ) external;
+
+    function bridgeContract() external view returns (address);
 }
