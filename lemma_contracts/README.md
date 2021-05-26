@@ -19,8 +19,11 @@ where:
  m is the amount of USDC Lemma has.
 
 ## Docs
-docs.lemma.finance
+https://docs.lemma.finance/basis-trading#current-strategy
 
+## Audit scope
+/contracts folder   
+/contacts/mocks is out of scope as its a quick and dirty way for us to write unit tests
 # Local development and testing.
 
 ## Requirements
