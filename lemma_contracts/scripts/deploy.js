@@ -83,7 +83,7 @@ async function main() {
     await tx.wait();
     console.log("lemmaMainnet", await lemmaToken.lemmaMainnet());
 
-    tx = await lemmaMainnet.deposit(0, { value: ethers.utils.parseUnits("0.1", "ether") });
+    tx = await lemmaMainnet.deposit(0, 0, { value: ethers.utils.parseUnits("0.1", "ether") });
     await tx.wait();
 
     console.log(tx.hash);
