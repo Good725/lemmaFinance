@@ -81,8 +81,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         uniswapV2Router02 = _uniswapV2Router02;
         ambBridge = _ambBridge;
         multiTokenMediator = _multiTokenMediator;
-        gasLimit = 1000000;
-        cap = _cap;
+        setGasLimit(1000000);
+        setCap(_cap);
     }
 
     function _msgSender()
@@ -111,13 +111,13 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
 
     /// @notice Set gas limit that is used to call bridge.
     /// @dev Only owner can set gas limit.
-    function setGasLimit(uint256 _gasLimit) external onlyOwner {
+    function setGasLimit(uint256 _gasLimit) public onlyOwner {
         gasLimit = _gasLimit;
     }
 
     /// @notice Set cap
     /// @dev Only owner can set cap.
-    function setCap(uint256 _cap) external onlyOwner {
+    function setCap(uint256 _cap) public onlyOwner {
         cap = _cap;
     }
 

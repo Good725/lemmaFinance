@@ -29,7 +29,7 @@ library SignedDecimalMath {
         int256 y,
         uint8 decimals
     ) internal pure returns (int256) {
-        return (x * y) / (unit(decimals));
+        return (x * y) / unit(decimals);
     }
 
     /// @dev Divides x between y, assuming they are both fixed point with 18 digits.
@@ -43,6 +43,6 @@ library SignedDecimalMath {
         int256 y,
         uint8 decimals
     ) internal pure returns (int256) {
-        return (x * (unit(decimals))) / (y);
+        return (x * unit(decimals)) / y;
     }
 }

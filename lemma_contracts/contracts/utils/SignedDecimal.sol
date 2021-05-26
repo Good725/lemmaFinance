@@ -46,7 +46,7 @@ library SignedDecimal {
         returns (signedDecimal memory)
     {
         signedDecimal memory t;
-        t.d = x.d + (y.d);
+        t.d = x.d + y.d;
         return t;
     }
 
@@ -57,7 +57,7 @@ library SignedDecimal {
         returns (signedDecimal memory)
     {
         signedDecimal memory t;
-        t.d = x.d - (y.d);
+        t.d = x.d - y.d;
         return t;
     }
 
@@ -101,7 +101,7 @@ library SignedDecimal {
         returns (signedDecimal memory)
     {
         signedDecimal memory t;
-        t.d = x.d / (y);
+        t.d = x.d / y;
         return t;
     }
 }

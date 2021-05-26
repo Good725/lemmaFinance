@@ -27,7 +27,7 @@ library Decimal {
         pure
         returns (decimal memory)
     {
-        return decimal((x.d * (DecimalMath.unit(18))) % y.d);
+        return decimal((x.d * DecimalMath.unit(18)) % y.d);
     }
 
     function cmp(decimal memory x, decimal memory y)
@@ -50,7 +50,7 @@ library Decimal {
         returns (decimal memory)
     {
         decimal memory t;
-        t.d = x.d + (y.d);
+        t.d = x.d + y.d;
         return t;
     }
 
@@ -61,7 +61,7 @@ library Decimal {
         returns (decimal memory)
     {
         decimal memory t;
-        t.d = x.d - (y.d);
+        t.d = x.d - y.d;
         return t;
     }
 
@@ -105,7 +105,7 @@ library Decimal {
         returns (decimal memory)
     {
         decimal memory t;
-        t.d = x.d / (y);
+        t.d = x.d / y;
         return t;
     }
 }

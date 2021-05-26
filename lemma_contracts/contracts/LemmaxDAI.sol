@@ -94,30 +94,41 @@ contract LemmaToken is
         return super._msgSender();
     }
 
+    function _msgData()
+        internal
+        view
+        virtual
+        override(ContextUpgradeable, ERC2771ContextUpgradeable)
+        returns (bytes calldata)
+    {
+        //ERC2771ContextUpgradeable._msgData();
+        return super._msgData();
+    }
+
     /// @notice Set lemma valut that where the fees goes
     /// @dev Only owner can call this function.
     /// @param _lemmaVault the vault
-    function setLemmaVault(address _lemmaVault) external onlyOwner {
+    function setLemmaVault(address _lemmaVault) public onlyOwner {
         lemmaVault = _lemmaVault;
     }
 
     /// @notice Set percentage of fees that will taken from the profit
     /// @dev Only owner can call this function.
     /// @param _feesFromProfit fees percentage in 1 per 10000
-    function setFeesFromProfit(uint256 _feesFromProfit) external onlyOwner {
+    function setFeesFromProfit(uint256 _feesFromProfit) public onlyOwner {
         feesFromProfit = _feesFromProfit;
     }
 
     /// @notice Set lemma contract deployed on Mainnet.
     /// @dev Only owner can call this function.
     /// @param _lemmaMainnet is lemma contract address deployed on mainnet.
-    function setLemmaMainnet(ILemmaMainnet _lemmaMainnet) external onlyOwner {
+    function setLemmaMainnet(ILemmaMainnet _lemmaMainnet) public onlyOwner {
         lemmaMainnet = _lemmaMainnet;
     }
 
     /// @notice Set gas limit that is used to call bridge.
     /// @dev Only owner can set gas limit.
-    function setGasLimit(uint256 _gasLimit) external onlyOwner {
+    function setGasLimit(uint256 _gasLimit) public onlyOwner {
         gasLimit = _gasLimit;
     }
 
