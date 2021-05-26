@@ -20,8 +20,8 @@ contract("LemmaXDAI", accounts => {
     const ammAddress = addresses.perpMainnetXDAI.layers.layer2.contracts.ETHUSDC.address;
     const testusdcAddress = addresses.perpMainnetXDAI.layers.layer2.externalContracts.usdc;
     const zeroAddress = "0x0000000000000000000000000000000000000000";
-    const lemmaVault = "0x0000000000000000000000000000000000000001";
-    const fees = 30;
+    const lemmaVault = "0xd8D412aE452E1918352BFB1849BD1b906B672734";
+    const feesFromProfit = 3000;
     const myEmitter = new EventEmitter();
     const ONE = ethers.utils.parseUnits("1", "18");
     let ambBridgeContract;
@@ -33,6 +33,7 @@ contract("LemmaXDAI", accounts => {
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
         const AMBBridge = await ethers.getContractFactory("MockLemmaXdaiAMB");
 
+
         await hre.network.provider.request({
             method: "hardhat_impersonateAccount",
             params: ["0x1A48776f436bcDAA16845A378666cf4BA131eb0F"]
@@ -42,7 +43,7 @@ contract("LemmaXDAI", accounts => {
 
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });
         LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress], { initializer: 'initialize' });
-        LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwarderXDAI], { initializer: 'initialize' });
+        LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwarderXDAI, lemmaVault, feesFromProfit], { initializer: 'initialize' });
 
         await LemmaPerpetualContract.setLemmaToken(LemmaXDAIContract.address);
         await LemmaXDAIContract.setLemmaMainnet(lemmaMainnet);
@@ -67,17 +68,17 @@ contract("LemmaXDAI", accounts => {
         return amount.mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("12")));
     };
 
-    it("Set LemmaMainnet on xdai contract", async function() {
+    it("Set LemmaMainnet on xdai contract", async function () {
         await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
         expect(await LemmaXDAIContract.lemmaMainnet()).to.equal(lemmaMainnet);
     });
 
-    it("Set LemmaMainnet on perpetual contract", async function() {
+    it("Set LemmaMainnet on perpetual contract", async function () {
         await LemmaPerpetualContract.setLemmaToken(LemmaXDAIContract.address);
         expect(await LemmaPerpetualContract.lemmaToken()).to.equal(LemmaXDAIContract.address);
     });
 
-    it("Only ambBridge contract can call setDepositInfo function", async function() {
+    it("Only ambBridge contract can call setDepositInfo function", async function () {
         let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
         try {
             await LemmaXDAIContract.connect(accounts[0]).setDepositInfo(accounts[0].address, depositUSDCAmountOut);
@@ -87,7 +88,7 @@ contract("LemmaXDAI", accounts => {
         }
     });
 
-    it("Can not deposit if ambBridge's messageSender() is not the same as lemmaMainnet", async function() {
+    it("Can not deposit if ambBridge's messageSender() is not the same as lemmaMainnet", async function () {
         let depositUSDCAmountOut = BigNumber.from(2 * 10 ** 6);
         await ambBridgeContract.setXDAIContract(LemmaXDAIContract.address);
         try {
@@ -98,26 +99,26 @@ contract("LemmaXDAI", accounts => {
         }
     });
 
-    it("Set xdai and mainnet contract on AMB", async function() {
+    it("Set xdai and mainnet contract on AMB", async function () {
         await ambBridgeContract.setMainnetContract(lemmaMainnet);
         expect(await ambBridgeContract.mainnetContract()).to.equal(lemmaMainnet);
     });
 
-    it("Set gasLimit", async function() {
+    it("Set gasLimit", async function () {
         await LemmaXDAIContract.connect(accounts[0]).setGasLimit(1000000);
         expect(await LemmaXDAIContract.gasLimit()).to.equal(1000000);
     });
 
-    it("Set Deposit", async function() {
+    it("Set Deposit", async function () {
         let minimumUSDCAmountOut = BigNumber.from(1 * 10 ** 6);
-        await accounts[0].sendTransaction({to: impersonate_account._address, value: ethers.utils.parseEther("2")});
-    
+        await accounts[0].sendTransaction({ to: impersonate_account._address, value: ethers.utils.parseEther("2") });
+
         let amountTransfer = BigNumber.from(7 * 10 ** 6);
         let test_usdc_balance_1 = await testusdc.balanceOf(impersonate_account._address);
         let spreadRatio = BigNumber.from(10 ** 15);
         let tollRatio = BigNumber.from(0);
         let one = BigNumber.from(1e18.toString());
-        
+
         let amountAfterOpeningPosition = minimumUSDCAmountOut.mul(one).div(one.add(spreadRatio));
         await testusdc.connect(impersonate_account).approve(LemmaXDAIContract.address, amountTransfer);
         await testusdc.connect(impersonate_account).transfer(LemmaXDAIContract.address, amountTransfer);
@@ -127,7 +128,7 @@ contract("LemmaXDAI", accounts => {
         expect(test_usdc_balance_2).to.equal(test_usdc_balance_1 - amountTransfer);
     });
 
-    it("Can not withdraw LemmaXDAI before setting lemmaMainnet", async function() {
+    it("Can not withdraw LemmaXDAI before setting lemmaMainnet", async function () {
         await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(zeroAddress);
         let amountWithdraw_1 = BigNumber.from(1e18.toString());
         let balance = await LemmaXDAIContract.balanceOf(impersonate_account._address);
@@ -139,7 +140,7 @@ contract("LemmaXDAI", accounts => {
         };
     });
 
-    it("Withdraw LemmaXDAI", async function() {
+    it("Withdraw LemmaXDAI", async function () {
         await LemmaXDAIContract.connect(accounts[0]).setLemmaMainnet(lemmaMainnet);
         let amountWithdraw = await LemmaXDAIContract.balanceOf(impersonate_account._address);
         let lemmabalanceBeforeWithdraw = await LemmaXDAIContract.balanceOf(impersonate_account._address);

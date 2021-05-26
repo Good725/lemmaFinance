@@ -139,10 +139,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //if there is a liquidation/bad debt in the system at the same block
     //call this function once after payFunding is called
     function reInvestFundingPayment() public override onlyLemmaToken {
-        //how to keep track of lastUpdatedCumulativePremiumFraction?
-        //recreate the caluclation of funding payment from clearingHouseViewer.sol
-        //just replace postion.lastUpdatedCumulativePremiumFraction with lastUpdatedCumulativePremiumFraction
-
         SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
             clearingHouse.getLatestCumulativePremiumFraction(amm);
         //change the position first

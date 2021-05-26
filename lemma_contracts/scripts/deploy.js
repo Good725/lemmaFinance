@@ -46,6 +46,8 @@ async function main() {
     const multiTokenMediatorOnEth = perpMetadata.layers.layer1.externalContracts.multiTokenMediatorOnEth;
 
     const maximumETHCap = ethers.utils.parseEther("500");
+    const lemmaVault = "0xd8D412aE452E1918352BFB1849BD1b906B672734";
+    const feesFromProfit = 3000;
     // console.log(maximumETHCap.toString());
 
 
@@ -60,7 +62,7 @@ async function main() {
 
     //deploy lemmaXdai
     const LemmaToken = (await hre.ethers.getContractFactory("LemmaToken")).connect(xDAIWallet);
-    const lemmaToken = await upgrades.deployProxy(LemmaToken, [usdcxDAI, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai, trustedForwaderXDAI], { initializer: 'initialize' });
+    const lemmaToken = await upgrades.deployProxy(LemmaToken, [usdcxDAI, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai, trustedForwaderXDAI, lemmaVault, feesFromProfit], { initializer: 'initialize' });
     await lemmaToken.deployed();
     console.log("lemmaXDAI", lemmaToken.address);
 

@@ -61,21 +61,16 @@ contract LemmaToken is
     event USDCWithdrawed(address indexed account, uint256 indexed amount);
     event DepositInfoAdded(address indexed account, uint256 indexed amount);
 
-    //mappping of protocols to wrappers
-    //mapping of protocol to collateral
-    //underlying assets supported
     /// @notice Initialize proxy
     function initialize(
         IERC20 _collateral,
         IPerpetualProtocol _perpetualProtocol,
         IAMB _ambBridge,
         IMultiTokenMediator _multiTokenMediator,
-        address trustedForwarder
-    )
-        public
-        // ILemmaMainnet _lemmaMainnet
-        initializer
-    {
+        address trustedForwarder,
+        address _lemmaVault,
+        uint256 _feesFromProfit //1 per 10000
+    ) public initializer {
         __Ownable_init();
         __ERC20_init('LemmaUSDT', 'LUSDT');
         __ERC2771Context_init(trustedForwarder);
@@ -83,10 +78,9 @@ contract LemmaToken is
         perpetualProtocol = _perpetualProtocol;
         ambBridge = _ambBridge;
         multiTokenMediator = _multiTokenMediator;
-        // lemmaMainnet = _lemmaMainnet;
-        gasLimit = 1000000;
-        feesFromProfit = 3000;
-        lemmaVault = address(1);
+        setGasLimit(1000000);
+        setLemmaVault(_lemmaVault);
+        setFeesFromProfit(_feesFromProfit);
     }
 
     function _msgSender()
@@ -100,15 +94,18 @@ contract LemmaToken is
         return super._msgSender();
     }
 
-    function _msgData()
-        internal
-        view
-        virtual
-        override(ContextUpgradeable, ERC2771ContextUpgradeable)
-        returns (bytes calldata)
-    {
-        //ERC2771ContextUpgradeable._msgData();
-        return super._msgData();
+    /// @notice Set lemma valut that where the fees goes
+    /// @dev Only owner can call this function.
+    /// @param _lemmaVault the vault
+    function setLemmaVault(address _lemmaVault) external onlyOwner {
+        lemmaVault = _lemmaVault;
+    }
+
+    /// @notice Set percentage of fees that will taken from the profit
+    /// @dev Only owner can call this function.
+    /// @param _feesFromProfit fees percentage in 1 per 10000
+    function setFeesFromProfit(uint256 _feesFromProfit) external onlyOwner {
+        feesFromProfit = _feesFromProfit;
     }
 
     /// @notice Set lemma contract deployed on Mainnet.
@@ -198,6 +195,8 @@ contract LemmaToken is
 
     /// @notice reopen perpetual position.
     function reInvestFundingPayment() public {
+        perpetualProtocol.reInvestFundingPayment();
+
         int256 fundingPayment =
             perpetualProtocol.getFundingPaymentNotReInvestedWithFees();
 
@@ -214,12 +213,20 @@ contract LemmaToken is
 
         amountOfLUSDCDeservedByLemmaVault += amountOfLUSDCToMintOrBurn;
 
-        if (amountOfLUSDCDeservedByLemmaVault > 0) {
-            _mint(lemmaVault, uint256(amountOfLUSDCDeservedByLemmaVault));
-            amountOfLUSDCDeservedByLemmaVault = 0;
+        if (amountOfLUSDCDeservedByLemmaVault >= 0) {
+            if (amountOfLUSDCDeservedByLemmaVault != 0) {
+                _mint(lemmaVault, uint256(amountOfLUSDCDeservedByLemmaVault));
+                amountOfLUSDCDeservedByLemmaVault = 0;
+            }
+        } else {
+            uint256 amountOfLUSDCToBurn =
+                uint256(0 - amountOfLUSDCDeservedByLemmaVault);
+            if (amountOfLUSDCToBurn <= balanceOf(lemmaVault)) {
+                _burn(lemmaVault, amountOfLUSDCToBurn);
+                amountOfLUSDCDeservedByLemmaVault = 0;
+            }
+            //else lemmaVault won't get any fees till the protocol has remade the fees
         }
-
-        perpetualProtocol.reInvestFundingPayment();
     }
 
     //maybe we can use this later
