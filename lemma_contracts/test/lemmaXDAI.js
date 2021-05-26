@@ -29,6 +29,7 @@ contract("LemmaXDAI", accounts => {
 
     before(async function () {
         accounts = await ethers.getSigners();
+        const lemmaReInvestor = accounts[2];
         const LemmaXDAI = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
         const AMBBridge = await ethers.getContractFactory("MockLemmaXdaiAMB");
@@ -43,7 +44,7 @@ contract("LemmaXDAI", accounts => {
 
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });
         LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress], { initializer: 'initialize' });
-        LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwarderXDAI, lemmaVault, feesFromProfit], { initializer: 'initialize' });
+        LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwarderXDAI, lemmaVault, feesFromProfit, lemmaReInvestor.address], { initializer: 'initialize' });
 
         await LemmaPerpetualContract.setLemmaToken(LemmaXDAIContract.address);
         await LemmaXDAIContract.setLemmaMainnet(lemmaMainnet);
@@ -249,8 +250,9 @@ contract("LemmaXDAI", accounts => {
         console.log("position of lemmaPerpetual: lastUpdatedCumulativePremiumFraction", positionAfterGettingFunding.lastUpdatedCumulativePremiumFraction.d.toString());
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 
-        // await LemmaPerpetualContract.reInvestFundingPayment();
-        await LemmaXDAIContract.reInvestFundingPayment();
+
+        await LemmaXDAIContract.connect(lemmaReInvestor).reInvestFundingPayment();
+
 
         const positionAfterReInvestingFundingPayment = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
             ammAddress,
@@ -318,7 +320,7 @@ contract("LemmaXDAI", accounts => {
         }
         );
         await this.clearingHouse.payFunding(ammAddress);
-        await LemmaXDAIContract.reInvestFundingPayment();
+        await LemmaXDAIContract.connect(lemmaReInvestor).reInvestFundingPayment();
 
         console.log("LUSDC total supply", (await LemmaXDAIContract.totalSupply()).toString());
 

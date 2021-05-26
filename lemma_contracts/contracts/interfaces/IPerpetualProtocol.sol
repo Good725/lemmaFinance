@@ -9,7 +9,7 @@ interface IPerpetualProtocol {
 
     function getTotalCollateral() external view returns (uint256);
 
-    function reInvestFundingPayment() external;
+    function reInvestFundingPayment(uint256 _baseAssetAmountLimit) external;
 
     function getFundingPaymentNotReInvestedWithFees()
         external

@@ -231,5 +231,5 @@ contract MockLemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         returns (int256 fundingPaymentNotReInvested)
     {}
 
-    function reInvestFundingPayment() public override {}
+    function reInvestFundingPayment(uint256) public override {}
 }

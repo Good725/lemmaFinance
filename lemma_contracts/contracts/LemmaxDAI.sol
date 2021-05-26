@@ -47,6 +47,7 @@ contract LemmaToken is
     uint256 public feesFromProfit;
     int256 public amountOfLUSDCDeservedByLemmaVault;
     address public lemmaVault;
+    address public lemmaReInvestor;
     mapping(address => uint256) public depositInfo;
     mapping(address => uint256) public minLUSDCOut;
 
@@ -62,7 +63,8 @@ contract LemmaToken is
         IMultiTokenMediator _multiTokenMediator,
         address trustedForwarder,
         address _lemmaVault,
-        uint256 _feesFromProfit //1 per 10000
+        uint256 _feesFromProfit, //1 per 10000
+        address _lemmaReInvestor
     ) public initializer {
         __Ownable_init();
         __ERC20_init('LemmaUSDT', 'LUSDT');
@@ -82,6 +84,7 @@ contract LemmaToken is
         setGasLimit(1000000);
         setLemmaVault(_lemmaVault);
         setFeesFromProfit(_feesFromProfit);
+        setLemmaReInvestor(_lemmaReInvestor);
     }
 
     function _msgSender()
@@ -104,6 +107,13 @@ contract LemmaToken is
     {
         //ERC2771ContextUpgradeable._msgData();
         return super._msgData();
+    }
+
+    /// @notice Set address of lemmaReInvestor which reInvests the funding Payment (at first it will simply just reInvest every hour)
+    /// @dev Only owner can call this function.
+    /// @param _lemmaReInvestor the vault
+    function setLemmaReInvestor(address _lemmaReInvestor) public onlyOwner {
+        lemmaReInvestor = _lemmaReInvestor;
     }
 
     /// @notice Set lemma valut that where the fees goes
@@ -227,8 +237,14 @@ contract LemmaToken is
         emit USDCWithdrawn(_msgSender(), amountGotBackAfterClosing);
     }
 
-    /// @notice reopen perpetual position.
-    function reInvestFundingPayment() public {
+    /// @notice re-invest the funding Payment
+    /// @dev only lemmaReInvestor can call this function (mainly to make sure that re-Investing transaction does not get frontrun by setting the right basAssetLimit)
+    ///@param _baseAssetAmountLimit 
+    function reInvestFundingPayment(uint256 _baseAssetAmountLimit) public {
+        require(
+            _msgSender() == lemmaReInvestor,
+            'only lemmaReInvestor is allowed'
+        );
         int256 fundingPayment =
             perpetualProtocol.getFundingPaymentNotReInvestedWithFees();
 
@@ -260,7 +276,7 @@ contract LemmaToken is
             //else lemmaVault won't get any fees till the protocol has remade the fees
         }
 
-        perpetualProtocol.reInvestFundingPayment();
+        perpetualProtocol.reInvestFundingPayment(_baseAssetAmountLimit);
     }
 
     //maybe we can use this later

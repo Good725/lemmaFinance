@@ -48,6 +48,7 @@ async function main() {
     const maximumETHCap = ethers.utils.parseEther("500");
     const lemmaVault = "0xd8D412aE452E1918352BFB1849BD1b906B672734";
     const feesFromProfit = 3000;
+    const lemmaReInvestor = "0x53b3c17dd599cDD1f69FC6866718369f1b5c8C7B";
     // console.log(maximumETHCap.toString());
 
 
@@ -62,7 +63,7 @@ async function main() {
 
     //deploy lemmaXdai
     const LemmaToken = (await hre.ethers.getContractFactory("LemmaToken")).connect(xDAIWallet);
-    const lemmaToken = await upgrades.deployProxy(LemmaToken, [usdcxDAI, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai, trustedForwaderXDAI, lemmaVault, feesFromProfit], { initializer: 'initialize' });
+    const lemmaToken = await upgrades.deployProxy(LemmaToken, [usdcxDAI, lemmaPerpetual.address, ambBridgeOnXDai, multiTokenMediatorOnXDai, trustedForwaderXDAI, lemmaVault, feesFromProfit, lemmaReInvestor], { initializer: 'initialize' });
     await lemmaToken.deployed();
     console.log("lemmaXDAI", lemmaToken.address);
 

@@ -137,10 +137,11 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         //there is not point in adding condition where amm is not open because lemmaXDAI will not be able to call this function when that condition is met
     }
 
-    //decided not to call reInvestFundingPayment() when opening and closing because of the restrction mode that can be on
-    //if there is a liquidation/bad debt in the system at the same block
-    //call this function once after payFunding is called
-    function reInvestFundingPayment() public override onlyLemmaToken {
+    function reInvestFundingPayment(uint256 _baseAssetAmountLimit)
+        public
+        override
+        onlyLemmaToken
+    {
         SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
             clearingHouse.getLatestCumulativePremiumFraction(amm);
         //change the position first
@@ -165,7 +166,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 (
                     Decimal.decimal memory assetAmount,
                     Decimal.decimal memory leverage,
-                    Decimal.decimal memory baseAssetAmountLimit
+
                 ) = calcInputsToPerp(collateralFromFundingPayment);
 
                 clearingHouse.openPosition(
@@ -173,7 +174,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                     IClearingHouse.Side.BUY,
                     assetAmount,
                     leverage,
-                    baseAssetAmountLimit
+                    Decimal.decimal(_baseAssetAmountLimit)
                 );
             } else {
                 //following equation makes sure that amount = assetAmount + assetAmount * fees (fees = tollRatio + spreadRatio)
@@ -189,13 +190,12 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
                 //here levarage = 1 meaining quoteAssetAmount  = assetAmount * levarage = assetAmount
                 Decimal.decimal memory leverage = Decimal.one();
-                Decimal.decimal memory baseAssetAmountLimit = Decimal.zero();
                 clearingHouse.openPosition(
                     amm,
                     IClearingHouse.Side.SELL,
                     assetAmount,
                     leverage,
-                    baseAssetAmountLimit
+                    Decimal.decimal(_baseAssetAmountLimit)
                 );
             }
             lastUpdatedCumulativePremiumFraction = latestCumulativePremiumFraction;
