@@ -24,6 +24,8 @@ contract("LemmaXDAI", accounts => {
     const feesFromProfit = 3000;
     const myEmitter = new EventEmitter();
     const ONE = ethers.utils.parseUnits("1", "18");
+    const maximumETHCap = ethers.utils.parseEther("500");
+
     let ambBridgeContract;
     let impersonate_account;
     let lemmaReInvestor;
