@@ -77,10 +77,10 @@ contract LemmaToken is
             'ambBridge chainId not valid'
         );
         multiTokenMediator = _multiTokenMediator;
-        // require(
-        //     _multiTokenMediator.bridgeContract() == address(_ambBridge),
-        //     'Invalid ambBridge/multiTokenMediator'
-        // );
+        require(
+            _multiTokenMediator.bridgeContract() == address(_ambBridge),
+            'Invalid ambBridge/multiTokenMediator'
+        );
         setGasLimit(1000000);
         setLemmaVault(_lemmaVault);
         setFeesFromProfit(_feesFromProfit);
