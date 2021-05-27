@@ -216,7 +216,7 @@ describe("LemmaPerpetual", () => {
     console.log("fundingPayment in test", fundingPayment.toString());
 
     //re invest the funding payments
-    await this.lemmaPerpetual.connect(lemmaToken).reInvestFundingPayment();
+    await this.lemmaPerpetual.connect(lemmaToken).reInvestFundingPayment(0);
 
     position = await this.clearingHouseViewer.getPersonalPositionWithFundingPayment(
       ammAddress,
@@ -247,7 +247,7 @@ describe("LemmaPerpetual", () => {
 
     //only fees to open position is subtracted from the margin with funding payment in both cases
     //in the contract the conversion will happen and that is why converting below is also necessary
-    //TODO: check if closeTo 1 is necessary below
+
     expect(convertWeiAmountToUSDC(marginBeforeReInvestingWithFundingPayment.d).sub(convertWeiAmountToUSDC(feesToOpenPositionForReInvestingFundingPayment.d))).to.be.closeTo(convertWeiAmountToUSDC(currentMargin.d), 1);
 
 

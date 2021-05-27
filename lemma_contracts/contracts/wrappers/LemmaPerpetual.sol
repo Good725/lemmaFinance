@@ -30,8 +30,8 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     IAmm public amm; //ETH-USDC
     IERC20 public collateral; //USDC
     address public lemmaToken; //lemmaXDAI and lemmaToken are interchangable
-    //yield is denominated in ETH that is why every fundingPayment coollected/paid in USDC needs to converted to ETH
-    //below updates evrytime fundingPayment gets converted to ETH
+    //yield is denominated in ETH that is why every fundingPayment collected/paid in USDC needs to converted to ETH
+    //below updates everytime fundingPayment gets converted to ETH
     //not neccesarily same as clearingHouse.getPosition(amm,address(this)).lastUpdatedCumulativePremiumFraction
     SignedDecimal.signedDecimal public lastUpdatedCumulativePremiumFraction;
 
@@ -68,7 +68,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         lemmaToken = _lemmaToken;
     }
 
-    /// @notice open on which side needs to decided by rebalancer logic
+    /// @notice go long on ETH
     /// @dev This function can be called through lemma token contract
     /// @param _amount The number of collateral to open perpetual protocol.
     function open(uint256 _amount)
@@ -100,7 +100,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         //do not do anything with it
     }
 
-    /// @notice close on which side needs to be decide by rebalacer logic
+    /// @notice short ETH ,remove margin and give it back to lemmaToken
     /// @dev This function can be called through lemma token contract.
     /// @param _amount The number of collateral to be closed from perpetual protocol.
     function close(uint256 _amount)
@@ -138,6 +138,8 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         }
     }
 
+    ///@notice reInvest the funding payment
+    ///@param _baseAsssetAmountLimit baseAssetAmountLimit
     function reInvestFundingPayment(uint256 _baseAssetAmountLimit)
         public
         override
@@ -337,6 +339,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 memory lastUpdatedCumulativePremiumFractionToConsider
          = lastUpdatedCumulativePremiumFraction;
 
+        //If It's the first time reInvesting the funding then we need to use position's lastUpdatedCumulativePremiumFraction
         if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
             lastUpdatedCumulativePremiumFractionToConsider = position
                 .lastUpdatedCumulativePremiumFraction;
@@ -352,7 +355,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
 
         //fees to open position with on the position
         //fees would be substracted from the fundingPayment
-
         Decimal.decimal memory fees =
             calcFee(amm, fundingPaymentNotReInvested.abs());
 
