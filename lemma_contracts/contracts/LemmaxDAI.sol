@@ -214,7 +214,6 @@ contract LemmaToken is
             amountGotBackAfterClosing >= _minUSDCOut,
             'insufficient USDC amount'
         );
-
         multiTokenTransfer(
             collateral,
             address(lemmaMainnet),
