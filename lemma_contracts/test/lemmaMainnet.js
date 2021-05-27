@@ -17,28 +17,30 @@ contract("LemmaMainnet", accounts => {
     const zeroAddress = "0x0000000000000000000000000000000000000000";
     let LemmaMainnetContract;
     let ambBridgeContract;
-    let lemmaXDAI;
 
     before(async function () {
+        let initial_cap = BigNumber.from(1e18.toString());
         accounts = await ethers.getSigners();
         const LemmaMainnet = await ethers.getContractFactory("LemmaMainnet");
         const AMBBridge = await ethers.getContractFactory("MockLemmaMainnetAMB");
         uniswap = new ethers.Contract(uniswapV2Router02Address, UNISWAP_ABI, accounts[0]);
         usdc = new ethers.Contract(usdcAddress, USDC_ABI, accounts[0]);
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });
-        LemmaMainnetContract = await upgrades.deployProxy(LemmaMainnet, [usdcAddress, wethAddress, lemmaxDAIAddress, uniswapV2Router02Address, ambBridgeContract.address, multiTokenMediatorOnEth, trustedForwaderRinkeby], { initializer: 'initialize' });
-        test_LemmaMainnetContract = await upgrades.deployProxy(LemmaMainnet, [usdcAddress, wethAddress, zeroAddress, uniswapV2Router02Address, ambBridgeContract.address, multiTokenMediatorOnEth, trustedForwaderRinkeby], { initializer: 'initialize' });
+        LemmaMainnetContract = await upgrades.deployProxy(LemmaMainnet, [usdcAddress, wethAddress, lemmaxDAIAddress, uniswapV2Router02Address, ambBridgeContract.address, multiTokenMediatorOnEth, trustedForwaderRinkeby, initial_cap], { initializer: 'initialize' });
+        test_LemmaMainnetContract = await upgrades.deployProxy(LemmaMainnet, [usdcAddress, wethAddress, zeroAddress, uniswapV2Router02Address, ambBridgeContract.address, multiTokenMediatorOnEth, trustedForwaderRinkeby, initial_cap], { initializer: 'initialize' });
     });
 
     it("Can not deposit if lemmaXdai is not set", async function () {
-        let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
+        let cap = BigNumber.from(0);
         let minLUSDCAmountOut = BigNumber.from(0);
-        let payableValue = BigNumber.from((10 ** 17).toString());
+        await LemmaMainnetContract.connect(accounts[0]).setCap(cap);
+        let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
+        let payableValue = BigNumber.from((10**17).toString());
         try {
-            await test_LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, minLUSDCAmountOut, { value: payableValue });
+            await LemmaMainnetContract.connect(accounts[0]).deposit(minimumUSDCAmountOut, minLUSDCAmountOut, {value: payableValue});    
         }
         catch (error) {
-            expect(error.message).to.equal("VM Exception while processing transaction: revert receiver is empty");
+            expect(error.message).to.equal("VM Exception while processing transaction: revert Lemma: cap reached");
         }
     });
 
@@ -60,6 +62,8 @@ contract("LemmaMainnet", accounts => {
     });
 
     it("Deposit(EthBalanceBeforeDeposit = EthBalanceAfterDeposit + Fee + payableAmount)", async function () {
+        let cap = BigNumber.from(1e18.toString());
+        await LemmaMainnetContract.connect(accounts[0]).setCap(cap);
         let minimumUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
         let payableValue = BigNumber.from((10 ** 18).toString());
         let balanceBeforeDeposit = await accounts[0].getBalance();
@@ -81,8 +85,9 @@ contract("LemmaMainnet", accounts => {
 
     it("Only ambBridge contract can call setWithdrawalInfo function", async function () {
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
+        let minETHOut = 0;
         try {
-            await LemmaMainnetContract.connect(accounts[0]).setWithdrawalInfo(accounts[0].address, withdrawUSDCAmountOut);
+            await LemmaMainnetContract.connect(accounts[0]).setWithdrawalInfo(accounts[0].address, withdrawUSDCAmountOut, minETHOut);
         }
         catch (error) {
             expect(error.message).to.equal("VM Exception while processing transaction: revert not ambBridge");
@@ -91,9 +96,10 @@ contract("LemmaMainnet", accounts => {
 
     it("Can not withdraw if ambBridge's messageSender() is not the same as lemmaXDAI", async function () {
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
+        let minETHOut = 0;
         await ambBridgeContract.setMainnetContract(LemmaMainnetContract.address);
         try {
-            await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
+            await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut, minETHOut);
         }
         catch (error) {
             expect(error.message).to.equal("VM Exception while processing transaction: revert ambBridge's messageSender is not lemmaXDAI");
@@ -108,10 +114,11 @@ contract("LemmaMainnet", accounts => {
     it("Withdraw", async function () {
         let usdcBalanceContractBeforeWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         let withdrawUSDCAmountOut = BigNumber.from(20 * 10 ** 6);
+        let minETHOut = 0;
         let balanceBeforeWithdraw = await accounts[0].getBalance();
 
-        expect(await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut)).to.emit(LemmaMainnetContract, "WithdrawalInfoAdded").withArgs(accounts[0].address, withdrawUSDCAmountOut);
-
+        expect(await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut, minETHOut)).to.emit(LemmaMainnetContract, "WithdrawalInfoAdded").withArgs(accounts[0].address, withdrawUSDCAmountOut);
+        await LemmaMainnetContract.withdraw(accounts[0].address);
         let balanceAfterWithdraw = await accounts[0].getBalance();
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);
@@ -120,7 +127,8 @@ contract("LemmaMainnet", accounts => {
     it("Can not withdraw more amount than the contract's balance", async function () {
         let usdcBalanceContractBeforeWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         let withdrawUSDCAmountOut = BigNumber.from(50 * 10 ** 6);
-        await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut);
+        let minETHOut = 0;
+        await ambBridgeContract.setWithdrawInfo(accounts[0].address, withdrawUSDCAmountOut, minETHOut);
         let usdcBalanceContractAfterWithdraw = await usdc.balanceOf(LemmaMainnetContract.address);
         if (usdcBalanceContractBeforeWithdraw >= withdrawUSDCAmountOut) {
             expect(usdcBalanceContractAfterWithdraw).to.equal(usdcBalanceContractBeforeWithdraw - withdrawUSDCAmountOut);

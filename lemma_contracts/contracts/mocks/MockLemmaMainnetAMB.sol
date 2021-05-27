@@ -3,7 +3,7 @@ pragma solidity =0.8.3;
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
 interface Mainnet {
-    function setWithdrawalInfo(address _account, uint256 _amount) external;
+    function setWithdrawalInfo(address _account, uint256 _amount, uint256 _minETHOut) external;
 }
 
 interface XDAI {
@@ -31,8 +31,8 @@ contract MockLemmaMainnetAMB is OwnableUpgradeable {
         return address(xdaiContract);
     }
 
-    function setWithdrawInfo(address _account, uint256 _amount) public {
-        mainnetContract.setWithdrawalInfo(_account, _amount);
+    function setWithdrawInfo(address _account, uint256 _amount, uint256 _minETHOut) public {
+        mainnetContract.setWithdrawalInfo(_account, _amount, _minETHOut);
     }
 
     function setDepositInfo(address _account, uint256 _amount) public {
@@ -43,8 +43,19 @@ contract MockLemmaMainnetAMB is OwnableUpgradeable {
         address _contract,
         bytes calldata _data,
         uint256 _gas
-    ) public returns (bytes32) {
+    ) public pure returns (bytes32) {
+        _contract;
+        _data;
+        _gas;
         bytes32 _messageId;
         return _messageId;
+    }
+
+    function sourceChainId() public view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
     }
 }

@@ -205,8 +205,6 @@ contract LemmaToken is
         require(_amount > 0, 'input is 0');
         uint256 userShareAmountOfCollateral =
             (perpetualProtocol.getTotalCollateral() * _amount) / totalSupply();
-
-        uint256 balance = balanceOf(_msgSender());
         _burn(_msgSender(), _amount);
 
         uint256 amountGotBackAfterClosing =
@@ -216,7 +214,6 @@ contract LemmaToken is
             amountGotBackAfterClosing >= _minUSDCOut,
             'insufficient USDC amount'
         );
-
         multiTokenTransfer(
             collateral,
             address(lemmaMainnet),

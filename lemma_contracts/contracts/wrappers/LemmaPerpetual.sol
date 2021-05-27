@@ -233,6 +233,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     ///@param _amount amount
     function calcInputsToPerp(uint256 _amount)
         internal
+        view
         returns (
             Decimal.decimal memory assetAmount,
             Decimal.decimal memory leverage,
