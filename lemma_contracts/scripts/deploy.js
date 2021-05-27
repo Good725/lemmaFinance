@@ -57,7 +57,7 @@ async function main() {
     const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual", xDAIWallet);
     //TODO: to make this works it requires that openzeppelin's upgrade use provider provided by the signer instead of taking it from the hardhat
     //make a custom change and use custom npm package to avoid errors
-    const lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ETH_USDC_AMMAddress, usdcxDAI], { initializer: 'initialize' });
+    const lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ETH_USDC_AMMAddress, usdcxDAI,maximumETHCap], { initializer: 'initialize' });
     await lemmaPerpetual.deployed();
     console.log("lemmaPerpetual", lemmaPerpetual.address);
 

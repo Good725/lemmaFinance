@@ -21,8 +21,8 @@ describe("LemmaPerpetual", () => {
 
     [owner, lemmaToken, someAccount] = await ethers.getSigners();
     const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
-
-    this.lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress], { initializer: 'initialize' });
+    const maximumETHCap = ethers.utils.parseEther("500");
+    this.lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress,maximumETHCap], { initializer: 'initialize' });
     await this.lemmaPerpetual.setLemmaToken(lemmaToken.address);
 
     this.clearingHouse = await ethers.getContractAt("IClearingHouse", clearingHouseAddress);

@@ -34,6 +34,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     //below updates everytime fundingPayment gets converted to ETH
     //not neccesarily same as clearingHouse.getPosition(amm,address(this)).lastUpdatedCumulativePremiumFraction
     SignedDecimal.signedDecimal public lastUpdatedCumulativePremiumFraction;
+    uint256 public maxSizeLimit;
 
     modifier onlyLemmaToken() {
         require(msg.sender == lemmaToken, 'Lemma: only lemma token allowed');
@@ -49,7 +50,8 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         IClearingHouse _clearingHouse,
         IClearingHouseViewer _clearingHouseViewer,
         IAmm _amm,
-        IERC20 _collateral
+        IERC20 _collateral,
+        uint256 _maxSizeLimit
     ) public initializer {
         __Ownable_init();
         clearingHouse = _clearingHouse;
@@ -58,6 +60,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         collateral = _collateral;
         require(amm.quoteAsset() == _collateral, 'invalid collateral or amm');
         require(amm.open(), 'amm not open');
+        setMaxSizeLimit(_maxSizeLimit);
         _collateral.safeApprove(address(_clearingHouse), type(uint256).max);
     }
 
@@ -66,6 +69,13 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     /// @param _lemmaToken LemmaToken address of xdai network.
     function setLemmaToken(address _lemmaToken) external onlyOwner {
         lemmaToken = _lemmaToken;
+    }
+
+    /// @notice set Maximum size (ETH limit)
+    /// @dev Only owner can call this function.
+    /// @param _maxSizeLimit maximum size
+    function setMaxSizeLimit(uint256 _maxSizeLimit) public onlyOwner {
+        maxSizeLimit = _maxSizeLimit;
     }
 
     /// @notice go long on ETH
@@ -94,6 +104,13 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         collateralAmount = convert18DecimalsToCollateralAmount(
             address(collateral),
             assetAmount
+        );
+
+        IClearingHouse.Position memory position =
+            clearingHouse.getPosition(amm, address(this));
+        require(
+            position.size.abs().toUint() <= maxSizeLimit,
+            'maximum size Limit reached'
         );
 
         //if amm is not open then just let the transaction fail
@@ -139,7 +156,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     }
 
     ///@notice reInvest the funding payment
-    ///@param _baseAsssetAmountLimit baseAssetAmountLimit
+    ///@param _baseAssetAmountLimit baseAssetAmountLimit
     function reInvestFundingPayment(uint256 _baseAssetAmountLimit)
         public
         override
