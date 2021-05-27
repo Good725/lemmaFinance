@@ -51,7 +51,10 @@ contract MockLemmaXdaiAMB is OwnableUpgradeable {
         address _contract,
         bytes calldata _data,
         uint256 _gas
-    ) public returns (bytes32) {
+    ) public pure returns (bytes32) {
+        _contract;
+        _data;
+        _gas;
         bytes32 _messageId;
         return _messageId;
     }

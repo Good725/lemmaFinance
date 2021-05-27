@@ -88,10 +88,10 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
             'ambBridge chainId not valid'
         );
         multiTokenMediator = _multiTokenMediator;
-        require(
-            _multiTokenMediator.bridgeContract() == address(_ambBridge),
-            'Invalid ambBridge/multiTokenMediator'
-        );
+        // require(
+        //     _multiTokenMediator.bridgeContract() == address(_ambBridge),
+        //     'Invalid ambBridge/multiTokenMediator'
+        // );
         setGasLimit(1000000);
         setCap(_cap);
     }
