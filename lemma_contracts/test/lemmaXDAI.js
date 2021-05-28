@@ -36,7 +36,7 @@ contract("LemmaXDAI", accounts => {
         const LemmaXDAI = await ethers.getContractFactory("LemmaToken");
         const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
         const AMBBridge = await ethers.getContractFactory("MockLemmaXdaiAMB");
-
+        const maximumETHCap = ethers.utils.parseEther("500");
 
         await hre.network.provider.request({
             method: "hardhat_impersonateAccount",
@@ -46,7 +46,7 @@ contract("LemmaXDAI", accounts => {
         await accounts[0].sendTransaction({ to: impersonate_account._address, value: ethers.utils.parseEther("2") });
 
         ambBridgeContract = await upgrades.deployProxy(AMBBridge, [], { initializer: 'initialize' });
-        LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress], { initializer: 'initialize' });
+        LemmaPerpetualContract = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, testusdcAddress, maximumETHCap], { initializer: 'initialize' });
         LemmaXDAIContract = await upgrades.deployProxy(LemmaXDAI, [testusdcAddress, LemmaPerpetualContract.address, ambBridgeContract.address, multiTokenMediatorOnXDai, trustedForwarderXDAI, lemmaVault, feesFromProfit, lemmaReInvestor.address], { initializer: 'initialize' });
 
         await LemmaPerpetualContract.setLemmaToken(LemmaXDAIContract.address);

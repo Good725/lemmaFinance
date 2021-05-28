@@ -64,6 +64,13 @@ describe("LemmaPerpetual", () => {
     expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
   });
 
+  it("Fail if the maxSizeLimit is low", async function() {
+    const maximumETHCap = ethers.utils.parseEther("1");
+    await this.lemmaPerpetual.connect(owner).setMaxSizeLimit(maximumETHCap);
+    const amount = ethers.utils.parseUnits("10000", "6");
+    await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
+    await expect(this.lemmaPerpetual.connect(lemmaToken).open(amount)).to.be.revertedWith("maximum size Limit reached");
+  });
 
   it("should open position correctly", async function () {
     //transfer USDC to lemmaPerpetual first
