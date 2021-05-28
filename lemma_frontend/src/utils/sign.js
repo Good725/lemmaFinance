@@ -19,7 +19,7 @@ export const getSignatures = async (txHash) => {
     abiDecoder.addABI(userEvent);
     let signatures = new Array();
     const amb_helper_xdai_address =
-      "0x7d94ece17e81355326e3359115D4B02411825EdD";
+      "0xa311f1B23A944f932363240DE5d40f81E23bfCC2";
     const provider = ethers.getDefaultProvider(
       "https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/"
     );
