@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import abiDecoder from "abi-decoder";
-import AmbHelper from "../abis/AMB.json";
+import AmbHelper from "../abis/AMB_Helper.json";
 
 export const getSignatures = async (txHash) => {
   try {
@@ -43,8 +43,8 @@ export const getSignatures = async (txHash) => {
       let decodedLog = decodedLogs[i];
       let encodedData = decodedLog.events[1].value;
       let messageId = decodedLog.events[0].value;
-      console.log(encodedData);
-      console.log(ethers.utils.arrayify(encodedData));
+      // console.log(encodedData);
+      // console.log(ethers.utils.arrayify(encodedData));
 
       let signature = await ambHelperContract.getSignatures(
         ethers.utils.arrayify(encodedData)
@@ -56,7 +56,7 @@ export const getSignatures = async (txHash) => {
         signature: signature,
       });
     }
-    console.log(signatures);
+    console.log("signatures", signatures);
 
     return signatures;
   } catch (e) {
