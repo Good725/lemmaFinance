@@ -10,6 +10,7 @@
     "@perp/contract": "^2.2.0",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "@walletconnect/web3-provider": "^1.4.1",
+    "abi-decoder": "^2.4.0",
     "axios": "^0.19.2",
     "classnames": "^2.2.6",
     "ethereum-multicall": "^2.1.1",
