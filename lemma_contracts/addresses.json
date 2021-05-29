@@ -12,7 +12,7 @@
     "mainnet": {
         "trustedForwarder": "0x84a0856b038eaAd1cC7E297cF34A7e72685A8693",
         "weth": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-        "uniswapV2Router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+        "uniswapV2Router02": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
     },
     "xDAIRinkeby": {
         "lemmaxDAI": "0x7c1C48460C66C279022F4a0afD9267dbC9744C30",

@@ -47,6 +47,13 @@ module.exports = {
         mnemonic: process.env.MNEMONIC,
       },
       gasPrice: (ethers.utils.parseUnits("1", "gwei")).toNumber()
+    },
+    mainnet: {
+      url: "https://mainnet.infura.io/v3/" + process.env.INFURA_KEY,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
+      gasPrice: (ethers.utils.parseUnits("25", "gwei")).toNumber()
     }
   },
   solidity: {
