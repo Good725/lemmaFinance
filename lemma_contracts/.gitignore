@@ -9,5 +9,6 @@ artifacts
 .openzeppelin
 
 coverage
+coverage.json
 
 .vscode
