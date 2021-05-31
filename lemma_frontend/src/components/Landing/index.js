@@ -17,7 +17,7 @@ import {
   List,
   Link,
 } from "@material-ui/core";
-import { Menu } from "@material-ui/icons";
+import { ContactSupportOutlined, Flag, Menu } from "@material-ui/icons";
 import { TabPanel, TabContext, Alert, TabList } from "@material-ui/lab";
 import Web3 from "web3";
 import axios from "axios";
@@ -33,10 +33,14 @@ import IUniswapV2Router02 from "@uniswap/v2-periphery/build/IUniswapV2Router02.j
 import ClearingHouseViewer from "@perp/contract/build/contracts/src/ClearingHouseViewer.sol/ClearingHouseViewer.json";
 import ClearingHouse from "@perp/contract/build/contracts/src/ClearingHouse.sol/ClearingHouse.json";
 import Amm from "@perp/contract/build/contracts/src/Amm.sol/Amm.json";
+import AMBHelper from "../../abis/AMBHelper.json";
+import HomeAMB from "../../abis/HomeAMB.json";
+import ForeignAMB from "../../abis/ForeignAMB.json";
+import BatchCalls from "../../abis/Upkaran-BatchCalls.json";
 
 import { useConnectedWeb3Context } from "../../context";
-import { useLemmaMain, useLemmaToken, useLemmaPerpetual } from "../../hooks";
-import { web3Modal, getSignatures } from "../../utils";
+import { useLemmaMain, useLemmaToken, useLemmaPerpetual, useBatchCall } from "../../hooks";
+import { web3Modal } from "../../utils";
 
 import { styles } from "./styles";
 import { parseEther } from "@ethersproject/units";
@@ -63,6 +67,9 @@ function LandingPage({ classes }) {
   } = useConnectedWeb3Context();
 
   const lemmaMain = useLemmaMain(addresses.rinkeby.lemmaMainnet);
+  const batchCalls = useBatchCall(
+    addresses.rinkeby.batchCalls
+  );
   const lemmaToken = useLemmaToken(
     addresses.xDAIRinkeby.lemmaxDAI,
     ethers.getDefaultProvider(XDAI_URL)
@@ -75,6 +82,24 @@ function LandingPage({ classes }) {
     addresses.xDAIRinkeby.lemmaPerpetual,
     ethers.getDefaultProvider(XDAI_URL)
   );
+
+
+  const homeAMB = new ethers.Contract(
+    addresses.perpRinkebyXDAI.layers.layer2.externalContracts.ambBridgeOnXDai,
+    HomeAMB.abi,
+    ethers.getDefaultProvider(XDAI_WSS_URL)
+  );
+  const ambHelper = new ethers.Contract(
+    addresses.xDAIRinkeby.AMBHelper,
+    AMBHelper.abi,
+    ethers.getDefaultProvider(XDAI_URL)
+  );
+  const foreignAMB = new ethers.Contract(
+    addresses.perpRinkebyXDAI.layers.layer1.externalContracts.ambBridgeOnEth,
+    ForeignAMB.abi,
+    signer
+  );
+
 
   const [amount, setAmount] = useState("");
   const [tabIndex, setTabIndex] = useState("1");
@@ -99,6 +124,8 @@ function LandingPage({ classes }) {
   const [sliderValue, setSliderValue] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [ambManualSigSubmissionOnMainnetData, setAmbManualSigSubmissionOnMainnetData] = useState([]);
+  const [batchCallsData, setBatchCallsData] = useState([]);
 
   const history = useHistory();
 
@@ -336,7 +363,7 @@ function LandingPage({ classes }) {
         } else {
           txHash = await lemmaMain.deposit(0, amount);
         }
-        //to test without actually depositting
+        //to test without actually depositing
         // txHash = "0xfd090be00e063eb8e0a6db9c2c471785d1064958d5ec50b0b4c0ff3c64ca63c7"
         setExplorerLink(getExplorerLink(txHash));
         setLoadMessage("Deposit started");
@@ -465,7 +492,7 @@ function LandingPage({ classes }) {
         let txHash = await provider.send("eth_sendTransaction", [txParams]);
 
         //to test the blockscout link
-        // let txHash = "0x2647d1b2f43706fca55a09e47dea8c9756bb1e5e685645ddf2294e354d7808c2";
+        // let txHash = "0x88903d79b572c601127ae61ff7997d2971d29777535b6de0dc06dcaf7bc850fa";
 
         const lemmaMainnetWithdrawInfoAdded =
           lemmaMain.instance.filters.WithdrawalInfoAdded(account);
@@ -496,8 +523,10 @@ function LandingPage({ classes }) {
         }
         await tx.wait();
 
-        let signatures = await getSignatures(txHash);
-        console.log("signatures", signatures);
+        // await getMessageIdsFromXDAITxHash(tx.hash);
+        await handleXDAITxHashForManualSubmission(txHash);
+
+
 
         setAmount("0");
 
@@ -550,9 +579,11 @@ function LandingPage({ classes }) {
   const refreshBalances = async () => {
     console.log("refresh Balance start");
     onWithdrawInfoAdded();
+
     setLoadingBalance(true);
     //to update the balance
     await onConnect();
+    onCollectedSignatures();
     const uniswapV2Router02 = new ethers.Contract(
       addresses.rinkeby.uniswapV2Router02,
       IUniswapV2Router02.abi,
@@ -794,6 +825,59 @@ function LandingPage({ classes }) {
     setErrorOpen(false);
     setWrongNetwork(false);
   };
+  const formateCall = (to, data, value = 0) => {
+    return {
+      to: to,
+      data: data,
+      value: value
+    };
+  };
+  const handleXDAITxHashForManualSubmission = async (txHash) => {
+    const xDAIProvider = ethers.getDefaultProvider(XDAI_URL);
+    const receipt = await xDAIProvider.getTransactionReceipt(txHash);
+    const logs = receipt.logs;
+
+    const homeAMBInterface = new ethers.utils.Interface(HomeAMB.abi);
+    const ambManualSigSubmissionOnMainnetDataLocal = [];
+    logs.forEach(log => {
+      try {
+        const userRequestForSignatureEvent = homeAMBInterface.parseLog(log);
+        ambManualSigSubmissionOnMainnetDataLocal.push({ messageId: userRequestForSignatureEvent.args.messageId, encodedData: userRequestForSignatureEvent.args.encodedData, isSignatureCollected: false });
+      }
+      catch { }
+    });
+    setAmbManualSigSubmissionOnMainnetData(ambManualSigSubmissionOnMainnetDataLocal);
+    //now we need to listed for collectedSignatures events for messageHash(s) associated with the messageId(s)
+
+  };
+  //CollectedSignatures(address authorityResponsibleForRelay, bytes32 messageHash, uint256 NumberOfCollectedSignatures)
+
+  const onCollectedSignatures = async (authorityResponsibleForRelay, messageHash, NumberOfCollectedSignatures, collectedSignaturesEvent) => {
+    const ambManualSigSubmissionOnMainnetDataLocal = ambManualSigSubmissionOnMainnetData;
+
+    // const ambManualSigSubmissionOnMainnetDataLocal = [{
+    //   "encodedData": "0x00050000dd91aecde2ad4ff420b70fff98bad16a14bb88170000000000000971a34c65d76b997a824a5e384471bba73b0013f5da30f693708fc604a57f1958e3cfa059f902e6d4cb001e848001010064048b6c0354000000000000000000000000755f41f1a81c2d3a97ed7a6383a4b7fe93e73421000000000000000000000000000000000000000000000000000000000321ed1b",
+    //   "messageId": "0x00050000dd91aecde2ad4ff420b70fff98bad16a14bb88170000000000000971"
+    // },
+
+    // {
+    //   "encodedData": "0x00050000dd91aecde2ad4ff420b70fff98bad16a14bb881700000000000009727c1c48460c66c279022f4a0afd9267dbc9744c30755f41f1a81c2d3a97ed7a6383a4b7fe93e73421000f4240010100640453fbc09b0000000000000000000000005fd7d6382de0d4c4a00b19ed10c11dfd96c27340000000000000000000000000000000000000000000000000000000000321ed1b0000000000000000000000000000000000000000000000000000000000000000",
+    //   "messageId": "0x00050000dd91aecde2ad4ff420b70fff98bad16a14bb88170000000000000972"
+    // }];
+
+    console.log("ambManualSigSubmissionOnMainnetDataLocal in collected sigs", ambManualSigSubmissionOnMainnetData);
+    ambManualSigSubmissionOnMainnetDataLocal.forEach((data, index) => {
+      console.log("index", index);
+      console.log(data);
+      const messageHashFromEncodedData = ethers.utils.keccak256(data.encodedData);
+      if (messageHashFromEncodedData == messageHash) {
+        console.log("signature submitted");
+        ambManualSigSubmissionOnMainnetDataLocal[index].isSignatureCollected = true;
+      }
+    });
+    setAmbManualSigSubmissionOnMainnetData(ambManualSigSubmissionOnMainnetDataLocal);
+    console.log("ambManualSigSubmissionOnMainnetData updated", ambManualSigSubmissionOnMainnetDataLocal);
+  };
 
   const onConnectXDai = async () => {
     try {
@@ -878,10 +962,53 @@ function LandingPage({ classes }) {
   }, []);
 
   useEffect(() => {
-    getSignatures(
-      "0xe5f665ddbd3cd240289a7b1e579007d8f51fa5b1072043f19ccf0e7619b933fa"
-    );
-  }, []);
+    console.log("ambBridge data changed", ambManualSigSubmissionOnMainnetData);
+    const collectedSignaturesEventFilter = homeAMB.filters.CollectedSignatures();
+    homeAMB.on(collectedSignaturesEventFilter, onCollectedSignatures);
+
+    async function checkIfBothSigAreSubmitted() {
+
+      const ambManualSigSubmissionOnMainnetDataLocal = ambManualSigSubmissionOnMainnetData;
+      let isBothSignaturesSubmitted = true;
+
+      ambManualSigSubmissionOnMainnetDataLocal.forEach(data => {
+        if (data.isSignatureCollected == false) {
+          isBothSignaturesSubmitted = false;
+        }
+      });
+
+      if (isBothSignaturesSubmitted && ambManualSigSubmissionOnMainnetDataLocal.length > 0) {
+        //get the signatures from the AMBHelper
+
+        for (let index = 0; index < ambManualSigSubmissionOnMainnetDataLocal.length; index++) {
+          const signatures = await ambHelper.getSignatures(
+            ambManualSigSubmissionOnMainnetDataLocal[index].encodedData
+          );
+          ambManualSigSubmissionOnMainnetDataLocal[index].signatures = signatures;
+        };
+
+        console.log("ambManualSigSubmissionOnMainnetDataLocal", ambManualSigSubmissionOnMainnetDataLocal);
+
+
+        const calls = [];
+
+        const executeSignatureCall1 = formateCall(foreignAMB.address, foreignAMB.interface.encodeFunctionData("executeSignatures", [ambManualSigSubmissionOnMainnetDataLocal[0].encodedData, ambManualSigSubmissionOnMainnetDataLocal[0].signatures]));
+        calls.push(executeSignatureCall1);
+        const executeSignatureCall2 = formateCall(foreignAMB.address, foreignAMB.interface.encodeFunctionData("executeSignatures", [ambManualSigSubmissionOnMainnetDataLocal[1].encodedData, ambManualSigSubmissionOnMainnetDataLocal[1].signatures]));
+        calls.push(executeSignatureCall2);
+
+        const withdrawETHCall = formateCall(lemmaMain.instance.address, lemmaMain.instance.interface.encodeFunctionData("withdraw", [account]));
+        calls.push(withdrawETHCall);
+
+        setBatchCallsData(calls);
+        await batchCalls.batch(calls);
+        //in the withdraw step 2, check if calls.length > 0 if yes then onClick call   await batchCalls.batch(calls);
+      }
+    };
+    checkIfBothSigAreSubmitted();
+  }, [ambManualSigSubmissionOnMainnetData]);
+
+
 
   return (
     <div className={classes.root}>

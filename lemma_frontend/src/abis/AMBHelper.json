@@ -1,4 +1,6 @@
-[
+{
+  "name": "AMBHelper",
+  "abi": [
     {
       "type": "constructor",
       "stateMutability": "nonpayable",
@@ -50,3 +52,4 @@
       ]
     }
   ]
+}
