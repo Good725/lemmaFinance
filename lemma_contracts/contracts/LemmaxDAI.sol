@@ -144,9 +144,10 @@ contract LemmaToken is
     }
 
     /// @notice Set info for minting lemma token.
-    /// @dev This function is called by bridge contract when depositing USDC on mainnet.
+    /// @dev This function is called only by bridge contract.
     /// @param _account The account lemma token is minted to.
     /// @param _amount The amount of lemma token is minted.
+    /// @param _minLUSDCAmountOut minimum amount of LUSDC use is willing to get.
     function setDepositInfo(
         address _account,
         uint256 _amount,
@@ -196,7 +197,8 @@ contract LemmaToken is
 
     /// @notice Burn lemma tokens from msg.sender and set withdrawinfo to lemma contract of mainnet.
     /// @param _amount The number of lemma tokens to be burned.
-    ///@param _minETHOut minimum ETH user should get back to protect users from frontrunning on mainnet
+    /// @param _minETHOut minimum ETH user should get back to protect users from frontrunning on mainnet
+    /// @param _minUSDCOut minimum USDC user is willing to get out (to protect users from frontrunning on the perpetual protocol)
     function withdraw(
         uint256 _amount,
         uint256 _minETHOut,
@@ -236,8 +238,8 @@ contract LemmaToken is
 
     /// @notice re-invest the funding Payment
     /// @dev only lemmaReInvestor can call this function (mainly to make sure that re-Investing transaction does not get frontrun by setting the right basAssetLimit)
-    ///@param _baseAssetAmountLimit baseAssetAmountLimit
-    function reInvestFundingPayment(uint256 _baseAssetAmountLimit) public {
+    /// @param _baseAssetAmountLimit baseAssetAmountLimit
+    function reInvestFundingPayment(uint256 _baseAssetAmountLimit) external {
         require(
             _msgSender() == lemmaReInvestor,
             'only lemmaReInvestor is allowed'
@@ -249,7 +251,7 @@ contract LemmaToken is
             int256(perpetualProtocol.getTotalCollateral()) -
                 (fundingPayment / 10**12);
 
-        //10**16 = 10**12 + 10**4 (10**4 is becuase the fees are in 1/10000)
+        //10**16 = 10**12 * 10**4 (10**4 is becuase the fees are in 1/10000)
         int256 feesOnfundingPayment =
             (fundingPayment * int256(feesFromProfit)) / int256(10**16);
 

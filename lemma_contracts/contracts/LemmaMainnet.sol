@@ -135,6 +135,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
     /// @notice Pay ethereum to deposit USDC.
     /// @dev Paid eth is converted to USDC on Uniswap and then deposited to lemmaXDAI.
     /// @param _minimumUSDCAmountOut is the minumum amount to get from Paid Eth.
+    /// @param _minLUSDCAmountOut minimum LUSDC user should get on XDAI
     function deposit(uint256 _minimumUSDCAmountOut, uint256 _minLUSDCAmountOut)
         external
         payable
@@ -155,7 +156,7 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
 
         multiTokenTransfer(USDC, address(lemmaXDAI), amounts[1]);
 
-        //now realy the depositInfo to lemmaXDAI
+        //now relay the depositInfo to lemmaXDAI
         bytes4 functionSelector = ILemmaxDAI.setDepositInfo.selector;
         bytes memory data =
             abi.encodeWithSelector(
@@ -170,8 +171,9 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
 
     /// @notice Set Withdraw Info
     /// @dev This function can be called by only lemmaXDAI contract via ambBridge contract.
-    /// @param _account is an account for withdrawing.
-    /// @param  _amount is the USDC amount.
+    /// @param _account account is withdrawing
+    /// @param  _amount USDC amount
+    /// @param _minETHOut minimum Eth amount user is willing to get out
     function setWithdrawalInfo(
         address _account,
         uint256 _amount,
@@ -187,8 +189,8 @@ contract LemmaMainnet is OwnableUpgradeable, ERC2771ContextUpgradeable {
         emit WithdrawalInfoAdded(_account, _amount);
     }
 
-    /// @notice Set minimum withdrawn eth amount per user.
-    /// @param _minETHOut msg.sender's minimun eth withdrawn amount.
+    /// @notice update the minimum ETH amount to get out after withdrawing
+    /// @param _minETHOut minimum ETH amount
     function setMinimuETHToBeWithdrawn(uint256 _minETHOut) external {
         minimumETHToBeWithdrawn[_msgSender()] = _minETHOut;
     }

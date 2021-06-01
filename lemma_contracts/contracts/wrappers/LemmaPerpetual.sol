@@ -147,12 +147,11 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 clearingHouse.removeMargin(amm, assetAmount);
             }
             collateralAmount = collateral.balanceOf(address(this));
-
-            collateral.safeTransfer(lemmaToken, collateralAmount);
         } else {
             ///after amm is closed clearing will transfer collateral here (once settle position is called)
-            collateral.safeTransfer(lemmaToken, _amount);
+            collateralAmount = _amount;
         }
+        collateral.safeTransfer(lemmaToken, collateralAmount);
     }
 
     ///@notice reInvest the funding payment
@@ -164,11 +163,11 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     {
         SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
             clearingHouse.getLatestCumulativePremiumFraction(amm);
-        //change the position first
+
         IClearingHouse.Position memory position =
             clearingHouse.getPosition(amm, address(this));
 
-        //if it's the first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
+        //if it's the first reInvesting (or first time after entire position is closed) and lastUpdatedCumulativePremiumFraction is not updated yet
         if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
             lastUpdatedCumulativePremiumFraction = position
                 .lastUpdatedCumulativePremiumFraction;
@@ -197,7 +196,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                     Decimal.decimal(_baseAssetAmountLimit)
                 );
             } else {
-                //following equation makes sure that amount = assetAmount + assetAmount * fees (fees = tollRatio + spreadRatio)
+                //in case of positive funding rate,increase the margin by fundingPayment.abs()
                 Decimal.decimal memory assetAmount =
                     fundingPayment.abs().divD(
                         (
@@ -208,7 +207,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                     );
                 clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
 
-                //here levarage = 1 meaining quoteAssetAmount  = assetAmount * levarage = assetAmount
+                //here levarage = 1 meaning quoteAssetAmount  = assetAmount * levarage = assetAmount
                 Decimal.decimal memory leverage = Decimal.one();
                 clearingHouse.openPosition(
                     amm,
@@ -220,7 +219,6 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
             }
             lastUpdatedCumulativePremiumFraction = latestCumulativePremiumFraction;
         }
-        position = clearingHouse.getPosition(amm, address(this));
     }
 
     ///@notice will be called when AMM is closed to settle lemmaPerpetual's position
@@ -339,16 +337,14 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
     }
 
     function getFundingPaymentNotReInvestedWithFees()
-        public
+        external
         view
         override
         returns (int256 fundingPaymentNotReInvestedWithFees)
     {
-        //if it's the first reInvesting and lastUpdatedCumulativePremiumFraction is not updated yet
-
         SignedDecimal.signedDecimal memory latestCumulativePremiumFraction =
             clearingHouse.getLatestCumulativePremiumFraction(amm);
-        //change the position first
+
         IClearingHouse.Position memory position =
             clearingHouse.getPosition(amm, address(this));
 
@@ -357,7 +353,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 memory lastUpdatedCumulativePremiumFractionToConsider
          = lastUpdatedCumulativePremiumFraction;
 
-        //If It's the first time reInvesting the funding then we need to use position's lastUpdatedCumulativePremiumFraction
+        //if it's the first reInvesting (or first time after entire position is closed) and lastUpdatedCumulativePremiumFraction is not updated yet
         if (lastUpdatedCumulativePremiumFraction.toInt() == 0) {
             lastUpdatedCumulativePremiumFractionToConsider = position
                 .lastUpdatedCumulativePremiumFraction;
