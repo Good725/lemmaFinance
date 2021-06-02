@@ -2,6 +2,7 @@ import pandas as pd
 
 
 # Input Date Format - 2021-04-01 00:00:55
+# TODO (@vineetred): Remove the other stats that are not needed
 def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
@@ -61,6 +62,13 @@ def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
         "APY": ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100,
         "TIME": abs(TIME_PERIOD.days),
     }
+
+
+# Get APY since inception
+def generate_apy_inception(df: pd.DataFrame) -> dict:
+    GENESIS_TIME = ""
+    return generate_statistics_by_date(df, GENESIS_TIME)
+
 
 def read_dataframe_from_csv(filepath: str) -> pd.DataFrame:
     df = pd.read_csv(filepath)

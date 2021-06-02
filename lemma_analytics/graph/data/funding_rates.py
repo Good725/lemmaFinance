@@ -46,7 +46,7 @@ def get_funding_rates() -> list:
     # Flatten and return
     return [item for sublist in trades for item in sublist]
 
-
+# TODO (@vineetred): Clean up type casting
 def get_dataframe(flat_list: list) -> pd.DataFrame:
     # Convert it into a Pandas DataFrame
     df = pd.DataFrame(flat_list)
