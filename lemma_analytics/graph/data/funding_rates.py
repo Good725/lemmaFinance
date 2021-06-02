@@ -3,14 +3,15 @@
 import requests
 import pandas as pd
 import datetime
+import numpy as np
 
 # Helper Functions
-def create_options(query, skip_iterator):
+def create_options(query, skip_iterator) -> str:
     return query.replace("skip_param", str(skip_iterator))
 
 
 # Get Funding Rates
-def get_funding_rates():
+def get_funding_rates() -> list:
     trades = []
     query = '{"query":"{\\n fundingRateUpdatedEvents(first: 1000, orderBy: timestamp, orderDirection: desc, where : {timestamp_lt : \\"skip_param\\", amm : \\"0x8d22F1a9dCe724D8c1B4c688D75f17A2fE2D32df\\"}) {\\n id\\n amm\\n rate\\n underlyingPrice\\n timestamp\\n }\\n}\\n","variables":null}'
 
@@ -47,7 +48,7 @@ def get_funding_rates():
     return [item for sublist in trades for item in sublist]
 
 
-def get_dataframe(flat_list):
+def get_dataframe(flat_list) -> pd.DataFrame:
     # Convert it into a Pandas DataFrame
     df = pd.DataFrame(flat_list)
     df["date"] = pd.to_datetime(df["timestamp"], unit="s")
@@ -61,14 +62,15 @@ def get_dataframe(flat_list):
     return df
 
 
-def runner():
+def main():
     # Get funding rates
     funding_rates_buff = get_funding_rates()
     # Converting it into a DF
     funding_rates = get_dataframe(funding_rates_buff)
     # Save CSV
-    funding_rates.to_csv("data/funding_rates.csv")
+    funding_rates.to_csv("funding_rates.csv")
+
 
 
 if __name__ == "__main__":
-    runner()
+    main()
