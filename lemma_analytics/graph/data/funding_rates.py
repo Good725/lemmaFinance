@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-
-import requests
-import pandas as pd
 import datetime
-import numpy as np
+import pandas as pd
+import requests
+
 
 # Helper Functions
-def create_options(query, skip_iterator) -> str:
+def create_options(query: str, skip_iterator: int) -> str:
     return query.replace("skip_param", str(skip_iterator))
 
 
@@ -48,7 +47,7 @@ def get_funding_rates() -> list:
     return [item for sublist in trades for item in sublist]
 
 
-def get_dataframe(flat_list) -> pd.DataFrame:
+def get_dataframe(flat_list: list) -> pd.DataFrame:
     # Convert it into a Pandas DataFrame
     df = pd.DataFrame(flat_list)
     df["date"] = pd.to_datetime(df["timestamp"], unit="s")

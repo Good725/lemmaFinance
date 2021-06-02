@@ -2,7 +2,7 @@ import pandas as pd
 
 
 # Input Date Format - 2021-04-01 00:00:55
-def generate_statistics(df, date) -> dict:
+def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
     # Get the nearest funding rate
@@ -62,9 +62,9 @@ def generate_statistics(df, date) -> dict:
         "TIME": abs(TIME_PERIOD.days),
     }
 
-def read_dataframe_from_csv(filepath) -> pd.DataFrame:
+def read_dataframe_from_csv(filepath: str) -> pd.DataFrame:
     df = pd.read_csv(filepath)
     df["date"] = pd.to_datetime(df["timestamp"], unit="s")
     return df
     # df = read_dataframe_from_csv("data/funding_rates.csv")
-    # X = generate_statistics(df, "2021-04-01 00:10:55")
+    # X = generate_statistics_by_date(df, "2021-04-01 00:10:55")
