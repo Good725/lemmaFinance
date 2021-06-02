@@ -66,7 +66,7 @@ def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
 
 # Get APY since inception
 def generate_apy_inception(df: pd.DataFrame) -> dict:
-    GENESIS_TIME = ""
+    GENESIS_TIME = "2021-06-01-2021 00:00:00"
     return generate_statistics_by_date(df, GENESIS_TIME)
 
 
@@ -74,5 +74,7 @@ def read_dataframe_from_csv(filepath: str) -> pd.DataFrame:
     df = pd.read_csv(filepath)
     df["date"] = pd.to_datetime(df["timestamp"], unit="s")
     return df
-    # df = read_dataframe_from_csv("data/funding_rates.csv")
-    # X = generate_statistics_by_date(df, "2021-04-01 00:10:55")
+
+
+# df = read_dataframe_from_csv("../data/funding_rates.csv")
+# X = generate_apy_inception(df)
