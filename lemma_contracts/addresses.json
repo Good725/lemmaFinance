@@ -10,6 +10,7 @@
         "trustedForwarder": "0x86C80a8aa58e0A4fa09A69624c31Ab2a6CAD56b8"
     },
     "mainnet": {
+        "lemmaMainnet": "0x0f9d7c17ee250d09f2c45657fdc918771de765fc",
         "trustedForwarder": "0x84a0856b038eaAd1cC7E297cF34A7e72685A8693",
         "weth": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         "uniswapV2Router02": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
@@ -17,6 +18,10 @@
     "xDAIRinkeby": {
         "lemmaxDAI": "0x7c1C48460C66C279022F4a0afD9267dbC9744C30",
         "lemmaPerpetual": "0xF56a5ED165b18Af0Eb0031285EF18736d290F4D3"
+    },
+    "xDAIMainnet": {
+        "lemmaxDAI": "0x4de180Bae8e2151f294508b72d899776284e42D2",
+        "lemmaPerpetual": "0x00A689ced9c50B8058617F96980F79F16dea28df"
     },
     "perpRinkebyXDAI": {
         "layers": {

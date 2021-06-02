@@ -6,6 +6,8 @@ require("@openzeppelin/hardhat-upgrades");
 require("@nomiclabs/hardhat-ethers");
 require("@tenderly/hardhat-tenderly");
 require("solidity-coverage");
+require("@nomiclabs/hardhat-etherscan");
+
 
 require("dotenv").config();
 
@@ -33,7 +35,7 @@ module.exports = {
       accounts: {
         mnemonic: process.env.MNEMONIC,
       },
-      // chainId: 100,
+      gasPrice: (ethers.utils.parseUnits("25", "gwei")).toNumber()
     },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
@@ -67,6 +69,9 @@ module.exports = {
   },
   mocha: {
     timeout: 999999
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
   }
 };
 

@@ -7,7 +7,7 @@ const addresses = require("../addresses.json");
 require("dotenv").config();
 
 const network = "mainnet";
-const tokenTransfers = require("truffle-token-test-utils");//just to visulize token transfers in a transaction
+// const tokenTransfers = require("truffle-token-test-utils");//just to visualize token transfers in a transaction
 
 
 
@@ -18,13 +18,13 @@ async function main() {
     const perpMetadataUrl = "https://metadata.perp.exchange/" + (network == "mainnet" ? "production" : "staging") + ".json";
     const perpMetadata = await fetch(perpMetadataUrl).then(res => res.json());
 
-    // const xDAIProvider = new ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/");
-    // const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
-    // const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
+    const xDAIProvider = new ethers.getDefaultProvider("https://rough-frosty-dream.xdai.quiknode.pro/40ffd401477e07ef089743fe2db6f9f463e1e726/");
+    const infuraURL = "https://" + network + ".infura.io/v3/" + process.env.INFURA_KEY;
+    const mainnetProvider = new ethers.getDefaultProvider(infuraURL);
 
-    //for testing in the localhost
-    const xDAIProvider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
-    const mainnetProvider = new ethers.getDefaultProvider("http://127.0.0.1:7545");
+    // //for testing in the localhost
+    // const xDAIProvider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
+    // const mainnetProvider = new ethers.getDefaultProvider("http://127.0.0.1:7545");
 
     const xDAIWallet = new ethers.Wallet(process.env.PRIVATE_KEY, xDAIProvider);
     const mainnetWallet = xDAIWallet.connect(mainnetProvider);
@@ -49,7 +49,7 @@ async function main() {
     const maximumETHCap = ethers.utils.parseEther("500");
     const lemmaVault = "0xd8D412aE452E1918352BFB1849BD1b906B672734";
     const feesFromProfit = 3000;
-    const lemmaReInvestor = "0x53b3c17dd599cDD1f69FC6866718369f1b5c8C7B";
+    const lemmaReInvestor = "0x0f3BF5c241B6625C0fA781ED137fDe6786b2e66f";//lemma_deployer will assume this role a the start
     // console.log(maximumETHCap.toString());
 
 
@@ -72,7 +72,7 @@ async function main() {
     tx = await lemmaPerpetual.setLemmaToken(lemmaToken.address);
     await tx.wait();
     console.log("lemmaToken", await lemmaPerpetual.lemmaToken());
-
+    const lemmaToken = { address: "0x4de180Bae8e2151f294508b72d899776284e42D2" };
     //deploy LemmaMainnet
     const LemmaMainnet = (await hre.ethers.getContractFactory("LemmaMainnet")).connect(mainnetWallet);
     const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcMainnet, wethMainnet, lemmaToken.address, uniswapV2Router02Mainnet, ambBridgeOnEth, multiTokenMediatorOnEth, trustedForwaderMainnet, maximumETHCap], { initializer: 'initialize' });
