@@ -1,7 +1,4 @@
-from os import read
-import requests
 import pandas as pd
-import datetime
 
 
 # Input Date Format - 2021-04-01 00:00:55
