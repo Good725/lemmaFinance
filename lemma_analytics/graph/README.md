@@ -18,8 +18,8 @@
 
 ## Endpoint
 #### get_apy_inception()
-* Returns the APY since the inception of Lemma. Date currently set as mentioned above.
-* Usage - 
+* Returns the APY since the inception of Lemma. Date currently set as mentioned above. No arguments.
+* Usage - get_apy_inception
 #### get_apy_date()
 * Returns APY and ROI. Takes initial deposit amount and date as input.
 * Usage - get_apy_date?date=2021-04-01+00%3A22%3A55&amount=1
@@ -27,5 +27,5 @@
 * Returns state of investment after every funding rate. Takes initial deposit amount and date as input.
 * Can be used to generate graphs showing investment and how it grew over time.
 * Usage - get_statistics?date=2021-04-01+00%3A22%3A55&amount=1
-
-
+#### get_tvl()
+* WIP.
