@@ -1,17 +1,23 @@
+import time
 from typing import Union
 import pandas as pd
 
-# Input Date Format - 2021-04-01 00:00:55
+# Input Date Format - 1619000000
 # TODO (@vineetred): Remove the other stats that are not needed
 def generate_statistics_by_date(
-    df: pd.DataFrame, date: str, initial_amount: float
+    df: pd.DataFrame, timestamp: int, initial_amount: float
 ) -> Union[dict, dict]:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
     # Get the nearest funding rate
-    date_buff = df.iloc[df.index.get_loc(pd.to_datetime(date), method="nearest")][
-        "date"
-    ]
+    date_buff = df.iloc[
+        df.index.get_loc(
+            pd.to_datetime(
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+            ),
+            method="nearest",
+        )
+    ]["date"]
     # Get the date
     DATE = pd.to_datetime(date_buff)
     # Set the investment amount (in ETH)
@@ -72,7 +78,7 @@ def generate_statistics_by_date(
 # Get APY since inception
 # TODO (@vineetred): Add the correct Genesis Time here
 def generate_apy_inception(df: pd.DataFrame) -> dict:
-    GENESIS_TIME = "2021-06-01-2021 00:00:00"
+    GENESIS_TIME = 1622505600
     return generate_statistics_by_date(df, GENESIS_TIME)
 
 
