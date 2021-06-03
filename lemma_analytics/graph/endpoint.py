@@ -5,6 +5,10 @@ from apy import apy
 
 app = flask.Flask(__name__)
 
+@app.route("/")
+def index() -> str:
+    return "Lemma Analytics Endpoint"
+
 
 @app.route("/get_apy_inception", methods=["GET"])
 def get_apy_inception() -> dict:
