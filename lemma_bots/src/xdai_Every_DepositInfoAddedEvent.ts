@@ -16,7 +16,7 @@ import axios from 'axios';
 //TODO: use the same biconomy keys for both files
 //move it to a .json file
 const biconomyApiKey = 'Aj47G_8mq.20f2cf98-9696-4125-89d8-379ee4f11f39';
-const biconomyMethodAPIKey = 'c8ce5cea-1f6b-4250-b068-4deb7a979e45';
+const biconomyMethodAPIKey = 'bf288df0-47d1-4ede-ac83-2a897c26b6e1';
 const headers = {
   'x-api-key': biconomyApiKey,
   'Content-Type': 'application/json',
@@ -28,19 +28,19 @@ export async function handler(credentials: RelayerParams) {
   const provider = new DefenderRelayProvider(credentials);
   // const web3Provider = new Web3.providers.HttpProvider("https://rpc.xdaichain.com/")
   // const provider = new ethers.providers.Web3Provider(web3Provider)
-  const lemmaToken = new ethers.Contract(addresses.xDAIRinkeby.lemmaxDAI, LemmaToken.abi, provider);
+  const lemmaToken = new ethers.Contract(addresses.xDAIMainnet.lemmaxDAI, LemmaToken.abi, provider);
 
   const latestBlockNumber: number = await provider.getBlockNumber();
   const eventFilter: ethers.EventFilter = lemmaToken.filters.DepositInfoAdded();
   //if the last 30 blocks (5 sec block time)  had the depositInfoAdded 
-  const events: ethers.Event[] = await lemmaToken.queryFilter(eventFilter,-60);
-  console.log(events.length,"events found")
-  for (let i = events.length -1 ; i>=0; i--) {
+  const events: ethers.Event[] = await lemmaToken.queryFilter(eventFilter, -6000);
+  console.log(events.length, "events found")
+  for (let i = events.length - 1; i >= 0; i--) {
     const account = events[i].args.account;
     const amount: BigNumber = events[i].args.amount;
     const amountOnLemma: BigNumber = await lemmaToken.depositInfo(account);
     console.log("seeing if mint transaction is necessary");
-    if (!amountOnLemma.isZero()) {     
+    if (!amountOnLemma.isZero()) {
       const apiData = {
         'userAddress': '',
         // 'from': '',
@@ -54,15 +54,17 @@ export async function handler(credentials: RelayerParams) {
       // apiData.from = accounts[0];
       apiData.to = lemmaToken.address;
       apiData.params = [account];
-      console.log("sending mint transaction using biconomy for ",account);
+      console.log(apiData)
+      console.log("sending mint transaction using biconomy for ", account);
       try {
-      await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
+        await axios({ method: 'post', url: 'https://api.biconomy.io/api/v2/meta-tx/native', headers: headers, data: apiData });
       }
       catch (e) {
-        console.log("sending mint transaction for ",account," failed");
+        console.log(e)
+        console.log("sending mint transaction for ", account, " failed");
       }
       //tell biconomy to make a mint transaction
-    }else{
+    } else {
       console.log("not necessary")
     }
   }
