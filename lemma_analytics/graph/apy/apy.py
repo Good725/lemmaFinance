@@ -1,9 +1,11 @@
 import pandas as pd
-
+from typing import Union
 
 # Input Date Format - 2021-04-01 00:00:55
 # TODO (@vineetred): Remove the other stats that are not needed
-def generate_statistics_by_date(df: pd.DataFrame, date: str, initial_amount: float) -> dict:
+def generate_statistics_by_date(
+    df: pd.DataFrame, date: str, initial_amount: float
+) -> Union[dict, dict]:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
     # Get the nearest funding rate
@@ -54,14 +56,17 @@ def generate_statistics_by_date(df: pd.DataFrame, date: str, initial_amount: flo
     ROI_ETH = ETH_GAIN / (INITIAL_AMOUNT)
     statistics = pd.DataFrame(statistics).sort_values("DATE")
 
-    return {
-        "START ETH": INITIAL_AMOUNT,
-        "END ETH": TOTAL_ETH,
-        "ETH Gain": ETH_GAIN,
-        "ROI": ROI_ETH * 100,
-        "APY": ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100,
-        "TIME": abs(TIME_PERIOD.days),
-    }
+    return (
+        {
+            "START_ETH": INITIAL_AMOUNT,
+            "END_ETH": TOTAL_ETH,
+            "ETH_Gain": ETH_GAIN,
+            "ROI": ROI_ETH * 100,
+            "APY": ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100,
+            "TIME": abs(TIME_PERIOD.days),
+        },
+        statistics.to_dict(),
+    )
 
 
 # Get APY since inception
@@ -75,7 +80,3 @@ def read_dataframe_from_csv(filepath: str) -> pd.DataFrame:
     df = pd.read_csv(filepath)
     df["date"] = pd.to_datetime(df["timestamp"], unit="s")
     return df
-
-
-# df = read_dataframe_from_csv("../data/funding_rates.csv")
-# X = generate_apy_inception(df)
