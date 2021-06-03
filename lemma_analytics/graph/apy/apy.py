@@ -3,7 +3,7 @@ from typing import Union
 import pandas as pd
 
 # Input Date Format - 1619000000
-# TODO (@vineetred): Remove the other stats that are not needed
+# TODO (@vineetred): Make the function modular
 def generate_statistics_by_date(
     df: pd.DataFrame, timestamp: int, initial_amount: float
 ) -> Union[dict, dict]:
@@ -61,6 +61,10 @@ def generate_statistics_by_date(
     # ROI on ETH gain
     ROI_ETH = ETH_GAIN / (INITIAL_AMOUNT)
     statistics = pd.DataFrame(statistics).sort_values("DATE")
+    # Converting the dataframe into a dict
+    statistics = statistics.to_dict()
+    # Adding the APY
+    statistics["APY"] = ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100
 
     return (
         {
@@ -71,12 +75,11 @@ def generate_statistics_by_date(
             "APY": ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100,
             "TIME": abs(TIME_PERIOD.days),
         },
-        statistics.to_dict(),
+        statistics,
     )
 
 
 # Get APY since inception
-# TODO (@vineetred): Add the correct Genesis Time here
 def generate_apy_inception(df: pd.DataFrame) -> dict:
     GENESIS_TIME = 1622505600
     inception_apy, _ = generate_statistics_by_date(df, GENESIS_TIME, 1)
