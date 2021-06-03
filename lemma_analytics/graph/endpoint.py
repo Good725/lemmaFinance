@@ -1,4 +1,3 @@
-from os import stat
 import flask
 from flask import request
 from apy import apy
