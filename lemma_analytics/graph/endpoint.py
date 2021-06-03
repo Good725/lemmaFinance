@@ -15,8 +15,9 @@ def get_apy_inception() -> dict:
 @app.route("/get_apy_date", methods=["GET"])
 def get_apy_date() -> dict:
     DATE = request.args.get("date")
+    initial_amount = request.args.get("amount")
     df = apy.read_dataframe_from_csv("data/funding_rates.csv")
-    return apy.generate_statistics_by_date(df, DATE)
+    return apy.generate_statistics_by_date(df, DATE, initial_amount)
 
 
 @app.route("/tvl", methods=["GET"])

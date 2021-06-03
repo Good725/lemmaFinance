@@ -3,7 +3,7 @@ import pandas as pd
 
 # Input Date Format - 2021-04-01 00:00:55
 # TODO (@vineetred): Remove the other stats that are not needed
-def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
+def generate_statistics_by_date(df: pd.DataFrame, date: str, initial_amount: float) -> dict:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
     # Get the nearest funding rate
@@ -13,7 +13,7 @@ def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
     # Get the date
     DATE = pd.to_datetime(date_buff)
     # Set the investment amount (in ETH)
-    INITIAL_AMOUNT = 0.1305
+    INITIAL_AMOUNT = initial_amount
     # Buying ETH at spot on DATE
     ETH_PRICE = float(df[df["date"] == DATE]["underlyingPrice"])
     TOTAL_USD = INITIAL_AMOUNT * ETH_PRICE
@@ -65,6 +65,7 @@ def generate_statistics_by_date(df: pd.DataFrame, date: str) -> dict:
 
 
 # Get APY since inception
+# TODO (@vineetred): Add the correct Genesis Time here
 def generate_apy_inception(df: pd.DataFrame) -> dict:
     GENESIS_TIME = "2021-06-01-2021 00:00:00"
     return generate_statistics_by_date(df, GENESIS_TIME)
