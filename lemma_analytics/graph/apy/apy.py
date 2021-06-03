@@ -79,7 +79,8 @@ def generate_statistics_by_date(
 # TODO (@vineetred): Add the correct Genesis Time here
 def generate_apy_inception(df: pd.DataFrame) -> dict:
     GENESIS_TIME = 1622505600
-    return generate_statistics_by_date(df, GENESIS_TIME, 1)
+    inception_apy, _ = generate_statistics_by_date(df, GENESIS_TIME, 1)
+    return inception_apy
 
 
 def read_dataframe_from_csv(filepath: str) -> pd.DataFrame:
