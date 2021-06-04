@@ -66,7 +66,7 @@ def main():
     # Converting it into a DF
     funding_rates = get_dataframe(funding_rates_buff)
     # Save CSV
-    funding_rates.to_csv("funding_rates.csv")
+    funding_rates.to_csv("/home/nginx/lemma/lemma_analytics/graph/data/funding_rates.csv")
     print(datetime.datetime.now())
 
 
