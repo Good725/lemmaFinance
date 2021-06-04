@@ -15,18 +15,16 @@ async function main() {
 
     const xDAIWallet = new ethers.Wallet(process.env.PRIVATE_KEY, xDAIProvider);
 
-    // console.log(maximumETHCap.toString());
-
-    const alreadyDeployedLemmaPerpetualAddress = addresses.xDAIMainnet.lemmaPerpetual;
-    console.log("alreadyDeployedLemmaPerpetual", alreadyDeployedLemmaPerpetualAddress);
+    const alreadyDeployedLemmaTokenAddress = addresses.xDAIMainnet.lemmaxDAI;
+    console.log("alreadyDeployedLemmaTokenAddress", alreadyDeployedLemmaTokenAddress);
 
     // const LemmaPerpetual = (await hre.ethers.getContractFactory("LemmaPerpetual")).connect(xDAIWallet);
-    const LemmaPerpetual = await hre.ethers.getContractFactory("LemmaPerpetual", xDAIWallet);
+    const LemmaToken = (await hre.ethers.getContractFactory("LemmaToken")).connect(xDAIWallet);
     //TODO: to make this works it requires that openzeppelin's upgrade use provider provided by the signer instead of taking it from the hardhat
     //make a custom change and use custom npm package to avoid errors
-    const lemmaPerpetual = await upgrades.upgradeProxy(alreadyDeployedLemmaPerpetualAddress, LemmaPerpetual);
-    await lemmaPerpetual.deployed();
-    console.log("lemmaPerpetual", lemmaPerpetual.address);
+    const lemmaToken = await upgrades.upgradeProxy(alreadyDeployedLemmaTokenAddress, LemmaToken);
+    await lemmaToken.deployed();
+    console.log("lemmaToken", lemmaToken.address);
 }
 
 main()

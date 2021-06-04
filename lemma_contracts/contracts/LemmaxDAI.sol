@@ -172,7 +172,15 @@ contract LemmaToken is
     /// @notice Mint lemma token to _account on xdai network.
     /// @param _account The lemma token is minted to.
     function mint(address _account) public {
-        uint256 amount = depositInfo[_account];
+        uint256 amountFromMainnet = depositInfo[_account];
+        //considering the omniBridge Fees (It is 0% at this time)
+        uint256 amount =
+            amountFromMainnet -
+                multiTokenMediator.calculateFee(
+                    multiTokenMediator.FOREIGN_TO_HOME_FEE(),
+                    address(collateral),
+                    amountFromMainnet
+                );
         uint256 minLUSDCAmountOut = minLUSDCOut[_account];
         delete depositInfo[_account];
         collateral.safeTransfer(address(perpetualProtocol), amount);
@@ -222,13 +230,21 @@ contract LemmaToken is
             amountGotBackAfterClosing
         );
 
+        //considering the omniBridge Fees (It is 0.1% at this time)
+        uint256 amountThatWillGetBackOnMainnet =
+            amountGotBackAfterClosing -
+                multiTokenMediator.calculateFee(
+                    multiTokenMediator.HOME_TO_FOREIGN_FEE(),
+                    address(collateral),
+                    amountGotBackAfterClosing
+                );
         //now realy the depositInfo to lemmaXDAI
         bytes4 functionSelector = ILemmaMainnet.setWithdrawalInfo.selector;
         bytes memory data =
             abi.encodeWithSelector(
                 functionSelector,
                 _msgSender(),
-                amountGotBackAfterClosing,
+                amountThatWillGetBackOnMainnet,
                 _minETHOut
             );
         callBridge(address(lemmaMainnet), data, gasLimit);
