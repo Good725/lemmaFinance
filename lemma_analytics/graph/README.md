@@ -25,6 +25,7 @@
 * Usage - get_apy_date?timestamp=1111111111&amount=1
 #### get_statistics()
 * Returns state of investment after every funding rate. Takes initial deposit amount and date as input.
+* An optional interval argument can be supplied to choose hourly, or, daily data granularity.
 * Can be used to generate graphs showing investment and how it grew over time.
 * Usage - get_statistics?timestamp=1111111111&amount=1
 

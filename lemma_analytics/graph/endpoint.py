@@ -6,6 +6,7 @@ from apy import apy
 
 app = flask.Flask(__name__)
 
+
 @app.route("/")
 def index() -> str:
     return "Lemma Analytics Endpoint"
@@ -33,8 +34,11 @@ def get_apy_date() -> dict:
 def get_statistics() -> dict:
     timestamp = int(request.args.get("timestamp"))
     initial_amount = float(request.args.get("amount"))
+    interval = request.args.get("interval")
     df = apy.read_dataframe_from_csv("data/funding_rates.csv")
-    _, statistics = apy.generate_statistics_by_date(df, timestamp, initial_amount)
+    _, statistics = apy.generate_statistics_by_date(
+        df, timestamp, initial_amount, interval
+    )
     statistics["timestamp"] = datetime.now().timestamp()
     return statistics
 

@@ -5,7 +5,7 @@ import pandas as pd
 # Input Date Format - 1619000000
 # TODO (@vineetred): Make the function modular
 def generate_statistics_by_date(
-    df: pd.DataFrame, timestamp: int, initial_amount: float
+    df: pd.DataFrame, timestamp: int, initial_amount: float, interval: str = "H"
 ) -> Union[dict, dict]:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
@@ -52,7 +52,7 @@ def generate_statistics_by_date(
                 # Value of ETH as is
                 "USD_VALUE_ETH": INITIAL_AMOUNT * row["underlyingPrice"],
                 "ROI": (TOTAL_ETH - INITIAL_AMOUNT) / (INITIAL_AMOUNT),
-                "DATE": row["date"].timestamp(),
+                "DATE": row["date"],
             }
         )
 
@@ -60,9 +60,21 @@ def generate_statistics_by_date(
     ETH_GAIN = TOTAL_ETH - INITIAL_AMOUNT
     # ROI on ETH gain
     ROI_ETH = ETH_GAIN / (INITIAL_AMOUNT)
+
+    # Sort dataframe by Date
     statistics = pd.DataFrame(statistics).sort_values("DATE")
+
+    # Check for interval and process data accordingly
+
+    if interval == "D":
+        statistics = (
+            statistics.groupby(pd.Grouper(key="DATE", freq="D")).sum().reset_index()
+        )
+    statistics["DATE"] = statistics["DATE"].astype("int64") // 10 ** 9
+
     # Converting the dataframe into a dict
     statistics = statistics.to_dict()
+
     # Adding the APY
     statistics["APY"] = ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100
 
