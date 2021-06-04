@@ -1,10 +1,12 @@
 from datetime import datetime
 import flask
 from flask import request
+from flask_cors import CORS
 from apy import apy
 
 
 app = flask.Flask(__name__)
+CORS(app)
 
 
 @app.route("/")
