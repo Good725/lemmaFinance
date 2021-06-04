@@ -1,5 +1,6 @@
 import time
 from typing import Union
+import numpy as np
 import pandas as pd
 
 # Input Date Format - 1619000000
@@ -68,7 +69,19 @@ def generate_statistics_by_date(
 
     if interval == "D":
         statistics = (
-            statistics.groupby(pd.Grouper(key="DATE", freq="D")).sum().reset_index()
+            # statistics.groupby(pd.Grouper(key="DATE", freq="D"))[["ROI", "FUNDING_PAYMENT"]].sum().reset_index()
+            statistics.groupby(pd.Grouper(key="DATE", freq="D"))
+            .agg(
+                {
+                    "ROI": "sum",
+                    "FUNDING_PAYMENT": "sum",
+                    "TOTAL_ETH": np.average,
+                    "TOTAL_FUNDING": np.average,
+                    "USD_VALUE_ETH": np.average,
+                    "USD_VALUE_LEMMA": np.average,
+                }
+            )
+            .reset_index()
         )
     statistics["DATE"] = statistics["DATE"].astype("int64") // 10 ** 9
 
