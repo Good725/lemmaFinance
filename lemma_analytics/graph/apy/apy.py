@@ -52,7 +52,7 @@ def generate_statistics_by_date(
                 # Value of ETH as is
                 "USD_VALUE_ETH": INITIAL_AMOUNT * row["underlyingPrice"],
                 "ROI": (TOTAL_ETH - INITIAL_AMOUNT) / (INITIAL_AMOUNT),
-                "DATE": row["date"],
+                "DATE": row["date"].timestamp(),
             }
         )
 
