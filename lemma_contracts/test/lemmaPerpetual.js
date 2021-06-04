@@ -22,7 +22,7 @@ describe("LemmaPerpetual", () => {
     [owner, lemmaToken, someAccount] = await ethers.getSigners();
     const LemmaPerpetual = await ethers.getContractFactory("LemmaPerpetual");
     const maximumETHCap = ethers.utils.parseEther("500");
-    this.lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress,maximumETHCap], { initializer: 'initialize' });
+    this.lemmaPerpetual = await upgrades.deployProxy(LemmaPerpetual, [clearingHouseAddress, clearingHouseViewerAddress, ammAddress, usdcAddress, maximumETHCap], { initializer: 'initialize' });
     await this.lemmaPerpetual.setLemmaToken(lemmaToken.address);
 
     this.clearingHouse = await ethers.getContractAt("IClearingHouse", clearingHouseAddress);
@@ -64,7 +64,7 @@ describe("LemmaPerpetual", () => {
     expect(await this.usdc.allowance(this.lemmaPerpetual.address, clearingHouseAddress)).to.equal(ethers.constants.MaxUint256);
   });
 
-  it("Fail if the maxSizeLimit is low", async function() {
+  it("Fail if the maxSizeLimit is low", async function () {
     const maximumETHCap = ethers.utils.parseEther("1");
     await this.lemmaPerpetual.connect(owner).setMaxSizeLimit(maximumETHCap);
     const amount = ethers.utils.parseUnits("10000", "6");
@@ -172,17 +172,22 @@ describe("LemmaPerpetual", () => {
     await this.usdc.connect(hasUSDC).transfer(this.lemmaPerpetual.address, amount);
 
     await this.lemmaPerpetual.connect(lemmaToken).open(amount);
+
+
     const balanceOfLemmaTokenBefore = await this.usdc.balanceOf(lemmaToken.address);
     //close position when totalCollateral is given as input
     const closingAmount = amount.div(10);
     await this.lemmaPerpetual.connect(lemmaToken).close(closingAmount);
 
-    const tollRatio = await this.amm.tollRatio();
-    const spreadRatio = await this.amm.spreadRatio();
     expect((await this.usdc.balanceOf(this.lemmaPerpetual.address))).to.equal(ZERO);
     const balanceOfLemmaTokenAfter = await this.usdc.balanceOf(lemmaToken.address);
     const collateralThatLemmaTokenGot = balanceOfLemmaTokenAfter.sub(balanceOfLemmaTokenBefore);
-    expect(collateralThatLemmaTokenGot).to.be.closeTo(getAmountToOpenPositionWith(closingAmount, tollRatio.d, spreadRatio.d), 1);
+
+    const closingAmountIn18Decimals = convertUSDCAmountInWei(closingAmount);
+    const calcFee = await this.amm.calcFee([closingAmountIn18Decimals]);
+    const feesToClosePosition = calcFee[0].d.add(calcFee[1].d);
+
+    expect(collateralThatLemmaTokenGot).to.be.closeTo(convertWeiAmountToUSDC(closingAmountIn18Decimals.sub(feesToClosePosition)), 1);
   });
 
 

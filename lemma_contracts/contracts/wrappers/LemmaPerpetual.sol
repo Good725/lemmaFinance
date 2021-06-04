@@ -127,7 +127,7 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
         returns (uint256 collateralAmount)
     {
         (
-            Decimal.decimal memory assetAmount,
+            ,
             Decimal.decimal memory leverage,
             Decimal.decimal memory baseAssetAmountLimit
         ) = calcInputsToPerp(_amount);
@@ -136,15 +136,21 @@ contract LemmaPerpetual is OwnableUpgradeable, IPerpetualProtocol {
                 clearingHouse.closePosition(amm, Decimal.zero());
                 lastUpdatedCumulativePremiumFraction = SignedDecimal.zero();
             } else {
-                clearingHouse.removeMargin(amm, calcFee(amm, assetAmount));
+                Decimal.decimal memory amount =
+                    convertCollteralAmountTo18Decimals(
+                        address(collateral),
+                        _amount
+                    );
+                Decimal.decimal memory fees = calcFee(amm, amount);
+                clearingHouse.removeMargin(amm, fees);
                 clearingHouse.openPosition(
                     amm,
                     IClearingHouse.Side.SELL,
-                    assetAmount,
+                    amount,
                     leverage,
                     baseAssetAmountLimit
                 );
-                clearingHouse.removeMargin(amm, assetAmount);
+                clearingHouse.removeMargin(amm, amount.subD(fees));
             }
             collateralAmount = collateral.balanceOf(address(this));
         } else {

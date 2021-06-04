@@ -26,12 +26,12 @@ task("accounts", "Prints the list of accounts", async () => {
 module.exports = {
   networks: {
     hardhat: {
-      // forking: {
-      //   url: "https://rpc.xdaichain.com/",
-      // },
       forking: {
-        url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
+        url: "https://rpc.xdaichain.com/",
       },
+      // forking: {
+      //   url: "https://rinkeby.infura.io/v3/" + process.env.INFURA_KEY,
+      // },
       accounts: {
         mnemonic: process.env.MNEMONIC,
       },

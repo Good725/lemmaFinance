@@ -72,7 +72,7 @@ async function main() {
     tx = await lemmaPerpetual.setLemmaToken(lemmaToken.address);
     await tx.wait();
     console.log("lemmaToken", await lemmaPerpetual.lemmaToken());
-    const lemmaToken = { address: "0x4de180Bae8e2151f294508b72d899776284e42D2" };
+    // const lemmaToken = { address: "0x4de180Bae8e2151f294508b72d899776284e42D2" };
     //deploy LemmaMainnet
     const LemmaMainnet = (await hre.ethers.getContractFactory("LemmaMainnet")).connect(mainnetWallet);
     const lemmaMainnet = await upgrades.deployProxy(LemmaMainnet, [usdcMainnet, wethMainnet, lemmaToken.address, uniswapV2Router02Mainnet, ambBridgeOnEth, multiTokenMediatorOnEth, trustedForwaderMainnet, maximumETHCap], { initializer: 'initialize' });
