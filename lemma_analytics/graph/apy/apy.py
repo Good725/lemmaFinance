@@ -1,17 +1,24 @@
+import time
 from typing import Union
+import numpy as np
 import pandas as pd
 
-# Input Date Format - 2021-04-01 00:00:55
-# TODO (@vineetred): Remove the other stats that are not needed
+# Input Date Format - 1619000000
+# TODO (@vineetred): Make the function modular
 def generate_statistics_by_date(
-    df: pd.DataFrame, date: str, initial_amount: float
+    df: pd.DataFrame, timestamp: int, initial_amount: float, interval: str = "H"
 ) -> Union[dict, dict]:
     # Set the date of investment
     df.index = pd.to_datetime(df["date"])
     # Get the nearest funding rate
-    date_buff = df.iloc[df.index.get_loc(pd.to_datetime(date), method="nearest")][
-        "date"
-    ]
+    date_buff = df.iloc[
+        df.index.get_loc(
+            pd.to_datetime(
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+            ),
+            method="nearest",
+        )
+    ]["date"]
     # Get the date
     DATE = pd.to_datetime(date_buff)
     # Set the investment amount (in ETH)
@@ -54,7 +61,35 @@ def generate_statistics_by_date(
     ETH_GAIN = TOTAL_ETH - INITIAL_AMOUNT
     # ROI on ETH gain
     ROI_ETH = ETH_GAIN / (INITIAL_AMOUNT)
+
+    # Sort dataframe by Date
     statistics = pd.DataFrame(statistics).sort_values("DATE")
+
+    # Check for interval and process data accordingly
+
+    if interval == "D":
+        statistics = (
+            # statistics.groupby(pd.Grouper(key="DATE", freq="D"))[["ROI", "FUNDING_PAYMENT"]].sum().reset_index()
+            statistics.groupby(pd.Grouper(key="DATE", freq="D"))
+            .agg(
+                {
+                    "ROI": "sum",
+                    "FUNDING_PAYMENT": "sum",
+                    "TOTAL_ETH": np.average,
+                    "TOTAL_FUNDING": np.average,
+                    "USD_VALUE_ETH": np.average,
+                    "USD_VALUE_LEMMA": np.average,
+                }
+            )
+            .reset_index()
+        )
+    statistics["DATE"] = statistics["DATE"].astype("int64") // 10 ** 9
+
+    # Converting the dataframe into a dict
+    statistics = statistics.to_dict()
+
+    # Adding the APY
+    statistics["APY"] = ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100
 
     return (
         {
@@ -65,15 +100,15 @@ def generate_statistics_by_date(
             "APY": ((1 + ROI_ETH) ** (12 / (abs(TIME_PERIOD.days) / 30)) - 1) * 100,
             "TIME": abs(TIME_PERIOD.days),
         },
-        statistics.to_dict(),
+        statistics,
     )
 
 
 # Get APY since inception
-# TODO (@vineetred): Add the correct Genesis Time here
 def generate_apy_inception(df: pd.DataFrame) -> dict:
-    GENESIS_TIME = "2021-06-01-2021 00:00:00"
-    return generate_statistics_by_date(df, GENESIS_TIME)
+    GENESIS_TIME = 1622505600
+    inception_apy, _ = generate_statistics_by_date(df, GENESIS_TIME, 1)
+    return inception_apy
 
 
 def read_dataframe_from_csv(filepath: str) -> pd.DataFrame:
